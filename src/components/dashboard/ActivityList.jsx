@@ -1,8 +1,10 @@
 import { useStore } from '../../store/useStore';
+import { useTimeTrackingStore } from '../../features/timeTracking/store/timeTrackingStore';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 export default function ActivityList() {
-  const { receipts, timeEntries } = useStore();
+  const { receipts } = useStore();
+  const timeEntries = useTimeTrackingStore((state) => state.timeEntries);
 
   const recentReceipts = receipts.slice(0, 3);
   const recentTime = timeEntries.slice(0, 2);
@@ -49,7 +51,7 @@ export default function ActivityList() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-gray-900 text-sm">
-                    {entry.workerName}
+                    {entry.employeeName}
                   </div>
                   <div className="text-xs text-gray-500">
                     Clocked out • {entry.hours} hours

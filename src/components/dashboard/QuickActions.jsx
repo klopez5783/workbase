@@ -1,46 +1,22 @@
 import { Clock, Camera, Send, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../../store/useStore';
-import { useGeolocation } from '../../hooks/useGeolocation';
+import { useTimeTrackingStore } from '../../features/timeTracking/store/timeTrackingStore';
 
 export default function QuickActions() {
   const navigate = useNavigate();
-  const { currentClockIn, clockIn, clockOut } = useStore();
-  const { getCurrentLocation } = useGeolocation();
+  const activeShift = useTimeTrackingStore((state) => state.activeShift);
 
-  const handleClockIn = async () => {
-    try {
-      const location = await getCurrentLocation();
-      const entry = {
-        id: Date.now().toString(),
-        workerId: 'current-user',
-        workerName: 'Current User',
-        clockIn: new Date().toISOString(),
-        location: location || { latitude: 0, longitude: 0 },
-        projectId: 'current-project',
-        verified: true,
-      };
-      clockIn(entry);
-    } catch (error) {
-      console.error('Clock in error:', error);
-      alert('Please enable location permissions to clock in');
-    }
-  };
-
-  const handleClockOut = () => {
-    if (!currentClockIn) return;
-    const now = new Date();
-    const start = new Date(currentClockIn.clockIn);
-    const hours = (now - start) / (1000 * 60 * 60);
-    clockOut(Number(hours.toFixed(2)));
+  // Navigate to Time page for clock in/out (where proper verification happens)
+  const handleClockAction = () => {
+    navigate('/time');
   };
 
   const actions = [
     {
       icon: Clock,
-      label: currentClockIn ? 'Clock Out' : 'Clock In',
-      onClick: currentClockIn ? handleClockOut : handleClockIn,
-      gradient: currentClockIn
+      label: activeShift ? 'Clock Out' : 'Clock In',
+      onClick: handleClockAction,  // ← Now navigates to Time page
+      gradient: activeShift
         ? 'from-red-500 to-red-600'
         : 'from-blue-500 to-blue-600',
     },

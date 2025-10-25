@@ -19,23 +19,6 @@ export const useStore = create(
           receipts: state.receipts.filter((r) => r.id !== id),
         })),
 
-      // Time Tracking
-      timeEntries: [],
-      currentClockIn: null,
-      clockIn: (entry) => set({ currentClockIn: entry }),
-      clockOut: (hours) =>
-        set((state) => ({
-          timeEntries: [
-            {
-              ...state.currentClockIn,
-              clockOut: new Date().toISOString(),
-              hours,
-            },
-            ...state.timeEntries,
-          ],
-          currentClockIn: null,
-        })),
-
       // Daily Reports
       reports: [],
       addReport: (report) =>
@@ -55,20 +38,6 @@ export const useStore = create(
         set((state) => ({
           documents: state.documents.filter((d) => d.id !== id),
         })),
-
-      // Projects
-      projects: [
-        {
-          id: '1',
-          name: 'Oak St Renovation',
-          address: '123 Oak St',
-          clientName: 'John Doe',
-          clientPhone: '+1234567890',
-          status: 'active',
-        },
-      ],
-      currentProject: null,
-      setCurrentProject: (project) => set({ currentProject: project }),
     }),
     {
       name: 'WorkBase-storage',

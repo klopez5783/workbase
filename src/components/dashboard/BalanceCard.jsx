@@ -8,7 +8,7 @@ export default function BalanceCard({ amount = 5420, trend = 12.5 }) {
         ${amount.toLocaleString()}
       </div>
       <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full text-sm">
-        <TrendingUp size={16} />
+        <TrendingUp size={25} />
         <span>+{trend}%</span>
       </div>
     </div>

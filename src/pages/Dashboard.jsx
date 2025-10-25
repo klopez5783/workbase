@@ -1,11 +1,13 @@
 import { useStore } from '../store/useStore';
+import { useTimeTrackingStore } from '../features/timeTracking/store/timeTrackingStore';
 import BalanceCard from '../components/dashboard/BalanceCard';
 import StatCard from '../components/dashboard/StatCard';
 import QuickActions from '../components/dashboard/QuickActions';
 import ActivityList from '../components/dashboard/ActivityList';
 
 export default function Dashboard() {
-  const { receipts, timeEntries, reports, currentClockIn } = useStore();
+  const { receipts, reports } = useStore();
+  const { timeEntries, activeShift } = useTimeTrackingStore();
 
   // Calculate today's stats
   const today = new Date().toDateString();
@@ -30,7 +32,7 @@ export default function Dashboard() {
       <BalanceCard />
 
       {/* Clock In Banner */}
-      {currentClockIn && (
+      {activeShift && (
         <div className="mx-5 mt-4 bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 rounded-xl p-4 flex items-center gap-3">
           <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center text-white flex-shrink-0">
             <span className="text-2xl">⏱</span>
@@ -40,12 +42,11 @@ export default function Dashboard() {
               Currently Clocked In
             </div>
             <div className="text-xs text-green-700 mt-0.5">
-              Since{' '}
-              {new Date(currentClockIn.clockIn).toLocaleTimeString('en-US', {
+              {activeShift.projectName} • Since{' '}
+              {new Date(activeShift.clockIn).toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
-              })}{' '}
-              • GPS Verified
+              })}
             </div>
           </div>
         </div>
