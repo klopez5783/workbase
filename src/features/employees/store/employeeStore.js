@@ -5,13 +5,7 @@ export const useEmployeeStore = create(
   persist(
     (set, get) => ({
       employees: [],
-      currentEmployee: {
-        id: 'demo-user',
-        name: 'Demo User',
-        email: 'demo@workbase.com',
-        role: 'admin',
-        status: 'active',
-      },
+      currentEmployee: null,  // ← Remove hardcoded demo user
       
       setCurrentEmployee: (employee) => set({ currentEmployee: employee }),
       
