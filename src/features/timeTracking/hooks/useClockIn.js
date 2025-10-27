@@ -58,22 +58,22 @@ export const useClockIn = () => {
         projectName: project.name,
         clockIn: new Date().toISOString(),
         clockInLocation: {
-          ...userLocation,
-          address: project.location.address,
+            ...userLocation,
+            address: project.location.address,
         },
         distanceFromSite: verification.distance,
         verified: true,
         status: 'active',
       };
 
-      clockIn(entry);
+      await clockIn(entry);
 
       setLoading(false);
-      return {
-        success: true,
-        message: verification.message,
-        distance: verification.distance,
-      };
+            return {
+            success: true,
+            message: verification.message,
+            distance: verification.distance,
+        };
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -104,7 +104,7 @@ export const useClockIn = () => {
         hours: Number(hours.toFixed(2)),
       };
 
-      clockOut(clockOutData);
+      await clockOut(clockOutData);
 
       setLoading(false);
       return { success: true };
