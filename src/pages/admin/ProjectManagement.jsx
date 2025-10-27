@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Briefcase, Loader } from 'lucide-react';
+import { Plus, Briefcase, Loader, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
 import ProjectForm from '../../features/projects/components/ProjectForm';
@@ -12,6 +13,7 @@ export default function ProjectManagement() {
   const [editingProject, setEditingProject] = useState(null);
 
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
   // Load projects from Firestore
   useEffect(() => {
@@ -100,11 +102,20 @@ export default function ProjectManagement() {
     <div className="p-5 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Project Management</h1>
-          <p className="text-gray-600 text-sm mt-1">
-            {projects.length} total {projects.length === 1 ? 'project' : 'projects'}
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            title="Go back"
+          >
+            <ArrowLeft size={24} className="text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Project Management</h1>
+            <p className="text-gray-600 text-sm mt-1">
+              {projects.length} total {projects.length === 1 ? 'project' : 'projects'}
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setShowForm(true)}

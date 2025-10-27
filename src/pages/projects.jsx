@@ -6,6 +6,7 @@ import {
   FolderOpen, 
   MapPin, 
   Users,
+  Settings,
   ChevronRight,
   Loader
 } from 'lucide-react';
@@ -100,7 +101,19 @@ export default function Projects() {
               <Users size={18} />
               <p className="text-sm">{selectedProject.clientName}</p>
             </div>
+            <div className='bg-gray-500'>
+                <button
+                onClick={() => {
+                    navigate('/admin/projects');
+                }}
+                className="flex items-center gap-2 text-gray-600"
+                >
+                <Settings size={16} />
+                Manage Projects
+            </button>
+            </div>
           </div>
+          
         </div>
 
         {/* Reports Section */}

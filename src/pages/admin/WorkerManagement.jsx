@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Users, Loader, Trash2, Send, Copy, CheckCircle } from 'lucide-react';
+import { Plus, Users, Loader, Trash2, Send, Copy, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -8,6 +9,7 @@ export default function WorkerManagement() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadWorkers();
@@ -62,11 +64,20 @@ export default function WorkerManagement() {
     <div className="p-5 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Worker Management</h1>
-          <p className="text-gray-600 text-sm mt-1">
-            {workers.length} {workers.length === 1 ? 'worker' : 'workers'}
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            title="Go back"
+          >
+            <ArrowLeft size={24} className="text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Worker Management</h1>
+            <p className="text-gray-600 text-sm mt-1">
+              {workers.length} {workers.length === 1 ? 'worker' : 'workers'}
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
