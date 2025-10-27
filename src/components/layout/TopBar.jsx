@@ -1,4 +1,4 @@
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut, Settings, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import { useNavigate } from 'react-router-dom';
@@ -64,6 +64,16 @@ export default function TopBar({ title = 'WorkBase' }) {
                   >
                     <Settings size={16} />
                     Manage Projects
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate('/admin/workers');
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"
+                  >
+                    <Users size={16} />
+                    Manage Workers
                   </button>
                 </div>
               )}

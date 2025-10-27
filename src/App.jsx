@@ -13,6 +13,8 @@ import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Projects from './pages/projects';
 import ProjectManagement from './pages/admin/ProjectManagement';
+import WorkerManagement from './pages/admin/WorkerManagement';
+import WorkerClockIn from './pages/WorkerClockIn';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser } = useAuth();
@@ -84,8 +86,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Routes */}
         <Route path="/login" element={currentUser ? <Navigate to="/" /> : <Login />} />
         <Route path="/signup" element={currentUser ? <Navigate to="/" /> : <Signup />} />
+        
+        {/* Worker Clock-In (Public - No Auth Required) */}
+        <Route path="/worker/:accessKey" element={<WorkerClockIn />} />
 
         {/* Main App Routes (with Layout) */}
         <Route
@@ -110,6 +116,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <ProjectManagement />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/admin/workers"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <WorkerManagement />
             </ProtectedRoute>
           }
         />
