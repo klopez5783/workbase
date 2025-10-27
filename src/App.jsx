@@ -11,6 +11,7 @@ import Reports from './pages/Reports';
 import Documents from './pages/Documents';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
+import Projects from './pages/projects';
 
 function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
@@ -67,6 +68,7 @@ function App() {
           <Route path="time" element={<Time />} />
           <Route path="reports" element={<Reports />} />
           <Route path="documents" element={<Documents />} />
+          <Route path="projects" element={<Projects />} />
         </Route>
       </Routes>
     </BrowserRouter>
