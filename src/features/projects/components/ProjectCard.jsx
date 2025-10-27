@@ -56,7 +56,7 @@ export default function ProjectCard({ project, onEdit, onDelete, onViewDetails }
           onClick={onEdit}
           className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 transition"
         >
-          <Settings size={18} />
+          <Settings size={18} />ad
         </button>
         <button
           onClick={onDelete}
