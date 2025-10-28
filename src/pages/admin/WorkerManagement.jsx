@@ -79,13 +79,15 @@ export default function WorkerManagement() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl font-semibold hover:shadow-lg transition flex items-center gap-2"
-        >
-          <Plus size={20} />
-          Add Worker
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl font-semibold hover:shadow-lg transition flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Add Worker
+          </button>
+        </div>
       </div>
 
       {/* Info Box */}
@@ -153,8 +155,6 @@ function WorkerCard({ worker, onDelete }) {
     setSending(true);
     
     try {
-      // TODO: Integrate with SMS service (Twilio, etc.)
-      // For now, just open SMS app with pre-filled message
       const message = `Hi ${worker.name}! Use this link to clock in/out: ${workerLink}`;
       const smsUrl = `sms:${worker.phone}${/iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(message)}`;
       window.open(smsUrl, '_blank');
@@ -238,17 +238,14 @@ function AddWorkerForm({ onClose, onSuccess }) {
   const [error, setError] = useState('');
 
   const generateAccessKey = () => {
-    // Generate a unique, URL-safe key
     return Math.random().toString(36).substring(2, 15) + 
            Math.random().toString(36).substring(2, 15) +
            Date.now().toString(36);
   };
 
   const formatPhoneNumber = (value) => {
-    // Remove all non-digits
     const phoneNumber = value.replace(/\D/g, '');
     
-    // Format as (XXX) XXX-XXXX
     if (phoneNumber.length <= 3) {
       return phoneNumber;
     } else if (phoneNumber.length <= 6) {
@@ -276,7 +273,6 @@ function AddWorkerForm({ onClose, onSuccess }) {
       return;
     }
 
-    // Validate phone number (must be 10 digits)
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== 10) {
       setError('Please enter a valid 10-digit phone number');
@@ -288,24 +284,31 @@ function AddWorkerForm({ onClose, onSuccess }) {
 
     try {
       const workerData = {
-        name: name.trim(),
-        phone: phone,
-        phoneRaw: digits,
-        accessKey: generateAccessKey(),
+        name: String(name.trim()),
+        phone: String(phone),
+        phoneRaw: String(digits),
+        accessKey: String(generateAccessKey()),
         status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
+      console.log('Creating worker with data:', workerData);
+
       const result = await firestoreService.create('workers', workerData);
       
+      console.log('Create result:', result);
+
       if (result.success) {
+        alert('Worker added successfully!');
         onSuccess(workerData);
       } else {
-        setError(result.error);
+        console.error('Failed to create worker:', result.error);
+        setError(result.error || 'Failed to add worker');
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Error adding worker:', err);
+      setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
