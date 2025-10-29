@@ -15,6 +15,7 @@ import Projects from './pages/projects';
 import ProjectManagement from './pages/admin/ProjectManagement';
 import WorkerManagement from './pages/admin/WorkerManagement';
 import WorkerClockIn from './pages/WorkerClockIn';
+import ProfileSettings from './pages/ProfileSettings';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser } = useAuth();
@@ -108,6 +109,7 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="documents" element={<Documents />} />
           <Route path="projects" element={<Projects />} />
+          <Route path="/profile" element={<ProfileSettings />} />
         </Route>
 
         {/* Admin Routes (without Layout, full page) */}

@@ -4,6 +4,7 @@ import BalanceCard from '../components/dashboard/BalanceCard';
 import StatCard from '../components/dashboard/StatCard';
 import QuickActions from '../components/dashboard/QuickActions';
 import ActivityList from '../components/dashboard/ActivityList';
+import WorkerLinkStatus from '../components/WorkerLinkStatus';
 
 export default function Dashboard() {
   const { receipts, reports } = useStore();
@@ -29,7 +30,8 @@ export default function Dashboard() {
 
   return (
     <div className="pb-6">
-      <BalanceCard />
+        <WorkerLinkStatus /> 
+        <BalanceCard />
 
       {/* Clock In Banner */}
       {activeShift && (

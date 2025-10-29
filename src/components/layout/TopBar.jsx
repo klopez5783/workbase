@@ -1,15 +1,15 @@
-import { User, LogOut, Settings, Users } from 'lucide-react';
+import { User, LogOut, Settings, Users,House  } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function TopBar({ title = 'WorkBase' }) {
   const { currentUser, signOut } = useAuth();
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-
   const handleSignOut = async () => {
     await signOut();
     setShowMenu(false);
@@ -62,7 +62,7 @@ export default function TopBar({ title = 'WorkBase' }) {
                     }}
                     className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"
                   >
-                    <Settings size={16} />
+                    <House size={16} />
                     Manage Projects
                   </button>
                   <button
@@ -75,6 +75,10 @@ export default function TopBar({ title = 'WorkBase' }) {
                     <Users size={16} />
                     Manage Workers
                   </button>
+                  <Link className='className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"' to="/profile">
+                    <Settings size={16} />
+                    Profile Settings
+                  </Link>
                 </div>
               )}
 
