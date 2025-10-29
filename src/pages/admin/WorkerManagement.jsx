@@ -142,11 +142,21 @@ export default function WorkerManagement() {
 function WorkerCard({ worker, onDelete }) {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showLinks, setShowLinks] = useState(false);
 
-  const workerLink = `${window.location.origin}/worker/${worker.accessKey}`;
+  const baseLink = `${window.location.origin}/worker/${worker.accessKey}`;
+  
+  // Generate auto-clock-in links for each project
+  const generateAutoClockInLink = (projectId) => {
+    return `${baseLink}?action=in&project=${projectId}`;
+  };
+
+  const generateAutoClockOutLink = () => {
+    return `${baseLink}?action=out`;
+  };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(workerLink);
+    navigator.clipboard.writeText(baseLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -155,7 +165,7 @@ function WorkerCard({ worker, onDelete }) {
     setSending(true);
     
     try {
-      const message = `Hi ${worker.name}! Use this link to clock in/out: ${workerLink}`;
+      const message = `Hi ${worker.name}! Use this link to clock in/out: ${baseLink}`;
       const smsUrl = `sms:${worker.phone}${/iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(message)}`;
       window.open(smsUrl, '_blank');
       
@@ -196,7 +206,7 @@ function WorkerCard({ worker, onDelete }) {
         <p className="text-xs font-semibold text-gray-700 mb-2">Worker Access Link:</p>
         <div className="flex items-center gap-2">
           <code className="flex-1 text-xs bg-white px-3 py-2 rounded border border-gray-200 truncate">
-            {workerLink}
+            {baseLink}
           </code>
           <button
             onClick={handleCopyLink}
@@ -210,6 +220,9 @@ function WorkerCard({ worker, onDelete }) {
             )}
           </button>
         </div>
+        <p className="text-xs text-gray-500 mt-2">
+          💡 Worker can bookmark this link or add it to their home screen
+        </p>
       </div>
 
       {/* Actions */}

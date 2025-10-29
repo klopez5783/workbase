@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, MapPin, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { firestoreService } from '../services/firestoreService';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -7,6 +7,7 @@ import { calculateDistance } from '../shared/utils/distance';
 
 export default function WorkerClockIn() {
   const { accessKey } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
   const [worker, setWorker] = useState(null);
@@ -20,9 +21,26 @@ export default function WorkerClockIn() {
 
   const { getCurrentLocation } = useGeolocation();
 
+  // Check for auto-clock-in parameters
+  const autoAction = searchParams.get('action'); // 'in' or 'out'
+  const autoProjectId = searchParams.get('project');
+
   useEffect(() => {
     loadWorkerData();
   }, [accessKey]);
+
+  // Auto clock-in/out if URL parameters present
+  useEffect(() => {
+    if (worker && !loading && autoAction && !actionLoading) {
+      if (autoAction === 'in' && autoProjectId && !activeShift) {
+        // Auto clock-in
+        handleAutoClockIn(autoProjectId);
+      } else if (autoAction === 'out' && activeShift) {
+        // Auto clock-out
+        handleAutoClockOut();
+      }
+    }
+  }, [worker, loading, autoAction, autoProjectId, activeShift]);
 
   const loadWorkerData = async () => {
     try {
@@ -42,10 +60,16 @@ export default function WorkerClockIn() {
       const workerData = workerResult.data[0];
       setWorker(workerData);
 
-      // Load all projects (worker can see all)
+      // Load projects assigned to this worker
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
-        setProjects(projectsResult.data);
+        // Filter projects where worker is assigned
+        const assignedProjects = projectsResult.data.filter(project => 
+          project.assignedWorkers?.includes(workerData.id) || 
+          !project.assignedWorkers || 
+          project.assignedWorkers.length === 0
+        );
+        setProjects(assignedProjects);
       }
 
       // Check for active shift
@@ -65,6 +89,99 @@ export default function WorkerClockIn() {
     }
   };
 
+  const handleAutoClockIn = async (projectId) => {
+    setActionLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const userLocation = await getCurrentLocation();
+      const project = projects.find(p => p.id === projectId);
+      
+      if (!project) {
+        throw new Error('Project not found');
+      }
+
+      const distance = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        project.location.latitude,
+        project.location.longitude
+      );
+
+      const isWithinGeofence = distance <= project.geofenceRadius;
+
+      const timeEntry = {
+        workerId: worker.id,
+        workerName: worker.name,
+        workerPhone: worker.phone,
+        projectId: project.id,
+        projectName: project.name,
+        clockIn: new Date().toISOString(),
+        clockInLocation: {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          address: project.location.address,
+        },
+        distanceFromSite: Math.round(distance),
+        verified: isWithinGeofence,
+        status: isWithinGeofence ? 'active' : 'flagged',
+        notes: isWithinGeofence ? '' : 'Clocked in outside geofence',
+      };
+
+      const result = await firestoreService.create('timeEntries', timeEntry);
+
+      if (result.success) {
+        setActiveShift({ ...timeEntry, id: result.id });
+        setSuccess(
+          isWithinGeofence
+            ? '✓ Auto-clocked in successfully!'
+            : '⚠️ Auto-clocked in (outside normal range - will be reviewed)'
+        );
+      }
+    } catch (err) {
+      setError('Failed to auto clock-in: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAutoClockOut = async () => {
+    if (!activeShift) return;
+
+    setActionLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const userLocation = await getCurrentLocation();
+      const now = new Date();
+      const start = new Date(activeShift.clockIn);
+      const hours = (now - start) / (1000 * 60 * 60);
+
+      const updateData = {
+        clockOut: now.toISOString(),
+        clockOutLocation: {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+        },
+        hours: Number(hours.toFixed(2)),
+        status: 'completed',
+        updatedAt: now.toISOString(),
+      };
+
+      await firestoreService.update('timeEntries', activeShift.id, updateData);
+
+      setSuccess(`✓ Auto-clocked out! Total hours: ${hours.toFixed(2)}`);
+      setActiveShift(null);
+      setSelectedProject('');
+    } catch (err) {
+      setError('Failed to auto clock-out: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleClockIn = async () => {
     if (!selectedProject) {
       setError('Please select a job site');
@@ -76,16 +193,13 @@ export default function WorkerClockIn() {
     setSuccess('');
 
     try {
-      // Get current location
       const userLocation = await getCurrentLocation();
-
-      // Find selected project
       const project = projects.find(p => p.id === selectedProject);
+      
       if (!project) {
         throw new Error('Project not found');
       }
 
-      // Verify location
       const distance = calculateDistance(
         userLocation.latitude,
         userLocation.longitude,
@@ -95,7 +209,6 @@ export default function WorkerClockIn() {
 
       const isWithinGeofence = distance <= project.geofenceRadius;
 
-      // Create time entry
       const timeEntry = {
         workerId: worker.id,
         workerName: worker.name,
@@ -261,23 +374,34 @@ export default function WorkerClockIn() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Job Site
                 </label>
-                <select
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-base"
-                >
-                  <option value="">Choose a project...</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name} - {project.address}
-                    </option>
-                  ))}
-                </select>
+                {projects.length === 0 ? (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    <p className="text-yellow-800 text-sm font-medium">
+                      You're not assigned to any projects yet.
+                    </p>
+                    <p className="text-yellow-700 text-xs mt-1">
+                      Contact your supervisor to get assigned.
+                    </p>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedProject}
+                    onChange={(e) => setSelectedProject(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-base"
+                  >
+                    <option value="">Choose a project...</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name} - {project.address}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <button
                 onClick={handleClockIn}
-                disabled={actionLoading || !selectedProject}
+                disabled={actionLoading || !selectedProject || projects.length === 0}
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center justify-center gap-3">

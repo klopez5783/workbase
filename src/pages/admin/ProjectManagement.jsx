@@ -5,12 +5,15 @@ import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
 import ProjectForm from '../../features/projects/components/ProjectForm';
 import ProjectCard from '../../features/projects/components/ProjectCard';
+import AssignWorkersModal from '../../features/projects/components/AssignWorkersModal';
 
 export default function ProjectManagement() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [showAssignWorkers, setShowAssignWorkers] = useState(false);
+  const [assigningProject, setAssigningProject] = useState(null);
 
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -38,6 +41,7 @@ export default function ProjectManagement() {
           clientName: doc.clientName || '',
           clientPhone: doc.clientPhone || '',
           status: doc.status || 'active',
+          assignedWorkers: doc.assignedWorkers || [],
           assignedEmployees: doc.assignedEmployees || [],
           geofenceRadius: doc.geofenceRadius || 100,
           createdAt: doc.createdAt,
@@ -56,6 +60,18 @@ export default function ProjectManagement() {
   const handleEdit = (project) => {
     setEditingProject(project);
     setShowForm(true);
+  };
+
+  const handleAssignWorkers = (project) => {
+    setAssigningProject(project);
+    setShowAssignWorkers(true);
+  };
+
+  const handleCloseAssignWorkers = async () => {
+    setShowAssignWorkers(false);
+    setAssigningProject(null);
+    // Reload projects to show updated assignments
+    await loadProjects();
   };
 
   const handleDelete = async (project) => {
@@ -161,6 +177,7 @@ export default function ProjectManagement() {
               onEdit={() => handleEdit(project)}
               onDelete={() => handleDelete(project)}
               onViewDetails={() => handleViewDetails(project)}
+              onAssignWorkers={() => handleAssignWorkers(project)}
             />
           ))}
         </div>
@@ -171,6 +188,15 @@ export default function ProjectManagement() {
         <ProjectForm
           onClose={handleCloseForm}
           existingProject={editingProject}
+        />
+      )}
+
+      {/* Assign Workers Modal */}
+      {showAssignWorkers && assigningProject && (
+        <AssignWorkersModal
+          project={assigningProject}
+          onClose={handleCloseAssignWorkers}
+          onSuccess={handleCloseAssignWorkers}
         />
       )}
     </div>

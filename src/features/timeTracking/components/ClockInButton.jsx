@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Clock, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
 import { useClockIn } from '../hooks/useClockIn';
 import { useEmployeeStore } from '../../employees/store/employeeStore';
-import { useProjectStore } from '../../projects/store/projectStore';
+import { useProjectStore } from '../../projects/store/projectstore';
 
 export default function ClockInButton() {
   const [selectedProject, setSelectedProject] = useState('');

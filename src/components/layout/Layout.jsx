@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import TopBar from './TopBar';
 import BottomNav from './BottomNav';
+import FloatingClockInButton from '../FloatingClockInButton';
 
 export default function Layout() {
   const location = useLocation();
@@ -23,6 +24,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <BottomNav />
+      <FloatingClockInButton />
     </div>
   );
 }
