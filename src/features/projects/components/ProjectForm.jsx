@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { MapPin, DollarSign, Users, Calendar, Loader } from 'lucide-react';
-import { useProjectStore } from '../store/projectstore';
+import { Loader, MapPin, X } from 'lucide-react';
+import { useProjectStore } from '../../projects/store/projectStore';
 import { firestoreService } from '../../../services/firestoreService';
-import { useGeolocation } from '../../../hooks/useGeolocation';
+import LocationPicker from './LocationPicker';
 
 export default function ProjectForm({ onClose, existingProject = null }) {
   const [name, setName] = useState(existingProject?.name || '');
@@ -11,30 +11,19 @@ export default function ProjectForm({ onClose, existingProject = null }) {
   const [clientPhone, setClientPhone] = useState(existingProject?.clientPhone || '');
   const [geofenceRadius, setGeofenceRadius] = useState(existingProject?.geofenceRadius || 100);
   const [location, setLocation] = useState(existingProject?.location || null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [gettingLocation, setGettingLocation] = useState(false);
   const [error, setError] = useState('');
 
-  const { getCurrentLocation } = useGeolocation();
   const { addProject, updateProject } = useProjectStore();
 
-  const handleGetCurrentLocation = async () => {
-    setGettingLocation(true);
-    setError('');
-    
-    try {
-      const coords = await getCurrentLocation();
-      setLocation({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        address: address || 'Current Location',
-      });
-      alert(`Location captured: ${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`);
-    } catch (err) {
-      setError('Failed to get location. Please enable location permissions.');
+  const handleLocationSet = (selectedLocation) => {
+    setLocation(selectedLocation);
+    setShowLocationPicker(false);
+    // Update address field with the selected location's address
+    if (selectedLocation.address) {
+      setAddress(selectedLocation.address);
     }
-    
-    setGettingLocation(false);
   };
 
   const handleSubmit = async (e) => {
@@ -93,18 +82,18 @@ export default function ProjectForm({ onClose, existingProject = null }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-5 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-5 z-50 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto my-4">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-2xl font-bold text-gray-900">
             {existingProject ? 'Edit Project' : 'Create New Project'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="text-gray-400 hover:text-gray-600 transition"
           >
-            ×
+            <X size={28} />
           </button>
         </div>
 
@@ -146,44 +135,61 @@ export default function ProjectForm({ onClose, existingProject = null }) {
             />
           </div>
 
-          {/* Location */}
+          {/* Location Picker */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               GPS Location *
             </label>
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={handleGetCurrentLocation}
-                disabled={gettingLocation}
-                className="w-full bg-blue-50 border-2 border-blue-200 text-blue-700 py-3 px-4 rounded-xl font-semibold hover:bg-blue-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {gettingLocation ? (
-                  <>
-                    <Loader className="animate-spin" size={20} />
-                    Getting Location...
-                  </>
-                ) : (
-                  <>
-                    <MapPin size={20} />
-                    Use Current Location
-                  </>
-                )}
-              </button>
+            
+            {!showLocationPicker ? (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setShowLocationPicker(true)}
+                  className="w-full bg-blue-50 border-2 border-blue-200 text-blue-700 py-3 px-4 rounded-xl font-semibold hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                >
+                  <MapPin size={20} />
+                  {location ? 'Change Location' : 'Set Location on Map'}
+                </button>
 
-              {location && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                  <p className="text-green-900 font-semibold text-sm mb-2">
-                    ✓ Location Set
-                  </p>
-                  <p className="text-green-700 text-xs font-mono">
-                    {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
-                  </p>
+                {location && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="text-green-900 font-semibold text-sm mb-2">
+                      ✓ Location Set
+                    </p>
+                    <p className="text-green-700 text-xs font-mono">
+                      {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                    </p>
+                    {location.address && (
+                      <p className="text-green-700 text-xs mt-1">
+                        {location.address}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Select Location</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowLocationPicker(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
-              )}
-            </div>
+                <LocationPicker
+                  initialLocation={location}
+                  onLocationSet={handleLocationSet}
+                  address={address}
+                />
+              </div>
+            )}
+
             <p className="text-xs text-gray-500 mt-2">
-              Go to the job site and click "Use Current Location" to capture GPS coordinates
+              📍 Search for the address, use your current location, or drag the pin on the map to set the exact job site location
             </p>
           </div>
 
@@ -236,7 +242,7 @@ export default function ProjectForm({ onClose, existingProject = null }) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 sticky bottom-0 bg-white pb-2">
             <button
               type="button"
               onClick={onClose}
@@ -246,10 +252,17 @@ export default function ProjectForm({ onClose, existingProject = null }) {
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
+              disabled={loading || !location}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Saving...' : existingProject ? 'Update Project' : 'Create Project'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader className="animate-spin" size={20} />
+                  Saving...
+                </span>
+              ) : (
+                existingProject ? 'Update Project' : 'Create Project'
+              )}
             </button>
           </div>
         </form>

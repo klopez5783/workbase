@@ -7,18 +7,26 @@ import {
   MapPin, 
   Users,
   ChevronRight,
-  Loader
+  Loader,
+  Settings
 } from 'lucide-react';
 import { firestoreService } from '../services/firestoreService';
 import { useAuth } from '../contexts/AuthContext';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
+import ProjectForm from '../features/projects/components/ProjectForm';
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
   
   const { currentUser } = useAuth();
+  const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   const navigate = useNavigate();
+
+  const isAdmin = currentEmployee?.role === 'admin';
 
   // Load projects from Firestore
   useEffect(() => {
@@ -64,6 +72,42 @@ export default function Projects() {
     setSelectedProject(null);
   };
 
+  const handleEdit = (project) => {
+    setEditingProject(project);
+    setShowEditForm(true);
+  };
+
+  const handleCloseForm = async () => {
+    setShowEditForm(false);
+    setEditingProject(null);
+    // Reload projects after edit
+    const result = await firestoreService.getAll('projects');
+    if (result.success && result.data) {
+      const projectObjects = result.data.map(doc => ({
+        id: doc.id,
+        name: doc.name || 'Unnamed Project',
+        address: doc.address || '',
+        location: doc.location || null,
+        clientName: doc.clientName || '',
+        clientPhone: doc.clientPhone || '',
+        status: doc.status || 'active',
+        assignedEmployees: doc.assignedEmployees || [],
+        geofenceRadius: doc.geofenceRadius || 100,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      }));
+      setProjects(projectObjects);
+      
+      // Update selected project if it was edited
+      if (selectedProject) {
+        const updatedProject = projectObjects.find(p => p.id === selectedProject.id);
+        if (updatedProject) {
+          setSelectedProject(updatedProject);
+        }
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-5 flex items-center justify-center min-h-screen">
@@ -89,16 +133,31 @@ export default function Projects() {
           </button>
           
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {selectedProject.name}
-            </h1>
-            <div className="flex items-start gap-2 text-gray-600 mb-3">
-              <MapPin size={18} className="mt-0.5 flex-shrink-0" />
-              <p className="text-sm">{selectedProject.address}</p>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <Users size={18} />
-              <p className="text-sm">{selectedProject.clientName}</p>
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {selectedProject.name}
+                </h1>
+                <div className="flex items-start gap-2 text-gray-600 mb-3">
+                  <MapPin size={18} className="mt-0.5 flex-shrink-0" />
+                  <p className="text-sm">{selectedProject.address}</p>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Users size={18} />
+                  <p className="text-sm">{selectedProject.clientName}</p>
+                </div>
+              </div>
+              
+              {/* Edit Button (Admin Only) */}
+              {isAdmin && (
+                <button
+                  onClick={() => handleEdit(selectedProject)}
+                  className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2"
+                  title="Edit project"
+                >
+                  <Settings size={18} />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -194,6 +253,29 @@ export default function Projects() {
             </button>
           </div>
         </div>
+
+        {/* Footer - Admin Settings (Only for Admins) */}
+        {isAdmin && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 safe-area-bottom z-30">
+            <div className="max-w-md mx-auto">
+              <button
+                onClick={() => navigate('/admin/projects')}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+              >
+                <Settings size={20} />
+                Manage Project Settings
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Project Form Modal */}
+        {showEditForm && (
+          <ProjectForm
+            onClose={handleCloseForm}
+            existingProject={editingProject}
+          />
+        )}
       </div>
     );
   }

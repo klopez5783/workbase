@@ -1,208 +1,262 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Loader, User, Mail, Lock, Phone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
-import { Mail, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
-export default function Signup() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+export default function SignUp() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const { signUp } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
+
+  const formatPhoneNumber = (value) => {
+    // Remove all non-digits
+    const phoneNumber = value.replace(/\D/g, '');
+    
+    // Format as (XXX) XXX-XXXX
+    if (phoneNumber.length <= 3) {
+      return phoneNumber;
+    } else if (phoneNumber.length <= 6) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    } else {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+    }
+  };
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setFormData({ ...formData, phone: formatted });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
-      return;
+    if (!formData.name.trim()) {
+      return setError('Please enter your name');
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
+    if (!formData.email.trim()) {
+      return setError('Please enter your email');
     }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
+    if (!formData.phone.trim()) {
+      return setError('Please enter your phone number');
     }
 
-    setError('');
+    // Validate phone number (must be 10 digits)
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      return setError('Please enter a valid 10-digit phone number');
+    }
+
+    if (formData.password.length < 6) {
+      return setError('Password must be at least 6 characters');
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      return setError('Passwords do not match');
+    }
+
     setLoading(true);
+    setError('');
 
     try {
       // Create Firebase Auth account
-      const result = await signUp(email, password);
+      const result = await signup(formData.email, formData.password);
 
-      if (result.success) {
+      if (result.success && result.user) {
         // Create user document in Firestore
-        await firestoreService.create('users', {
+        const userData = {
           uid: result.user.uid,
-          name: name,
-          email: email,
-          role: 'admin', // First user is admin
+          name: formData.name.trim(),
+          email: formData.email.toLowerCase().trim(),
+          phone: formData.phone,
+          phoneRaw: phoneDigits,
+          role: 'employee', // Default role
           status: 'active',
           createdAt: new Date().toISOString(),
-        });
+          updatedAt: new Date().toISOString(),
+        };
 
-        // Create employee record
-        await firestoreService.create('employees', {
-          userId: result.user.uid,
-          name: name,
-          email: email,
-          role: 'admin',
-          status: 'active',
-        });
+        const firestoreResult = await firestoreService.create('users', userData);
 
-        navigate('/');
+        if (firestoreResult.success) {
+          navigate('/dashboard');
+        } else {
+          throw new Error('Failed to create user profile');
+        }
       } else {
-        setError(result.error);
+        throw new Error(result.error || 'Failed to create account');
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Signup error:', err);
+      setError(err.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-5">
-      <div className="w-full max-w-md">
-        {/* Logo */}
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
             <span className="text-white font-bold text-3xl">W</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-          <p className="text-gray-600 mt-2">Get started with WorkBase</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+          <p className="text-gray-600">Join your team on WorkBase</p>
         </div>
 
-        {/* Signup Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {error && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="text-red-500" size={20} />
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6">
+            <p className="text-red-700 text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="John Smith"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="John Doe"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            {/* Email Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="you@example.com"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            {/* Password Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="••••••••"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
-            </div>
-
-            {/* Confirm Password Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="••••••••"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-            >
-              {loading ? 'Creating Account...' : 'Sign Up'}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 border-t border-gray-200"></div>
-            <span className="text-gray-500 text-sm">or</span>
-            <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
-          {/* Login Link */}
-          <div className="text-center">
-            <p className="text-gray-600 text-sm">
-              Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700">
-                Sign In
-              </Link>
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address *
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="john@example.com"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Phone Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number *
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handlePhoneChange}
+                placeholder="(555) 123-4567"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              📱 Used to link your account with worker clock-in
             </p>
           </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Minimum 6 characters
+            </p>
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password *
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader className="animate-spin" size={20} />
+                Creating Account...
+              </span>
+            ) : (
+              'Create Account'
+            )}
+          </button>
+        </form>
+
+        {/* Sign In Link */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 text-sm">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700">
+              Sign In
+            </Link>
+          </p>
         </div>
       </div>
     </div>

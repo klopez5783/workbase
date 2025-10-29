@@ -3,7 +3,7 @@ import { useGeolocation } from '../../../hooks/useGeolocation';
 import { useLocationVerification } from './useLocationVerification';
 import { useEmployeeStore } from '../../employees/store/employeeStore';
 import { useTimeTrackingStore } from '../store/timeTrackingStore';
-import { useProjectStore } from '../../projects/store/projectstore';
+import { useProjectStore } from '../../projects/store/projectStore';
 
 export const useClockIn = () => {
   const [loading, setLoading] = useState(false);

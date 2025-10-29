@@ -1,11 +1,13 @@
-import { MapPin, Users, Settings, Trash2 } from 'lucide-react';
+import { MapPin, Users, Settings, Trash2, UserPlus } from 'lucide-react';
 
-export default function ProjectCard({ project, onEdit, onDelete, onViewDetails }) {
+export default function ProjectCard({ project, onEdit, onDelete, onViewDetails, onAssignWorkers }) {
   const statusColors = {
     active: 'bg-green-100 text-green-800',
     completed: 'bg-blue-100 text-blue-800',
     'on-hold': 'bg-yellow-100 text-yellow-800',
   };
+
+  const assignedCount = project.assignedWorkers?.length || project.assignedEmployees?.length || 0;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition">
@@ -36,34 +38,48 @@ export default function ProjectCard({ project, onEdit, onDelete, onViewDetails }
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600 flex items-center gap-1">
             <Users size={14} />
-            Assigned:
+            Workers:
           </span>
-          <span className="font-semibold text-gray-900">
-            {project.assignedEmployees?.length || 0} workers
+          <span className={`font-semibold ${assignedCount > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+            {assignedCount} assigned
           </span>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
-        <button
-          onClick={onViewDetails}
-          className="flex-1 bg-blue-50 text-blue-700 py-2 px-3 rounded-lg font-semibold hover:bg-blue-100 transition text-sm"
-        >
-          View Details
-        </button>
-        <button
-          onClick={onEdit}
-          className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 transition"
-        >
-          <Settings size={18} />
-        </button>
-        <button
-          onClick={onDelete}
-          className="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition"
-        >
-          <Trash2 size={18} />
-        </button>
+      <div className="space-y-2">
+        {/* Assign Workers Button */}
+        {onAssignWorkers && (
+          <button
+            onClick={onAssignWorkers}
+            className="w-full bg-green-50 text-green-700 py-2 px-3 rounded-lg font-semibold hover:bg-green-100 transition text-sm flex items-center justify-center gap-2"
+          >
+            <UserPlus size={16} />
+            Assign Workers
+          </button>
+        )}
+        
+        {/* Other Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={onViewDetails}
+            className="flex-1 bg-blue-50 text-blue-700 py-2 px-3 rounded-lg font-semibold hover:bg-blue-100 transition text-sm"
+          >
+            View Details
+          </button>
+          <button
+            onClick={onEdit}
+            className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 transition"
+          >
+            <Settings size={18} />
+          </button>
+          <button
+            onClick={onDelete}
+            className="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );
