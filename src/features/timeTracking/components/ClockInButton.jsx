@@ -145,6 +145,17 @@ export default function ClockInButton() {
 
       const isWithinGeofence = distance <= project.geofenceRadius;
 
+      if (!isWithinGeofence) {
+      setError(
+        `❌ You're too far from the job site!\n\n` +
+        `Your distance: ${Math.round(distance)}m\n` +
+        `Required: Within ${project.geofenceRadius}m\n\n` +
+        `Please move closer to the job site to clock in.`
+      );
+      setActionLoading(false);
+      return; // ← STOP HERE, don't create time entry
+    }
+
       const timeEntry = {
         workerId: worker.id,
         workerName: worker.name,

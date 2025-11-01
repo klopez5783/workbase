@@ -18,6 +18,8 @@ export default function WorkerClockIn() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [requestingSent, setRequestingSent] = useState(false);
+
 
   const { getCurrentLocation } = useGeolocation();
 
@@ -42,52 +44,81 @@ export default function WorkerClockIn() {
     }
   }, [worker, loading, autoAction, autoProjectId, activeShift]);
 
+  const handleRequestLink = async () => {
+  try {
+    setLoading(true);
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const functions = getFunctions();
+    
+    const requestLink = httpsCallable(functions, 'requestWorkerLink');
+    await requestLink({ accessKey });
+
+    setRequestingSent(true);
+    alert('Request sent to your supervisor! You should receive a link shortly.');
+  } catch (err) {
+    alert('Failed to request link: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
   const loadWorkerData = async () => {
-    try {
-      setLoading(true);
-      
-      // Find worker by access key
-      const workerResult = await firestoreService.query('workers', [
-        { field: 'accessKey', operator: '==', value: accessKey }
-      ]);
+  try {
+    setLoading(true);
+    
+    // Find worker by access key
+    const workerResult = await firestoreService.query('workers', [
+      { field: 'accessKey', operator: '==', value: accessKey }
+    ]);
 
-      if (!workerResult.success || workerResult.data.length === 0) {
-        setError('Invalid access link. Please contact your supervisor.');
-        setLoading(false);
-        return;
-      }
-
-      const workerData = workerResult.data[0];
-      setWorker(workerData);
-
-      // Load projects assigned to this worker
-      const projectsResult = await firestoreService.getAll('projects');
-      if (projectsResult.success) {
-        // Filter projects where worker is assigned
-        const assignedProjects = projectsResult.data.filter(project => 
-          project.assignedWorkers?.includes(workerData.id) || 
-          !project.assignedWorkers || 
-          project.assignedWorkers.length === 0
-        );
-        setProjects(assignedProjects);
-      }
-
-      // Check for active shift
-      const shiftResult = await firestoreService.query('timeEntries', [
-        { field: 'workerId', operator: '==', value: workerData.id },
-        { field: 'status', operator: '==', value: 'active' }
-      ]);
-
-      if (shiftResult.success && shiftResult.data.length > 0) {
-        setActiveShift(shiftResult.data[0]);
-      }
-
+    if (!workerResult.success || workerResult.data.length === 0) {
+      setError('Invalid access link. Please contact your supervisor.');
       setLoading(false);
-    } catch (err) {
-      setError('Failed to load data: ' + err.message);
-      setLoading(false);
+      return;
     }
-  };
+
+    const workerData = workerResult.data[0];
+
+    // 🔥 CHECK IF ACCESS KEY HAS EXPIRED 🔥
+    const now = new Date();
+    const expiresAt = new Date(workerData.accessKeyExpiresAt);
+
+    if (now > expiresAt) {
+      setError('This access link has expired. Please request a new link from your supervisor.');
+      setWorker(workerData); // Still set worker so they can see their info
+      setLoading(false);
+      return;
+    }
+
+    setWorker(workerData);
+
+    // Load projects assigned to this worker
+    const projectsResult = await firestoreService.getAll('projects');
+    if (projectsResult.success) {
+      const assignedProjects = projectsResult.data.filter(project => 
+        project.assignedWorkers?.includes(workerData.id) || 
+        !project.assignedWorkers || 
+        project.assignedWorkers.length === 0
+      );
+      setProjects(assignedProjects);
+    }
+
+    // Check for active shift
+    const shiftResult = await firestoreService.query('timeEntries', [
+      { field: 'workerId', operator: '==', value: workerData.id },
+      { field: 'status', operator: '==', value: 'active' }
+    ]);
+
+    if (shiftResult.success && shiftResult.data.length > 0) {
+      setActiveShift(shiftResult.data[0]);
+    }
+
+    setLoading(false);
+  } catch (err) {
+    setError('Failed to load data: ' + err.message);
+    setLoading(false);
+  }
+};
 
   const handleAutoClockIn = async (projectId) => {
     setActionLoading(true);
@@ -209,6 +240,17 @@ export default function WorkerClockIn() {
 
       const isWithinGeofence = distance <= project.geofenceRadius;
 
+      if (!isWithinGeofence) {
+      setError(
+        `❌ You're too far from the job site!\n\n` +
+        `Your distance: ${Math.round(distance)}m\n` +
+        `Required: Within ${project.geofenceRadius}m\n\n` +
+        `Please move closer to the job site to clock in.`
+      );
+      setActionLoading(false);
+      return; // ← STOP HERE, don't create time entry
+    }
+
       const timeEntry = {
         workerId: worker.id,
         workerName: worker.name,
@@ -291,17 +333,24 @@ export default function WorkerClockIn() {
     );
   }
 
-  if (error && !worker) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-5">
-        <div className="bg-white rounded-2xl p-8 text-center max-w-md shadow-xl">
-          <AlertCircle className="mx-auto mb-4 text-red-600" size={64} />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Link</h2>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  {error && !worker && (
+  <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-5">
+    <div className="bg-white rounded-2xl p-8 text-center max-w-md shadow-xl">
+      <AlertCircle className="mx-auto mb-4 text-red-600" size={64} />
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Link</h2>
+      <p className="text-gray-600 mb-6">{error}</p>
+      
+      {/* Add this button */}
+      <button
+        onClick={handleRequestLink}
+        disabled={requestingSent}
+        className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+      >
+        {requestingSent ? 'Request Sent!' : 'Request New Link'}
+      </button>
+    </div>
+  </div>
+)}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">

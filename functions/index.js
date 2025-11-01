@@ -33,11 +33,11 @@ exports.sendWorkerClockInLink = onDocumentCreated(
         }
 
         // Generate the clock-in link
-        const baseUrl = "https://workbase-8dfe2.firebaseapp.com"; // ← Added https://
+        const baseUrl = "https://workbase-8dfe2.firebaseapp.com";
         const clockInLink = `${baseUrl}/worker/${worker.accessKey}`;
 
-        // SMS message
-        const message = `Hi ${worker.name}! Welcome to the team. Use this link to clock in/out: ${clockInLink}`;
+        // SMS message with expiration notice
+        const message = `Hi ${worker.name}! Welcome to the team. Use this link to clock in (valid for 30 minutes): ${clockInLink}`;
 
         // Send SMS
         const result = await client.messages.create({
@@ -60,7 +60,13 @@ exports.resendWorkerLink = onCall(
     {
       secrets: [twilioSid, twilioToken, twilioPhone],
       memory: "256MiB",
-      region: "us-east1",
+      cors: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://192.168.1.50:3000",
+        "https://workbase-8dfe2.firebaseapp.com",
+      ],
     },
     async (request) => {
       const {workerId} = request.data;
@@ -81,14 +87,31 @@ exports.resendWorkerLink = onCall(
         }
 
         const worker = workerDoc.data();
+
+        // 🔥 GENERATE NEW ACCESS KEY WITH NEW EXPIRATION 🔥
+        const newAccessKey = require("crypto").randomUUID();
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes
+
+        // Update worker with new access key
+        await admin.firestore()
+            .collection("workers")
+            .doc(workerId)
+            .update({
+              accessKey: newAccessKey,
+              accessKeyCreatedAt: now.toISOString(),
+              accessKeyExpiresAt: expiresAt.toISOString(),
+              updatedAt: now.toISOString(),
+            });
+
         const client = twilio(twilioSid.value(), twilioToken.value());
 
-        // Generate link
-        const baseUrl = "https://workbase-8dfe2.firebaseapp.com"; // ← Made consistent
-        const clockInLink = `${baseUrl}/worker/${worker.accessKey}`;
+        // Generate link with NEW access key
+        const baseUrl = "https://workbase-8dfe2.firebaseapp.com";
+        const clockInLink = `${baseUrl}/worker/${newAccessKey}`;
 
         // Send SMS
-        const message = `Hi ${worker.name}! Here's your clock-in link again: ${clockInLink}`;
+        const message = `Hi ${worker.name}! Here's your clock-in link (valid for 30 minutes): ${clockInLink}`;
 
         const result = await client.messages.create({
           body: message,
@@ -97,7 +120,7 @@ exports.resendWorkerLink = onCall(
         });
 
         console.log("SMS resent successfully:", result.sid);
-        return {success: true, messageSid: result.sid};
+        return {success: true, messageSid: result.sid, newAccessKey};
       } catch (error) {
         console.error("Error resending SMS:", error);
         throw new Error(error.message);
