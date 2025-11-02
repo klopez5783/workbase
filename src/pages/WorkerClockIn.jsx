@@ -29,7 +29,7 @@ export default function WorkerClockIn() {
 
   useEffect(() => {
     loadWorkerData();
-  }, [accessKey]);
+    }, [accessKey]);
 
   // Auto clock-in/out if URL parameters present
   useEffect(() => {
@@ -62,61 +62,89 @@ export default function WorkerClockIn() {
   }
 };
 
-  const loadWorkerData = async () => {
+ const loadWorkerData = async () => {
+  console.log('=== START loadWorkerData ===');
+  
   try {
     setLoading(true);
+    
+    console.log('Access Key from URL:', accessKey);
     
     // Find worker by access key
     const workerResult = await firestoreService.query('workers', [
       { field: 'accessKey', operator: '==', value: accessKey }
     ]);
 
+    console.log('Query result:', workerResult);
+    console.log('Number of workers found:', workerResult.data?.length);
+
     if (!workerResult.success || workerResult.data.length === 0) {
+      console.error('❌ Worker not found!');
       setError('Invalid access link. Please contact your supervisor.');
-      setLoading(false);
+      setLoading(false); // ← Make sure this is here
       return;
     }
 
     const workerData = workerResult.data[0];
+    console.log('Worker found:', workerData);
 
-    // 🔥 CHECK IF ACCESS KEY HAS EXPIRED 🔥
-    const now = new Date();
-    const expiresAt = new Date(workerData.accessKeyExpiresAt);
+    // Check expiration
+    if (workerData.accessKeyExpiresAt) {
+      const now = new Date();
+      const expiresAt = new Date(workerData.accessKeyExpiresAt);
 
-    if (now > expiresAt) {
-      setError('This access link has expired. Please request a new link from your supervisor.');
-      setWorker(workerData); // Still set worker so they can see their info
-      setLoading(false);
-      return;
+      console.log('Current time:', now);
+      console.log('Expires at:', expiresAt);
+      console.log('Is expired?', now > expiresAt);
+
+      if (now > expiresAt) {
+        console.error('❌ Access key expired!');
+        setError('This access link has expired. Please request a new link from your supervisor.');
+        setWorker(workerData);
+        setLoading(false); // ← Make sure this is here
+        return;
+      }
     }
 
+    console.log('✅ Setting worker data');
     setWorker(workerData);
 
     // Load projects assigned to this worker
+    console.log('Loading projects...');
     const projectsResult = await firestoreService.getAll('projects');
+    console.log('Projects result:', projectsResult);
+    
     if (projectsResult.success) {
       const assignedProjects = projectsResult.data.filter(project => 
         project.assignedWorkers?.includes(workerData.id) || 
         !project.assignedWorkers || 
         project.assignedWorkers.length === 0
       );
+      console.log('Assigned projects:', assignedProjects);
       setProjects(assignedProjects);
     }
 
     // Check for active shift
+    console.log('Checking for active shift...');
     const shiftResult = await firestoreService.query('timeEntries', [
       { field: 'workerId', operator: '==', value: workerData.id },
       { field: 'status', operator: '==', value: 'active' }
     ]);
+    console.log('Shift result:', shiftResult);
 
     if (shiftResult.success && shiftResult.data.length > 0) {
+      console.log('Active shift found:', shiftResult.data[0]);
       setActiveShift(shiftResult.data[0]);
     }
 
-    setLoading(false);
+    console.log('✅ Setting loading to false');
+    setLoading(false); // ← CRITICAL: This must be called!
+    console.log('=== END loadWorkerData ===');
+    
   } catch (err) {
+    console.error('ERROR in loadWorkerData:', err);
     setError('Failed to load data: ' + err.message);
-    setLoading(false);
+    setLoading(false); // ← Make sure this is here too
   }
 };
 

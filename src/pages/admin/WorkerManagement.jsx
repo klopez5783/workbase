@@ -3,6 +3,7 @@ import { Plus, Users, Loader, Trash2, Send, Copy, CheckCircle, ArrowLeft } from 
 import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
+import { AlertCircle } from 'lucide-react';
 
 
 export default function WorkerManagement() {
@@ -37,18 +38,63 @@ export default function WorkerManagement() {
   };
 
   const handleDeleteWorker = async (worker) => {
-    if (!window.confirm(`Remove ${worker.name}? They will no longer be able to clock in.`)) {
-      return;
+  if (!window.confirm(`Remove ${worker.name}? They will no longer be able to clock in.`)) {
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // 🔥 DEBUG: Check what we're working with 🔥
+    console.log('=== DELETING WORKER ===');
+    console.log('Worker object:', worker);
+    console.log('Worker ID:', worker.id);
+    console.log('Worker access key:', worker.accessKey);
+
+    // Get all projects
+    const projectsResult = await firestoreService.getAll('projects');
+    console.log('All projects:', projectsResult.data);
+    
+    if (projectsResult.success) {
+      const projectsWithWorker = projectsResult.data.filter(project => {
+        console.log(`Project: ${project.name}`);
+        console.log('  assignedWorkers:', project.assignedWorkers);
+        console.log('  includes worker.id?', project.assignedWorkers?.includes(worker.id));
+        
+        return project.assignedWorkers?.includes(worker.id);
+      });
+
+      console.log(`Found ${projectsWithWorker.length} projects with this worker`);
+
+      // Update each project
+      for (const project of projectsWithWorker) {
+        console.log(`Updating project: ${project.name}`);
+        console.log('  Before:', project.assignedWorkers);
+        
+        const updatedWorkers = project.assignedWorkers.filter(id => id !== worker.id);
+        
+        console.log('  After:', updatedWorkers);
+        
+        await firestoreService.update('projects', project.id, {
+          assignedWorkers: updatedWorkers,
+          updatedAt: new Date().toISOString(),
+        });
+      }
     }
 
-    try {
-      await firestoreService.delete('workers', worker.id);
-      await loadWorkers();
-      alert('Worker removed successfully');
-    } catch (error) {
-      alert('Error removing worker: ' + error.message);
-    }
-  };
+    // Delete the worker
+    await firestoreService.delete('workers', worker.id);
+    
+    await loadWorkers();
+    alert(`✅ ${worker.name} removed successfully`);
+    
+  } catch (error) {
+    console.error('Error removing worker:', error);
+    alert('Error removing worker: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loading) {
     return (
