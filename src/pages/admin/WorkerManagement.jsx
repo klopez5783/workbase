@@ -3,6 +3,8 @@ import { Plus, Users, Loader, Trash2, Send, Copy, CheckCircle, ArrowLeft } from 
 import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
+import { AlertCircle } from 'lucide-react';
+
 
 export default function WorkerManagement() {
   const [workers, setWorkers] = useState([]);
@@ -36,18 +38,63 @@ export default function WorkerManagement() {
   };
 
   const handleDeleteWorker = async (worker) => {
-    if (!window.confirm(`Remove ${worker.name}? They will no longer be able to clock in.`)) {
-      return;
+  if (!window.confirm(`Remove ${worker.name}? They will no longer be able to clock in.`)) {
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // 🔥 DEBUG: Check what we're working with 🔥
+    console.log('=== DELETING WORKER ===');
+    console.log('Worker object:', worker);
+    console.log('Worker ID:', worker.id);
+    console.log('Worker access key:', worker.accessKey);
+
+    // Get all projects
+    const projectsResult = await firestoreService.getAll('projects');
+    console.log('All projects:', projectsResult.data);
+    
+    if (projectsResult.success) {
+      const projectsWithWorker = projectsResult.data.filter(project => {
+        console.log(`Project: ${project.name}`);
+        console.log('  assignedWorkers:', project.assignedWorkers);
+        console.log('  includes worker.id?', project.assignedWorkers?.includes(worker.id));
+        
+        return project.assignedWorkers?.includes(worker.id);
+      });
+
+      console.log(`Found ${projectsWithWorker.length} projects with this worker`);
+
+      // Update each project
+      for (const project of projectsWithWorker) {
+        console.log(`Updating project: ${project.name}`);
+        console.log('  Before:', project.assignedWorkers);
+        
+        const updatedWorkers = project.assignedWorkers.filter(id => id !== worker.id);
+        
+        console.log('  After:', updatedWorkers);
+        
+        await firestoreService.update('projects', project.id, {
+          assignedWorkers: updatedWorkers,
+          updatedAt: new Date().toISOString(),
+        });
+      }
     }
 
-    try {
-      await firestoreService.delete('workers', worker.id);
-      await loadWorkers();
-      alert('Worker removed successfully');
-    } catch (error) {
-      alert('Error removing worker: ' + error.message);
-    }
-  };
+    // Delete the worker
+    await firestoreService.delete('workers', worker.id);
+    
+    await loadWorkers();
+    alert(`✅ ${worker.name} removed successfully`);
+    
+  } catch (error) {
+    console.error('Error removing worker:', error);
+    alert('Error removing worker: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loading) {
     return (
@@ -141,18 +188,30 @@ export default function WorkerManagement() {
 
 function WorkerCard({ worker, onDelete }) {
   const [copied, setCopied] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [showLinks, setShowLinks] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
-  const baseLink = `${window.location.origin}/worker/${worker.accessKey}`;
-  
-  // Generate auto-clock-in links for each project
-  const generateAutoClockInLink = (projectId) => {
-    return `${baseLink}?action=in&project=${projectId}`;
+  const baseLink = `https://workbase-8dfe2.firebaseapp.com/worker/${worker.accessKey}`;
+
+  // 🔥 CHECK IF LINK IS EXPIRED OR ABOUT TO EXPIRE 🔥
+  const isExpired = () => {
+    if (!worker.accessKeyExpiresAt) return false;
+    return new Date() > new Date(worker.accessKeyExpiresAt);
   };
 
-  const generateAutoClockOutLink = () => {
-    return `${baseLink}?action=out`;
+  const getTimeRemaining = () => {
+    if (!worker.accessKeyExpiresAt) return null;
+    const now = new Date();
+    const expires = new Date(worker.accessKeyExpiresAt);
+    const diffMs = expires - now;
+    
+    if (diffMs <= 0) return "Expired";
+    
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 60) return `${diffMins} min${diffMins !== 1 ? 's' : ''}`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    return `${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
   };
 
   const handleCopyLink = () => {
@@ -161,19 +220,30 @@ function WorkerCard({ worker, onDelete }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSendSMS = async () => {
-    setSending(true);
-    
+  const handleResendSMS = async () => {
+    setResending(true);
+    setResendSuccess(false);
+
     try {
-      const message = `Hi ${worker.name}! Use this link to clock in/out: ${baseLink}`;
-      const smsUrl = `sms:${worker.phone}${/iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(message)}`;
-      window.open(smsUrl, '_blank');
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const functions = getFunctions();
       
-      alert('SMS app opened. Send the message to complete.');
+      const resendLink = httpsCallable(functions, 'resendWorkerLink');
+      const result = await resendLink({ workerId: worker.id });
+
+      if (result.data.success) {
+        setResendSuccess(true);
+        setTimeout(() => {
+          setResendSuccess(false);
+          // Reload the page to show new access key
+          window.location.reload();
+        }, 2000);
+      }
     } catch (error) {
-      alert('Error: ' + error.message);
+      console.error('Error resending SMS:', error);
+      alert('Failed to send SMS: ' + error.message);
     } finally {
-      setSending(false);
+      setResending(false);
     }
   };
 
@@ -201,6 +271,39 @@ function WorkerCard({ worker, onDelete }) {
         </button>
       </div>
 
+      {/* Expiration Warning */}
+      {worker.accessKeyExpiresAt && (
+        <div className={`border-l-4 rounded-lg p-3 mb-3 ${
+          isExpired() 
+            ? 'bg-red-50 border-red-500' 
+            : 'bg-yellow-50 border-yellow-500'
+        }`}>
+          <div className="flex items-center gap-2">
+            <AlertCircle className={isExpired() ? 'text-red-600' : 'text-yellow-600'} size={16} />
+            <p className={`text-sm font-medium ${
+              isExpired() ? 'text-red-900' : 'text-yellow-900'
+            }`}>
+              {isExpired() 
+                ? '❌ Access link expired' 
+                : `⏰ Link expires in ${getTimeRemaining()}`
+              }
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {resendSuccess && (
+        <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-3 mb-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="text-green-600" size={16} />
+            <p className="text-sm text-green-800 font-medium">
+              ✓ New link sent! Valid for 30 minutes.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Access Link */}
       <div className="bg-gray-50 rounded-lg p-3 mb-3">
         <p className="text-xs font-semibold text-gray-700 mb-2">Worker Access Link:</p>
@@ -221,25 +324,28 @@ function WorkerCard({ worker, onDelete }) {
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          💡 Worker can bookmark this link or add it to their home screen
+          ⏰ Links expire 30 minutes after creation
         </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2">
-        <button
-          onClick={handleSendSMS}
-          disabled={sending}
-          className="flex-1 bg-green-50 text-green-700 py-2 px-3 rounded-lg font-semibold hover:bg-green-100 transition text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {sending ? (
+      {/* Resend SMS Button */}
+      <button
+        onClick={handleResendSMS}
+        disabled={resending}
+        className="w-full bg-green-50 text-green-700 py-2 px-3 rounded-lg font-semibold hover:bg-green-100 transition text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {resending ? (
+          <>
             <Loader className="animate-spin" size={16} />
-          ) : (
+            Sending New Link...
+          </>
+        ) : (
+          <>
             <Send size={16} />
-          )}
-          Send Link via SMS
-        </button>
-      </div>
+            {isExpired() ? 'Send New Link' : 'Resend Link (Generates New Key)'}
+          </>
+        )}
+      </button>
     </div>
   );
 }
@@ -251,9 +357,7 @@ function AddWorkerForm({ onClose, onSuccess }) {
   const [error, setError] = useState('');
 
   const generateAccessKey = () => {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15) +
-           Date.now().toString(36);
+    return crypto.randomUUID();
   };
 
   const formatPhoneNumber = (value) => {
@@ -274,58 +378,61 @@ function AddWorkerForm({ onClose, onSuccess }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  if (!name.trim()) {
+    setError('Please enter worker name');
+    return;
+  }
+
+  if (!phone.trim()) {
+    setError('Please enter phone number');
+    return;
+  }
+
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length !== 10) {
+    setError('Please enter a valid 10-digit phone number');
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+
+  try {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+
+    const workerData = {
+      name: String(name.trim()),
+      phone: String(phone),
+      phoneRaw: String(digits),
+      accessKey: String(generateAccessKey()),
+      accessKeyCreatedAt: now.toISOString(),
+      accessKeyExpiresAt: expiresAt.toISOString(), // 🔥 Expires in 30 minutes
+      status: 'active',
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+
+    console.log('Creating worker with data:', workerData);
+
+    const result = await firestoreService.create('workers', workerData);
     
-    if (!name.trim()) {
-      setError('Please enter worker name');
-      return;
+    if (result.success) {
+      alert('Worker added successfully! Access link expires in 30 minutes.');
+      onSuccess(workerData);
+    } else {
+      console.error('Failed to create worker:', result.error);
+      setError(result.error || 'Failed to add worker');
     }
-
-    if (!phone.trim()) {
-      setError('Please enter phone number');
-      return;
-    }
-
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const workerData = {
-        name: String(name.trim()),
-        phone: String(phone),
-        phoneRaw: String(digits),
-        accessKey: String(generateAccessKey()),
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      console.log('Creating worker with data:', workerData);
-
-      const result = await firestoreService.create('workers', workerData);
-      
-      console.log('Create result:', result);
-
-      if (result.success) {
-        alert('Worker added successfully!');
-        onSuccess(workerData);
-      } else {
-        console.error('Failed to create worker:', result.error);
-        setError(result.error || 'Failed to add worker');
-      }
-    } catch (err) {
-      console.error('Error adding worker:', err);
-      setError(err.message || 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error('Error adding worker:', err);
+    setError(err.message || 'An error occurred');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-5 z-50">
