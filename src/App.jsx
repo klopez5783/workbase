@@ -18,11 +18,35 @@ import WorkerClockIn from './pages/WorkerClockIn';
 import ProfileSettings from './pages/ProfileSettings';
 
 function ProtectedRoute({ children, requiredRole = null }) {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth(); // ← Get loading from context
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
+  const [authChecking, setAuthChecking] = useState(true);
 
+
+  // Wait for auth to stabilize
+  useEffect(() => {
+    const unsubscribe = authService.onAuthChange((user) => {
+      setCurrentUser(user);
+      setLoading(false); // ← Auth is ready
+    });
+    return unsubscribe;
+  }, []);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
+          <p className="text-gray-600">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Block if not authenticated
   if (!currentUser) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   // Check role if required

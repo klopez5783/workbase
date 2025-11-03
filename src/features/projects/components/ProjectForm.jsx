@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader, MapPin, X } from 'lucide-react';
-import { useProjectStore } from '../../projects/store/projectStore';
+import { useProjectStore } from '../../projects/store/projectstore';
 import { firestoreService } from '../../../services/firestoreService';
 import LocationPicker from './LocationPicker';
 
