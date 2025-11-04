@@ -147,112 +147,129 @@ export default function Projects() {
                   <p className="text-sm">{selectedProject.clientName}</p>
                 </div>
               </div>
-              
-              {/* Edit Button (Admin Only) */}
-              {isAdmin && (
-                <button
-                  onClick={() => handleEdit(selectedProject)}
-                  className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2"
-                  title="Edit project"
-                >
-                  <Settings size={18} />
-                </button>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Reports Section */}
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">Reports</h2>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate(`/reports/timecard?projectId=${selectedProject.id}`)}
-              className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <FileText className="text-blue-600" size={24} />
+        {/* Admin Reports Section */}
+        {isAdmin && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">Reports</h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate(`/reports/timecard?projectId=${selectedProject.id}`)}
+                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <FileText className="text-blue-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Timecard Report</p>
+                    <p className="text-sm text-gray-600">View hours worked</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Timecard Report</p>
-                  <p className="text-sm text-gray-600">View hours worked</p>
-                </div>
-              </div>
-              <ChevronRight className="text-gray-400" size={20} />
-            </button>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
 
-            <button
-              onClick={() => navigate(`/reports/production?projectId=${selectedProject.id}`)}
-              className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <FileText className="text-green-600" size={24} />
+              <button
+                onClick={() => navigate(`/reports/production?projectId=${selectedProject.id}`)}
+                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <FileText className="text-green-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Production Report</p>
+                    <p className="text-sm text-gray-600">View productivity metrics</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Production Report</p>
-                  <p className="text-sm text-gray-600">View productivity metrics</p>
-                </div>
-              </div>
-              <ChevronRight className="text-gray-400" size={20} />
-            </button>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
 
-            <button
-              onClick={() => navigate(`/reports/cost?projectId=${selectedProject.id}`)}
-              className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <FileText className="text-purple-600" size={24} />
+              <button
+                onClick={() => navigate(`/reports/cost?projectId=${selectedProject.id}`)}
+                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <FileText className="text-purple-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Cost Report</p>
+                    <p className="text-sm text-gray-600">View project costs</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Cost Report</p>
-                  <p className="text-sm text-gray-600">View project costs</p>
-                </div>
-              </div>
-              <ChevronRight className="text-gray-400" size={20} />
-            </button>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Documents Section */}
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">Documents</h2>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate(`/docs/project?projectId=${selectedProject.id}`)}
-              className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <FolderOpen className="text-orange-600" size={24} />
+        {/* Worker Actions Section */}
+        {!isAdmin && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">My Work</h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate(`/daily-work-log?projectId=${selectedProject.id}`)}
+                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <FileText className="text-blue-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Work Log</p>
+                    <p className="text-sm text-gray-600">Log daily work activities</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Project Documents</p>
-                  <p className="text-sm text-gray-600">Plans, permits, photos</p>
-                </div>
-              </div>
-              <ChevronRight className="text-gray-400" size={20} />
-            </button>
-
-            <button
-              onClick={() => navigate(`/docs/dailylog?projectId=${selectedProject.id}`)}
-              className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <FileText className="text-indigo-600" size={24} />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Daily Logs</p>
-                  <p className="text-sm text-gray-600">View site activity logs</p>
-                </div>
-              </div>
-              <ChevronRight className="text-gray-400" size={20} />
-            </button>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Documents Section (Admin Only) */}
+        {isAdmin && (
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">Documents</h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate(`/docs/project?projectId=${selectedProject.id}`)}
+                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <FolderOpen className="text-orange-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Project Documents</p>
+                    <p className="text-sm text-gray-600">Plans, permits, photos</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
+
+              <button
+                onClick={() => navigate(`/docs/dailylog?projectId=${selectedProject.id}`)}
+                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <FileText className="text-indigo-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Daily Logs</p>
+                    <p className="text-sm text-gray-600">View site activity logs</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Footer - Admin Settings (Only for Admins) */}
         {isAdmin && (
@@ -270,7 +287,7 @@ export default function Projects() {
         )}
 
         {/* Edit Project Form Modal */}
-        {showEditForm && (
+        {isAdmin && showEditForm && (
           <ProjectForm
             onClose={handleCloseForm}
             existingProject={editingProject}

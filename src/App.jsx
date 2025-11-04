@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useEmployeeStore } from './features/employees/store/employeeStore';
 import { firestoreService } from './services/firestoreService';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader } from 'lucide-react';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Receipts from './pages/Receipts';
@@ -16,21 +17,13 @@ import ProjectManagement from './pages/admin/ProjectManagement';
 import WorkerManagement from './pages/admin/WorkerManagement';
 import WorkerClockIn from './pages/WorkerClockIn';
 import ProfileSettings from './pages/ProfileSettings';
+import DailyWorkLog from './pages/DailyWorkLog';
+import DailyReportsViewer from './pages/DailyReportsViewer';
+import { authService } from './services/authService';
 
 function ProtectedRoute({ children, requiredRole = null }) {
-  const { currentUser, loading } = useAuth(); // ← Get loading from context
+  const { currentUser, loading } = useAuth();
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
-  const [authChecking, setAuthChecking] = useState(true);
-
-
-  // Wait for auth to stabilize
-  useEffect(() => {
-    const unsubscribe = authService.onAuthChange((user) => {
-      setCurrentUser(user);
-      setLoading(false); // ← Auth is ready
-    });
-    return unsubscribe;
-  }, []);
 
   // Show loading while checking auth
   if (loading) {
@@ -133,7 +126,9 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="documents" element={<Documents />} />
           <Route path="projects" element={<Projects />} />
-          <Route path="/profile" element={<ProfileSettings />} />
+          <Route path="profile" element={<ProfileSettings />} />
+          <Route path="daily-work-log" element={<DailyWorkLog />} />
+          <Route path="daily-reports" element={<DailyReportsViewer />} />
         </Route>
 
         {/* Admin Routes (without Layout, full page) */}
