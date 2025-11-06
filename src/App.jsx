@@ -20,6 +20,7 @@ import ProfileSettings from './pages/ProfileSettings';
 import DailyWorkLog from './pages/DailyWorkLog';
 import DailyReportsViewer from './pages/DailyReportsViewer';
 import { authService } from './services/authService';
+import AdminWorkLogs from './pages/admin/AdminWorkLogs';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -129,6 +130,13 @@ function App() {
           <Route path="profile" element={<ProfileSettings />} />
           <Route path="daily-work-log" element={<DailyWorkLog />} />
           <Route path="daily-reports" element={<DailyReportsViewer />} />
+            <Route 
+            path="/admin/work-logs" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminWorkLogs />
+              </ProtectedRoute>} 
+          />
         </Route>
 
         {/* Admin Routes (without Layout, full page) */}

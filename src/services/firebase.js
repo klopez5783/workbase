@@ -1,13 +1,8 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDcRWnHywc7uWUqFwb-qLrEV-VfhdVRea8",
   authDomain: "workbase-8dfe2.firebaseapp.com",
@@ -24,7 +19,45 @@ const app = initializeApp(firebaseConfig);
 // Initialize services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+// Connect to emulators in development
+// IMPORTANT: This must run BEFORE any auth operations
+const USE_EMULATORS = false; // ← SET TO true TO USE EMULATORS
+
+if (USE_EMULATORS && typeof window !== 'undefined') {
+  // Only connect once
+  let emulatorsConnected = false;
+  
+  if (!emulatorsConnected) {
+    try {
+      console.log('🔧 Connecting to Firebase Emulators...');
+      
+      // Connect to Auth Emulator
+      connectAuthEmulator(auth, "http://127.0.0.1:9099", { 
+        disableWarnings: true 
+      });
+      
+      // Connect to Firestore Emulator
+      connectFirestoreEmulator(db, "127.0.0.1", 8080);
+      
+      // Connect to Storage Emulator
+      connectStorageEmulator(storage, "127.0.0.1", 9199);
+      
+      emulatorsConnected = true;
+      
+      console.log('✅ Connected to Firebase Emulators:');
+      console.log('   - Auth: http://127.0.0.1:9099');
+      console.log('   - Firestore: http://127.0.0.1:8080');
+      console.log('   - Storage: http://127.0.0.1:9199');
+      console.log('   - UI: http://127.0.0.1:4000');
+    } catch (error) {
+      console.error('❌ Failed to connect to emulators:', error);
+      console.error('Make sure emulators are running: firebase emulators:start');
+    }
+  }
+} else {
+  console.log('🌐 Using Production Firebase');
+}
 
 export default app;
-// AIzaSyCRIlaHJs64iqcxuZ6j7JW6MCBhHRzW2QY
-

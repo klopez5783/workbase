@@ -3,11 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
 import { FileText, Loader, Plus, Calendar } from 'lucide-react';
 import WorkLogForm from '../components/WorkLogForm';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
 
 export default function DailyWorkLog() {
   const { currentUser } = useAuth();
+  const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   
-  const [worker, setWorker] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -17,58 +18,32 @@ export default function DailyWorkLog() {
 
   useEffect(() => {
     loadData();
-  }, [currentUser]);
+  }, [currentUser, currentEmployee]);
 
   const loadData = async () => {
     try {
       setLoading(true);
 
-      // Get worker data
-      const userResult = await firestoreService.query('users', [
-        { field: 'uid', operator: '==', value: currentUser.uid }
-      ]);
-
-      if (!userResult.success || userResult.data.length === 0) {
-        setError('User profile not found');
+      if (!currentEmployee) {
+        setError('Employee profile not found');
         setLoading(false);
         return;
       }
-
-      const userData = userResult.data[0];
-      const userPhone = userData.phone || userData.phoneNumber;
-
-      if (!userPhone) {
-        setError('No phone number on file');
-        setLoading(false);
-        return;
-      }
-
-      const workerResult = await firestoreService.query('workers', [
-        { field: 'phoneRaw', operator: '==', value: userPhone.replace(/\D/g, '') }
-      ]);
-
-      if (!workerResult.success || workerResult.data.length === 0) {
-        setError('Not registered as a worker');
-        setLoading(false);
-        return;
-      }
-
-      const workerData = workerResult.data[0];
-      setWorker(workerData);
 
       // Get assigned projects
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
+        // Filter projects assigned to this employee
         const assignedProjects = projectsResult.data.filter(project => 
-          project.assignedWorkers?.includes(workerData.id) || 
-          !project.assignedWorkers || 
-          project.assignedWorkers.length === 0
+          project.assignedEmployees?.includes(currentEmployee.id) || 
+          !project.assignedEmployees || 
+          project.assignedEmployees.length === 0
         );
         setProjects(assignedProjects);
       }
 
       // Get today's work logs
-      await loadTodayLogs(workerData.id);
+      await loadTodayLogs(currentEmployee.id);
 
       setLoading(false);
     } catch (err) {
@@ -78,18 +53,18 @@ export default function DailyWorkLog() {
     }
   };
 
-  const loadTodayLogs = async (workerId) => {
+  const loadTodayLogs = async (employeeId) => {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
       const logsResult = await firestoreService.query('workLogs', [
-        { field: 'workerId', operator: '==', value: workerId }
+        { field: 'employeeId', operator: '==', value: employeeId }
       ]);
 
       if (logsResult.success) {
         const todayOnly = logsResult.data.filter(log => {
-          const logDate = new Date(log.createdAt);
+          const logDate = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
           return logDate >= today;
         });
         setTodayLogs(todayOnly);
@@ -126,7 +101,7 @@ export default function DailyWorkLog() {
     );
   }
 
-  if (error && !worker) {
+  if (error && !currentEmployee) {
     return (
       <div className="p-5">
         <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
@@ -139,18 +114,14 @@ export default function DailyWorkLog() {
   // Show form when project selected
   if (showForm && selectedProject) {
     return (
-      <div className="p-5 pb-24">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Daily Work Log</h1>
-          <p className="text-gray-600 text-sm mt-1">Document your work with photos and description</p>
-        </div>
-
-        <WorkLogForm
-          projectId={selectedProject.id}
-          onSuccess={handleFormSuccess}
-          onCancel={handleFormCancel}
-        />
-      </div>
+      <WorkLogForm
+        projectId={selectedProject.id}
+        projectName={selectedProject.name}
+        employeeId={currentEmployee.id}
+        employeeName={currentEmployee.name}
+        onSuccess={handleFormSuccess}
+        onCancel={handleFormCancel}
+      />
     );
   }
 
@@ -161,7 +132,7 @@ export default function DailyWorkLog() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Daily Work Log</h1>
         <p className="text-gray-600 text-sm mt-1">
-          Select a project to document your work
+          Document your work with photos and description
         </p>
       </div>
 
@@ -173,17 +144,40 @@ export default function DailyWorkLog() {
           </div>
           <div>
             <p className="font-semibold text-blue-900">
-              Today: {new Date().toLocaleDateString('en-US', { 
+              {new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 month: 'long', 
                 day: 'numeric' 
               })}
             </p>
             <p className="text-sm text-blue-700">
-              {todayLogs.length} work log{todayLogs.length !== 1 ? 's' : ''} submitted
+              {todayLogs.length} work log{todayLogs.length !== 1 ? 's' : ''} submitted today
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Instructions Card */}
+      <div className="bg-white rounded-xl p-4 mb-6 border border-gray-200">
+        <h3 className="font-bold text-gray-900 mb-3">How to Submit a Work Log:</h3>
+        <ol className="space-y-2 text-sm text-gray-700">
+          <li className="flex gap-2">
+            <span className="font-bold text-blue-600">1.</span>
+            <span>Select your current project below</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-bold text-blue-600">2.</span>
+            <span>Describe your completed work (any language)</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-bold text-blue-600">3.</span>
+            <span>Take photos of your work (at least 1 required)</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-bold text-blue-600">4.</span>
+            <span>Submit - your work will be auto-translated!</span>
+          </li>
+        </ol>
       </div>
 
       {/* Project Selection */}
@@ -242,37 +236,42 @@ export default function DailyWorkLog() {
         <div className="mt-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Today's Work Logs</h2>
           <div className="space-y-3">
-            {todayLogs.map((log) => (
-              <div key={log.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FileText className="text-green-600" size={20} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900">{log.projectName}</p>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                      {log.translatedDescription}
-                    </p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <p className="text-xs text-gray-500">
-                        {new Date(log.createdAt).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+            {todayLogs.map((log) => {
+              const logProject = projects.find(p => p.id === log.projectId);
+              const logTime = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
+              
+              return (
+                <div key={log.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="text-green-600" size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900">{logProject?.name || 'Unknown Project'}</p>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        {log.translatedDescription || log.description}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        📸 {log.images?.length || 0} photo{log.images?.length !== 1 ? 's' : ''}
-                      </p>
-                      {log.wasTranslated && (
-                        <p className="text-xs text-purple-600 font-medium">
-                          🌐 Translated
+                      <div className="flex items-center gap-4 mt-2 flex-wrap">
+                        <p className="text-xs text-gray-500">
+                          {logTime.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </p>
-                      )}
+                        <p className="text-xs text-gray-500">
+                          📸 {log.images?.length || 0} photo{log.images?.length !== 1 ? 's' : ''}
+                        </p>
+                        {log.wasTranslated && (
+                          <p className="text-xs text-purple-600 font-medium">
+                            🌐 Translated
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

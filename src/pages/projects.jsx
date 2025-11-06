@@ -252,21 +252,21 @@ export default function Projects() {
                 <ChevronRight className="text-gray-400" size={20} />
               </button>
 
-              <button
-                onClick={() => navigate(`/docs/dailylog?projectId=${selectedProject.id}`)}
-                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <FileText className="text-indigo-600" size={24} />
+                <button
+                  onClick={() => navigate('/admin/work-logs')}
+                  className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                      <FileText className="text-indigo-600" size={24} />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-gray-900">Daily Logs</p>
+                      <p className="text-sm text-gray-600">View site activity logs</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="font-bold text-gray-900">Daily Logs</p>
-                    <p className="text-sm text-gray-600">View site activity logs</p>
-                  </div>
-                </div>
-                <ChevronRight className="text-gray-400" size={20} />
-              </button>
+                  <ChevronRight className="text-gray-400" size={20} />
+                </button>
             </div>
           </div>
         )}

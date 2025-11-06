@@ -93,12 +93,16 @@ export default function SignUp() {
           updatedAt: new Date().toISOString(),
         };
 
-        const firestoreResult = await firestoreService.create('users', userData);
+        const firestoreResult = await firestoreService.createUserProfile(result.user.uid, userData); // Call the new function
+        console.log(firestoreResult)
+        //const firestoreResult = await firestoreService.create('users', userData);
 
         if (firestoreResult.success) {
-          navigate('/');
+            console.log("Firestore user profile created successfully!");
+            navigate('/');
         } else {
-          throw new Error('Failed to create user profile');
+            console.error("DEBUG: firestoreResult object:", firestoreResult); // Log the full object
+            throw new Error(firestoreResult.error || 'Failed to create user profile');
         }
       } else {
         throw new Error(result.error || 'Failed to create account');
