@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { firestoreService } from '../../services/firestoreService';
 import { FileText, Loader, Search, Filter, Calendar, User, MapPin, Image as ImageIcon, X, ChevronDown, ChevronUp } from 'lucide-react';
+import WorkSummaryGenerator from '../../components/WorkSummaryGenerator'; // Add this import
+import { Sparkles } from 'lucide-react'; // Add Sparkles icon
 
 export default function AdminWorkLogs() {
   const [workLogs, setWorkLogs] = useState([]);
@@ -9,6 +11,8 @@ export default function AdminWorkLogs() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showSummaryGenerator, setShowSummaryGenerator] = useState(false);
+
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,6 +141,20 @@ export default function AdminWorkLogs() {
     setExpandedLogId(expandedLogId === logId ? null : logId);
   };
 
+  // ADD THIS FUNCTION inside your component
+    const getSummaryContext = () => {
+    const projectName = selectedProject !== 'all' 
+        ? getProjectName(selectedProject) 
+        : 'All Projects';
+    
+    let dateRange = 'All Time';
+    if (dateFilter === 'today') dateRange = new Date().toLocaleDateString();
+    else if (dateFilter === 'week') dateRange = 'Past Week';
+    else if (dateFilter === 'month') dateRange = 'Past Month';
+
+    return { projectName, date: dateRange };
+    };
+
   if (loading) {
     return (
       <div className="p-5 flex items-center justify-center min-h-screen">
@@ -156,7 +174,17 @@ export default function AdminWorkLogs() {
         <p className="text-gray-600 text-sm mt-1">
           View and manage daily work submissions
         </p>
+        <button
+        onClick={() => setShowSummaryGenerator(true)}
+        disabled={filteredLogs.length === 0}
+        className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition flex items-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+        >
+        <Sparkles size={20} />
+        Generate AI Summary
+        </button>
       </div>
+
+      
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -433,6 +461,15 @@ export default function AdminWorkLogs() {
           />
         </div>
       )}
+      {/* Summary Generator Modal */}
+        {showSummaryGenerator && (
+        <WorkSummaryGenerator
+            workLogs={filteredLogs}
+            projectName={getSummaryContext().projectName}
+            date={getSummaryContext().date}
+            onClose={() => setShowSummaryGenerator(false)}
+        />
+        )}
     </div>
   );
 }

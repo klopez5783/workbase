@@ -8,7 +8,8 @@ import {
   Users,
   ChevronRight,
   Loader,
-  Settings
+  Settings,
+  Clock10
 } from 'lucide-react';
 import { firestoreService } from '../services/firestoreService';
 import { useAuth } from '../contexts/AuthContext';
@@ -152,27 +153,12 @@ export default function Projects() {
         </div>
 
         {/* Admin Reports Section */}
-        {isAdmin && (
+        {/* {isAdmin && (
           <div className="mb-6">
             <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">Reports</h2>
             <div className="space-y-3">
-              <button
-                onClick={() => navigate(`/reports/timecard?projectId=${selectedProject.id}`)}
-                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <FileText className="text-blue-600" size={24} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-gray-900">Timecard Report</p>
-                    <p className="text-sm text-gray-600">View hours worked</p>
-                  </div>
-                </div>
-                <ChevronRight className="text-gray-400" size={20} />
-              </button>
 
-              <button
+              {/* <button
                 onClick={() => navigate(`/reports/production?projectId=${selectedProject.id}`)}
                 className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
               >
@@ -202,11 +188,10 @@ export default function Projects() {
                   </div>
                 </div>
                 <ChevronRight className="text-gray-400" size={20} />
-              </button>
+              </button> 
             </div>
           </div>
-        )}
-
+        )} */}
         {/* Worker Actions Section */}
         {!isAdmin && (
           <div className="mb-6">
@@ -234,8 +219,25 @@ export default function Projects() {
         {/* Documents Section (Admin Only) */}
         {isAdmin && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">Documents</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">Admin Tools</h2>
             <div className="space-y-3">
+
+              <button
+                onClick={() => navigate(`/reports/timecard?projectId=${selectedProject.id}`)}
+                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Clock10 className="text-blue-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Timecard Report</p>
+                    <p className="text-sm text-gray-600">View hours worked</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
+
               <button
                 onClick={() => navigate(`/docs/project?projectId=${selectedProject.id}`)}
                 className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
