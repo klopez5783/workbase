@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Briefcase, 
   FileText, 
@@ -22,6 +22,7 @@ export default function Projects() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const location = useLocation();
   
   const { currentUser } = useAuth();
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
@@ -64,6 +65,15 @@ export default function Projects() {
 
     loadProjects();
   }, [currentUser]);
+
+
+  useEffect(() => {
+    if (location.state?.selectedProject) {
+      setSelectedProject(location.state.selectedProject);
+      // Clean up the state so it doesn't persist on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
@@ -255,7 +265,14 @@ export default function Projects() {
               </button>
 
                 <button
-                  onClick={() => navigate('/admin/work-logs')}
+                onClick={() => navigate(
+                    `/admin/work-logs?projectId=${selectedProject.id}`,
+                    { 
+                      state: { 
+                        returnToProject: selectedProject 
+                      } 
+                    }
+                  )}
                   className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">

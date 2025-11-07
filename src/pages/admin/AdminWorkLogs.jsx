@@ -3,6 +3,7 @@ import { firestoreService } from '../../services/firestoreService';
 import { FileText, Loader, Search, Filter, Calendar, User, MapPin, Image as ImageIcon, X, ChevronDown, ChevronUp } from 'lucide-react';
 import WorkSummaryGenerator from '../../components/WorkSummaryGenerator'; // Add this import
 import { Sparkles } from 'lucide-react'; // Add Sparkles icon
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 
 export default function AdminWorkLogs() {
   const [workLogs, setWorkLogs] = useState([]);
@@ -12,7 +13,11 @@ export default function AdminWorkLogs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showSummaryGenerator, setShowSummaryGenerator] = useState(false);
-
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const projectIdFromUrl = searchParams.get('projectId')
+  const location = useLocation();
+  const returnToProject = location.state?.returnToProject;
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +37,21 @@ export default function AdminWorkLogs() {
   useEffect(() => {
     applyFilters();
   }, [workLogs, searchTerm, selectedProject, selectedEmployee, dateFilter]);
+
+   const handleBack = () => {
+    if (returnToProject) {
+      // Navigate back to projects page with the selected project
+      navigate('/projects', { 
+        state: { 
+          selectedProject: returnToProject 
+        } 
+      });
+    } else {
+      // No project context, just go to projects list
+      navigate('/projects');
+    }
+  };
+
 
   const loadData = async () => {
     try {
@@ -170,6 +190,12 @@ export default function AdminWorkLogs() {
     <div className="p-5 pb-24 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
+        <button
+            onClick={handleBack}
+            className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
+          >
+            ← Back to Admin Tools
+          </button>
         <h1 className="text-2xl font-bold text-gray-900">Work Logs</h1>
         <p className="text-gray-600 text-sm mt-1">
           View and manage daily work submissions
