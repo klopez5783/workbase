@@ -25,12 +25,24 @@ export const aiService = {
 
       console.log(`📊 Processing ${workLogs.length} work logs`);
 
+      // ✅ Limit to prevent token overflow
+      const MAX_LOGS = 50;
+      const logsToProcess = workLogs.slice(0, MAX_LOGS);
+      
+      if (workLogs.length > MAX_LOGS) {
+        console.warn(`⚠️ Too many logs (${workLogs.length}). Using first ${MAX_LOGS} only.`);
+      }
+
       // Prepare work descriptions for the AI
-      const descriptions = workLogs.map((log, index) => {
+      const descriptions = logsToProcess.map((log, index) => {
         const desc = log.translatedDescription || log.description;
         const employee = log.employeeName || 'Unknown';
         const photoCount = log.images?.length || 0;
-        return `${index + 1}. ${employee}: ${desc} (${photoCount} photo${photoCount !== 1 ? 's' : ''})`;
+        
+        // ✅ Truncate very long descriptions
+        const truncatedDesc = desc.length > 200 ? desc.substring(0, 200) + '...' : desc;
+        
+        return `${index + 1}. ${employee}: ${truncatedDesc} (${photoCount} photo${photoCount !== 1 ? 's' : ''})`;
       }).join('\n');
 
       const { projectName, date } = options;
@@ -38,7 +50,7 @@ export const aiService = {
       const dateInfo = date ? `Date: ${date}\n` : '';
 
       // Create prompt for Gemini
-      const prompt = `You are a construction project manager creating a daily work summary report.
+  const prompt = `You are a construction project manager creating a daily work summary report.
 
 ${projectInfo}${dateInfo}
 Below are the work logs submitted by workers today. Generate a concise, professional summary (3-5 sentences) that:
@@ -46,6 +58,7 @@ Below are the work logs submitted by workers today. Generate a concise, professi
 2. Mentions key accomplishments
 3. Notes the number of workers/submissions
 4. Is suitable for client reports or project documentation
+5. **(New Instruction): Ensure the summary uses clear, common language and simple sentence structures to facilitate translation and understanding by foreign families whose first language is not English.**
 
 Work Logs (${workLogs.length} submission${workLogs.length !== 1 ? 's' : ''}):
 ${descriptions}
@@ -70,7 +83,7 @@ Generate a brief, professional summary:`;
           }],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 500,
+            maxOutputTokens: 2048,  // ✅ Increased from 500 to 2048
             topP: 0.95,
             topK: 40
           }
@@ -101,31 +114,48 @@ Generate a brief, professional summary:`;
       }
 
       const candidate = data.candidates[0];
-      console.log('📝 First candidate:', candidate);
+      console.log('📝 First candidate:', JSON.stringify(candidate, null, 2));
+
+      // ✅ Check for MAX_TOKENS error specifically
+      if (candidate.finishReason === 'MAX_TOKENS') {
+        throw new Error('Response too long. Try filtering to fewer work logs or use a shorter date range.');
+      }
 
       // Check if response was blocked
       if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'RECITATION') {
         throw new Error(`Response blocked by Gemini safety filters: ${candidate.finishReason}`);
       }
 
-      // Safely access nested properties
-      if (!candidate.content) {
-        console.error('❌ No content in candidate:', candidate);
-        throw new Error('Invalid response structure: missing content');
+      // Handle different possible response structures
+      let summary = null;
+
+      // Try primary structure: candidate.content.parts[0].text
+      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+        const firstPart = candidate.content.parts[0];
+        if (firstPart && firstPart.text) {
+          summary = firstPart.text;
+          console.log('✨ Found summary in standard location');
+        }
       }
 
-      if (!candidate.content.parts || candidate.content.parts.length === 0) {
-        console.error('❌ No parts in content:', candidate.content);
-        throw new Error('Invalid response structure: missing parts');
+      // Try alternative structure: candidate.text
+      if (!summary && candidate.text) {
+        summary = candidate.text;
+        console.log('✨ Found summary in candidate.text');
       }
 
-      const firstPart = candidate.content.parts[0];
-      if (!firstPart || !firstPart.text) {
-        console.error('❌ No text in first part:', firstPart);
-        throw new Error('Invalid response structure: missing text');
+      // Try alternative structure: candidate.output
+      if (!summary && candidate.output) {
+        summary = candidate.output;
+        console.log('✨ Found summary in candidate.output');
       }
 
-      const summary = firstPart.text;
+      if (!summary) {
+        console.error('❌ Could not find text in any expected location');
+        console.error('Full candidate structure:', JSON.stringify(candidate, null, 2));
+        throw new Error('Invalid response structure: could not find generated text. Check console for details.');
+      }
+
       console.log('✨ Generated summary:', summary);
 
       return {

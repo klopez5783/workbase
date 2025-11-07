@@ -75,12 +75,9 @@ export default function FloatingClockInButton() {
 
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
-        console.log("Projects Retrieved")
-        console.log("Current User Signed In " + workerData)
         const assignedProjects = projectsResult.data.filter(project => 
           project.assignedWorkers?.includes(workerData.id)
         );
-        console.log("Assigned Projects : " + assignedProjects)
         setProjects(assignedProjects);
       }
 
