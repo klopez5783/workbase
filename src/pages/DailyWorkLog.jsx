@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
-import { FileText, Loader, Plus, Calendar } from 'lucide-react';
+import { FileText, Loader, Plus, Calendar, ArrowLeft, CheckCircle, X  } from 'lucide-react';
 import WorkLogForm from '../components/WorkLogForm';
 import { useEmployeeStore } from '../features/employees/store/employeeStore';
+import { useLocation, useNavigate } from 'react-router-dom'; // ← ADD useLocation, useNavigate
 
 export default function DailyWorkLog() {
   const { currentUser } = useAuth();
@@ -15,10 +16,34 @@ export default function DailyWorkLog() {
   const [todayLogs, setTodayLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const location = useLocation(); 
+  const navigate = useNavigate();
+  const [showAlert, setShowAlert] = useState(false); // Add this
+  const [alertMessage, setAlertMessage] = useState(''); // Add this
 
   useEffect(() => {
     loadData();
   }, [currentUser, currentEmployee]);
+
+  useEffect(() => {
+    if (location.state?.selectedProject) {
+      const passedProject = location.state.selectedProject;
+      setSelectedProject(passedProject);
+      setShowForm(true); // Automatically show the form
+
+      // Show alert
+      setAlertMessage(`Project selected: ${passedProject.name}`);
+      setShowAlert(true);
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        setShowAlert(false);
+      }, 3000);
+      
+      // Clean up the state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const loadData = async () => {
     try {
@@ -114,14 +139,26 @@ export default function DailyWorkLog() {
   // Show form when project selected
   if (showForm && selectedProject) {
     return (
-      <WorkLogForm
-        projectId={selectedProject.id}
-        projectName={selectedProject.name}
-        employeeId={currentEmployee.id}
-        employeeName={currentEmployee.name}
-        onSuccess={handleFormSuccess}
-        onCancel={handleFormCancel}
-      />
+      <>
+        {/* Alert Toast */}
+        {showAlert && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out">
+            <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+              <CheckCircle size={20} />
+              <span className="font-semibold">{alertMessage}</span>
+            </div>
+          </div>
+        )}
+
+        <WorkLogForm
+          projectId={selectedProject.id}
+          projectName={selectedProject.name}
+          employeeId={currentEmployee.id}
+          employeeName={currentEmployee.name}
+          onSuccess={handleFormSuccess}
+          onCancel={handleFormCancel}
+        />
+      </>
     );
   }
 

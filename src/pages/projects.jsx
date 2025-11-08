@@ -9,7 +9,8 @@ import {
   ChevronRight,
   Loader,
   Settings,
-  Clock10
+  Clock10,
+  Send
 } from 'lucide-react';
 import { firestoreService } from '../services/firestoreService';
 import { useAuth } from '../contexts/AuthContext';
@@ -208,8 +209,12 @@ export default function Projects() {
             <h2 className="text-lg font-bold text-gray-900 mb-3 px-2">My Work</h2>
             <div className="space-y-3">
               <button
-                onClick={() => navigate(`/daily-work-log?projectId=${selectedProject.id}`)}
-                className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+                    onClick={() => navigate('/daily-work-log', { 
+                        state: { 
+                          selectedProject: selectedProject // Pass the whole project object
+                        } 
+                      })}
+                      className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -286,6 +291,27 @@ export default function Projects() {
                   </div>
                   <ChevronRight className="text-gray-400" size={20} />
                 </button>
+
+                  <button
+                    onClick={() => navigate('/daily-work-log', { 
+                        state: { 
+                          selectedProject: selectedProject // Pass the whole project object
+                        } 
+                      })}
+                      className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Send className="text-blue-600" size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Work Log</p>
+                    <p className="text-sm text-gray-600">Log daily work activities</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-gray-400" size={20} />
+              </button>
+
             </div>
           </div>
         )}
