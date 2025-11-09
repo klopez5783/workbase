@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
-import { FileText, Loader, Plus, Calendar, ArrowLeft, CheckCircle, X  } from 'lucide-react';
+import { FileText, Loader, Plus, Calendar, CircleArrowLeft , CheckCircle, X  } from 'lucide-react';
 import WorkLogForm from '../components/WorkLogForm';
 import { useEmployeeStore } from '../features/employees/store/employeeStore';
 import { useLocation, useNavigate } from 'react-router-dom'; // ← ADD useLocation, useNavigate
 
+
 export default function DailyWorkLog() {
   const { currentUser } = useAuth();
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
-  
+  const isAdmin = currentEmployee?.role === 'admin';
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -115,6 +116,11 @@ export default function DailyWorkLog() {
     setSelectedProject(null);
   };
 
+   const handleBack = () => {
+    navigate('/admin/tools')
+  };
+
+
   if (loading) {
     return (
       <div className="p-5 flex items-center justify-center min-h-screen">
@@ -165,6 +171,14 @@ export default function DailyWorkLog() {
   // Show project selection
   return (
     <div className="p-5 pb-24">
+      {isAdmin && ( 
+        <button
+            onClick={handleBack}
+            className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
+          >
+            <CircleArrowLeft  size={20}/> Back to Admin Tools
+          </button>)
+      }
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Daily Work Log</h1>

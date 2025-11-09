@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { firestoreService } from '../../services/firestoreService';
-import { FileText, Loader, Search, Filter, Calendar, User, MapPin, Image as ImageIcon, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Loader, Search, CircleArrowLeft, Filter, Calendar, User, MapPin, Image as ImageIcon, X, ChevronDown, ChevronUp } from 'lucide-react';
 import WorkSummaryGenerator from '../../components/WorkSummaryGenerator'; // Add this import
 import { Sparkles } from 'lucide-react'; // Add Sparkles icon
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -39,17 +39,7 @@ export default function AdminWorkLogs() {
   }, [workLogs, searchTerm, selectedProject, selectedEmployee, dateFilter]);
 
    const handleBack = () => {
-    if (returnToProject) {
-      // Navigate back to projects page with the selected project
-      navigate('/projects', { 
-        state: { 
-          selectedProject: returnToProject 
-        } 
-      });
-    } else {
-      // No project context, just go to projects list
-      navigate('/projects');
-    }
+    navigate('/admin/tools')
   };
 
 
@@ -194,7 +184,7 @@ export default function AdminWorkLogs() {
             onClick={handleBack}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
           >
-            ← Back to Admin Tools
+            <CircleArrowLeft size={20} /> Back to Admin Tools
           </button>
         <h1 className="text-2xl font-bold text-gray-900">Work Logs</h1>
         <p className="text-gray-600 text-sm mt-1">
