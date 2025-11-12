@@ -5,22 +5,25 @@ import {
   Calendar, 
   Download, 
   Printer, 
-  ArrowLeft, 
+  ArrowLeft,
+  ChevronDown, 
   Loader,
   Clock,
   User,
   Briefcase,
+  ChevronUp,
   Edit,
   Trash2,
   X,
   Save,
   Check,
   AlertCircle,
-  Square,
+  CircleArrowLeft,
   CheckSquare,
   Filter,
   XCircle
 } from 'lucide-react';
+import TimeEntryTable from '../components/TimeEntryTable';
 
 export default function TimecardReport() {
   const navigate = useNavigate();
@@ -549,13 +552,13 @@ export default function TimecardReport() {
             onClick={() => navigate(-1)}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
-            <ArrowLeft size={20} />
-            Back
+            <CircleArrowLeft size={24} />
+            Back To Admin Tools
           </button>
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Timecard Report</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Timecard Report!</h1>
               <p className="text-gray-600 text-sm mt-1">Employee work hours summary</p>
             </div>
 
@@ -667,33 +670,29 @@ export default function TimecardReport() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6 print:hidden">
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 text-left"
-            >
-              <Filter size={20} className="text-gray-600" />
-              <h2 className="text-xl font-bold text-gray-900">Filters</h2>
-              {hasActiveFilters() && (
-                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
-                  Active
-                </span>
-              )}
-            </button>
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+              showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Filter size={20} />
+            <h2 className={`text-xl font-bold ${showFilters ? `text-white` : `text-xl font-bold text-gray-900`}`}>Filters</h2>
+            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+            
             <div className="flex items-center gap-2">
               {hasActiveFilters() && (
                 <button
-                  onClick={clearFilters}
-                  className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold transition text-sm flex items-center gap-1"
-                >
-                  <XCircle size={16} />
-                  Clear Filters
-                </button>
-              )}
-              <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="text-blue-600 font-semibold hover:text-blue-700 transition"
+                className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+                  showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                {showFilters ? '▼ Hide' : '▶ Show'}
+                <Filter size={20} />
+                Filters
+                {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
+              )}
             </div>
           </div>
 
@@ -829,190 +828,22 @@ export default function TimecardReport() {
           </div>
         ) : (
           <div className="space-y-8">
-            {Object.entries(groupedEntries).map(([employeeName, projects]) => {
-              const employeeTotal = Object.values(projects)
-                .flat()
-                .reduce((sum, entry) => sum + calculateHours(entry.clockIn, entry.clockOut), 0);
-              
-              const allEmployeeEntries = Object.values(projects).flat();
-              const employeeSelected = allEmployeeEntries.every(e => selectedEntries.includes(e.id));
-
-              return (
-                <div key={employeeName} className="bg-white rounded-xl shadow-sm border-2 border-gray-300 overflow-hidden print:break-inside-avoid print:mb-8">
-                  {/* Employee Header */}
-                  <div className="bg-gray-800 text-white p-4 print:bg-gray-900">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => selectAllByEmployee(employeeName, projects)}
-                          className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition print:hidden"
-                          title={employeeSelected ? "Deselect all for this employee" : "Select all for this employee"}
-                        >
-                          {employeeSelected ? <CheckSquare size={20} /> : <Square size={20} />}
-                        </button>
-                        <User size={24} />
-                        <div>
-                          <h2 className="text-2xl font-bold">{employeeName}</h2>
-                          <p className="text-gray-300 text-sm">
-                            Employee
-                            <span className="ml-2">
-                              ({allEmployeeEntries.filter(e => selectedEntries.includes(e.id)).length}/{allEmployeeEntries.length} selected)
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-300">Total Hours</p>
-                        <p className="text-3xl font-bold">{employeeTotal.toFixed(2)}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Projects */}
-                  {Object.entries(projects).map(([projectName, entries]) => {
-                    const projectTotal = entries.reduce(
-                      (sum, entry) => sum + calculateHours(entry.clockIn, entry.clockOut),
-                      0
-                    );
-                    const allProjectSelected = entries.every(e => selectedEntries.includes(e.id));
-
-                    return (
-                      <div key={projectName} className="border-b-2 border-gray-200 last:border-b-0">
-                        {/* Project Header */}
-                        <div className="bg-gray-100 p-3 flex items-center justify-between print:bg-gray-200">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => selectAllByProject(entries)}
-                              className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition print:hidden"
-                              title={allProjectSelected ? "Deselect all for this project" : "Select all for this project"}
-                            >
-                              {allProjectSelected ? <CheckSquare size={18} /> : <Square size={18} />}
-                            </button>
-                            <Briefcase size={20} className="text-gray-600" />
-                            <span className="font-bold text-lg text-gray-900">
-                              {projectName}
-                              <span className="ml-2 text-sm text-gray-600">
-                                ({entries.filter(e => selectedEntries.includes(e.id)).length}/{entries.length})
-                              </span>
-                            </span>
-                          </div>
-                          <span className="font-bold text-lg text-gray-900">
-                            {projectTotal.toFixed(2)} hrs
-                          </span>
-                        </div>
-
-                        {/* Time Entries Table */}
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="bg-gray-50 border-b-2 border-gray-300">
-                                <th className="px-4 py-3 text-center print:hidden" style={{width: '60px'}}>
-                                  <span className="text-xs font-normal text-gray-600">Select</span>
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">
-                                  Date
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">
-                                  Time In
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">
-                                  Time Out
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-bold text-gray-900 uppercase">
-                                  Hours
-                                </th>
-                                <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 uppercase print:hidden">
-                                  Status
-                                </th>
-                                <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 uppercase print:hidden">
-                                  Actions
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {entries.map((entry, idx) => {
-                                const hours = calculateHours(entry.clockIn, entry.clockOut);
-                                const isSelected = selectedEntries.includes(entry.id);
-                                
-                                return (
-                                  <tr 
-                                    key={entry.id} 
-                                    className={`border-b border-gray-200 ${
-                                      isSelected 
-                                        ? 'bg-purple-50' 
-                                        : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                    }`}
-                                  >
-                                    <td className="px-4 py-3 text-center print:hidden">
-                                      <input
-                                        type="checkbox"
-                                        className="w-5 h-5 cursor-pointer"
-                                        checked={isSelected}
-                                        onChange={() => toggleSelectEntry(entry.id)}
-                                      />
-                                    </td>
-                                    <td className="px-4 py-3 text-lg text-gray-900">
-                                      {formatDate(entry.clockIn)}
-                                    </td>
-                                    <td className="px-4 py-3 text-lg text-gray-900 font-mono">
-                                      {formatTime(entry.clockIn)}
-                                    </td>
-                                    <td className="px-4 py-3 text-lg text-gray-900 font-mono">
-                                      {formatTime(entry.clockOut)}
-                                    </td>
-                                    <td className="px-4 py-3 text-right text-lg font-bold text-gray-900">
-                                      {hours.toFixed(2)}
-                                    </td>
-                                    <td className="px-4 py-3 text-center print:hidden">
-                                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                        entry.status === 'approved' 
-                                          ? 'bg-green-100 text-green-800'
-                                          : entry.status === 'rejected'
-                                          ? 'bg-red-100 text-red-800'
-                                          : 'bg-yellow-100 text-yellow-800'
-                                      }`}>
-                                        {entry.status || 'Pending'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-center print:hidden">
-                                      <div className="flex items-center justify-center gap-2">
-                                        {entry.status !== 'approved' && (
-                                          <button
-                                            onClick={() => handleApprove(entry)}
-                                            className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
-                                            title="Approve"
-                                          >
-                                            <Check size={18} />
-                                          </button>
-                                        )}
-                                        <button
-                                          onClick={() => handleEdit(entry)}
-                                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
-                                          title="Edit"
-                                        >
-                                          <Edit size={18} />
-                                        </button>
-                                        <button
-                                          onClick={() => handleDelete(entry)}
-                                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
-                                          title="Delete"
-                                        >
-                                          <Trash2 size={18} />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+            <TimeEntryTable
+              entries={filteredEntries}
+              selectedEntries={selectedEntries}
+              onToggleSelect={toggleSelectEntry}
+              onSelectEmployee={selectAllByEmployee}
+              onSelectProject={selectAllByProject}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onApprove={handleApprove}
+              calculateHours={calculateHours}
+              formatDate={formatDate}
+              formatTime={formatTime}
+              getEmployeeName={getEmployeeName}
+              getProjectName={getProjectName}
+              entriesPerProject={5}
+            />
           </div>
         )}
 
