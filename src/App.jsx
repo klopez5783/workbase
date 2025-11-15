@@ -23,6 +23,8 @@ import { authService } from './services/authService';
 import AdminWorkLogs from './pages/admin/AdminWorkLogs';
 import AdminTools from './pages/admin/AdminTools';
 import TimecardReport from './pages/TimecardReport';
+import ProjectDetailsPage from './pages/ProjectDetailsPage';
+import ProjectHoursPage from './pages/ProjectHoursPage';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -127,6 +129,8 @@ return (
           <Route path="profile" element={<ProfileSettings />} />
           <Route path="daily-work-log" element={<DailyWorkLog />} />
           <Route path="daily-reports" element={<DailyReportsViewer />} />
+          <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
+          <Route path="/project-hours" element={<ProjectHoursPage />} />
           
           {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */}
           <Route 
@@ -155,17 +159,21 @@ return (
                 <TimecardReport />
               </ProtectedRoute>
             } 
+            
           />
-        </Route>//end Route tag
 
-        {/* Admin Management Pages (WITHOUT Layout - full page for complex management) */}
-        <Route
+
+            <Route
           path="/admin/projects"
           element={
             <ProtectedRoute requiredRole="admin">
               <ProjectManagement />
             </ProtectedRoute>
           } /> 
+
+        </Route>//end Route tag
+
+        {/* Admin Management Pages (WITHOUT Layout - full page for complex management) */}
         
         <Route
           path="/admin/workers"

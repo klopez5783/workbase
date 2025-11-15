@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Clock, Briefcase, FolderOpen, FileText } from 'lucide-react';
+import { Home, Hammer , Briefcase, Clock, FileText } from 'lucide-react';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 
 export default function BottomNav() {
@@ -11,10 +11,10 @@ export default function BottomNav() {
   // Admin navigation items
   const adminNavItems = [
     { path: '/', icon: Home, label: 'Home' },
-    { path: '/time', icon: Clock, label: 'Time' },
+    { path: '/projects', icon: Hammer , label: 'Projects' },
     { path: '/admin/tools', icon: Briefcase, label: 'Admin' },
   ];
-  
+
   // Worker navigation items
   const workerNavItems = [
     { path: '/', icon: Home, label: 'Home' },

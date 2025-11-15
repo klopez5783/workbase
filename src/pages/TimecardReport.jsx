@@ -634,148 +634,138 @@ export default function TimecardReport() {
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6 print:hidden">
             <h3 className="text-sm font-bold text-gray-700 mb-3">Quick Select:</h3>
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={selectAll}
-                className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-semibold transition text-sm flex items-center gap-1"
-              >
-                {selectedEntries.length === filteredEntries.length ? <XCircle size={16} /> : <CheckSquare size={16} />}
-                {selectedEntries.length === filteredEntries.length ? 'Deselect All' : `All (${filteredEntries.length})`}
-              </button>
-              
-              <button
-                onClick={() => selectAllByStatus('pending')}
-                className="px-3 py-1.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-lg font-semibold transition text-sm"
-              >
-                Pending ({filteredEntries.filter(e => e.status === 'pending').length})
-              </button>
-              
-              <button
-                onClick={() => selectAllByStatus('approved')}
-                className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg font-semibold transition text-sm"
-              >
-                Approved ({filteredEntries.filter(e => e.status === 'approved').length})
-              </button>
-              
-              <button
-                onClick={() => selectAllByStatus('rejected')}
-                className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold transition text-sm"
-              >
-                Rejected ({filteredEntries.filter(e => e.status === 'rejected').length})
-              </button>
             </div>
           </div>
         )}
 
         {/* Filters - No Print */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6 print:hidden">
-          <div className="flex items-center justify-between mb-4">
-            <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
-              showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Filter size={20} />
-            <h2 className={`text-xl font-bold ${showFilters ? `text-white` : `text-xl font-bold text-gray-900`}`}>Filters</h2>
-            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-            
-            <div className="flex items-center gap-2">
-              {hasActiveFilters() && (
-                <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
-                  showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <Filter size={20} />
-                Filters
-                {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-              )}
-            </div>
-          </div>
+  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+    {/* Left: Filters Toggle */}
+    <button
+      onClick={() => setShowFilters(!showFilters)}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${
+        showFilters
+          ? 'bg-blue-600 text-white hover:bg-blue-700'
+          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+      }`}
+    >
+      <Filter size={18} />
+      <span>Filters</span>
+      {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+    </button>
 
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-lg"
-                />
-              </div>
+    {/* Center: Status Filters */}
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={selectAll}
+        className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium text-sm flex items-center gap-1 transition"
+      >
+        {selectedEntries.length === filteredEntries.length ? (
+          <XCircle size={16} />
+        ) : (
+          <CheckSquare size={16} />
+        )}
+        {selectedEntries.length === filteredEntries.length
+          ? 'Deselect All'
+          : `All (${filteredEntries.length})`}
+      </button>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-lg"
-                />
-              </div>
+      <button
+        onClick={() => selectAllByStatus('pending')}
+        className="px-3 py-1.5 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 rounded-lg font-medium text-sm transition"
+      >
+        Pending ({filteredEntries.filter((e) => e.status === 'pending').length})
+      </button>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Project
-                </label>
-                <select
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-lg"
-                >
-                  <option value="all">All Projects</option>
-                  {projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      <button
+        onClick={() => selectAllByStatus('approved')}
+        className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-medium text-sm transition"
+      >
+        Approved ({filteredEntries.filter((e) => e.status === 'approved').length})
+      </button>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Employee
-                </label>
-                <select
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-lg"
-                >
-                  <option value="all">All Employees</option>
-                  {employees.map(employee => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      <button
+        onClick={() => selectAllByStatus('rejected')}
+        className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-medium text-sm transition"
+      >
+        Rejected ({filteredEntries.filter((e) => e.status === 'rejected').length})
+      </button>
+    </div>
+  </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={approvalStatus}
-                  onChange={(e) => setApprovalStatus(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-lg"
-                >
-                  <option value="all">All Status</option>
-                  <option value="approved">Approved</option>
-                  <option value="pending">Pending</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-            </div>
-          )}
-        </div>
+  {/* Filter Inputs */}
+  {showFilters && (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Project</label>
+        <select
+          value={selectedProject}
+          onChange={(e) => setSelectedProject(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="all">All Projects</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Employee</label>
+        <select
+          value={selectedEmployee}
+          onChange={(e) => setSelectedEmployee(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="all">All Employees</option>
+          {employees.map((employee) => (
+            <option key={employee.id} value={employee.id}>
+              {employee.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+        <select
+          value={approvalStatus}
+          onChange={(e) => setApprovalStatus(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="all">All Status</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+  )}
+</div>
+
 
         {/* Print Header */}
         <div className="hidden print:block mb-8 border-b-4 border-gray-800 pb-4">
