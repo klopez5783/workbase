@@ -9,7 +9,8 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  setDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -38,6 +39,19 @@ export const firestoreService = {
       } else {
         return { success: false, error: 'Document not found' };
       }
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+   async createUserProfile(uid, data) { // New function specifically for user profiles
+    try {
+      const docRef = doc(db, 'users', uid); // Set the document ID to the user's UID
+      await setDoc(docRef, {
+        ...data,
+        createdAt: serverTimestamp(),
+      });
+      return { success: true, id: uid };
     } catch (error) {
       return { success: false, error: error.message };
     }

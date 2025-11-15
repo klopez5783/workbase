@@ -76,9 +76,7 @@ export default function FloatingClockInButton() {
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
         const assignedProjects = projectsResult.data.filter(project => 
-          project.assignedWorkers?.includes(workerData.id) || 
-          !project.assignedWorkers || 
-          project.assignedWorkers.length === 0
+          project.assignedWorkers?.includes(workerData.id)
         );
         setProjects(assignedProjects);
       }

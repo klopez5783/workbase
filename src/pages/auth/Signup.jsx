@@ -11,10 +11,11 @@ export default function SignUp() {
     phone: '',
     password: '',
     confirmPassword: '',
+    role: 'worker'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const formatPhoneNumber = (value) => {
@@ -76,7 +77,7 @@ export default function SignUp() {
 
     try {
       // Create Firebase Auth account
-      const result = await signup(formData.email, formData.password);
+      const result = await signUp(formData.email, formData.password);
 
       if (result.success && result.user) {
         // Create user document in Firestore
@@ -86,18 +87,22 @@ export default function SignUp() {
           email: formData.email.toLowerCase().trim(),
           phone: formData.phone,
           phoneRaw: phoneDigits,
-          role: 'employee', // Default role
+          role: formData.role, // Default role
           status: 'active',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
-        const firestoreResult = await firestoreService.create('users', userData);
+        const firestoreResult = await firestoreService.createUserProfile(result.user.uid, userData); // Call the new function
+        console.log(firestoreResult)
+        //const firestoreResult = await firestoreService.create('users', userData);
 
         if (firestoreResult.success) {
-          navigate('/dashboard');
+            console.log("Firestore user profile created successfully!");
+            navigate('/');
         } else {
-          throw new Error('Failed to create user profile');
+            console.error("DEBUG: firestoreResult object:", firestoreResult); // Log the full object
+            throw new Error(firestoreResult.error || 'Failed to create user profile');
         }
       } else {
         throw new Error(result.error || 'Failed to create account');
@@ -190,6 +195,39 @@ export default function SignUp() {
               📱 Used to link your account with worker clock-in
             </p>
           </div>
+                {/* Role Selection */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account Type *
+                </label>
+                <div className="flex items-center gap-6">
+                    {/* Worker Option */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="radio"
+                        name="role"
+                        value="worker"
+                        checked={formData.role === 'worker'}
+                        onChange={handleChange}
+                        className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 text-sm font-medium">Worker</span>
+                    </label>
+
+                    {/* Admin Option */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="radio"
+                        name="role"
+                        value="admin"
+                        checked={formData.role === 'admin'}
+                        onChange={handleChange}
+                        className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 text-sm font-medium">Admin</span>
+                    </label>
+                </div>
+            </div>
 
           {/* Password */}
           <div>

@@ -2,7 +2,19 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { storage } from './firebase';
 
 export const storageService = {
-  // Upload file
+  // Upload file (renamed from 'upload' to match usage in WorkLogForm)
+  async uploadFile(file, path) {
+    try {
+      const storageRef = ref(storage, path);
+      const snapshot = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      return { success: true, url };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Upload file (alternate method name)
   async upload(path, file) {
     try {
       const storageRef = ref(storage, path);

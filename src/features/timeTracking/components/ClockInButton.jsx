@@ -24,9 +24,7 @@ export default function ClockInButton() {
 
   // Filter assigned projects
   const assignedProjects = projects.filter(project => 
-    project.assignedWorkers?.includes(worker?.id) || 
-    !project.assignedWorkers || 
-    project.assignedWorkers.length === 0
+    project.assignedWorkers?.includes(worker?.id)
   );
 
   useEffect(() => {
