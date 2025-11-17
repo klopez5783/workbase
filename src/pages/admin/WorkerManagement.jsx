@@ -220,32 +220,64 @@ function WorkerCard({ worker, onDelete }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleResendSMS = async () => {
-    setResending(true);
-    setResendSuccess(false);
+  // const handleResendSMS = async () => {
+  //   setResending(true);
+  //   setResendSuccess(false);
 
-    try {
-      const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const functions = getFunctions();
+  //   try {
+  //     const { getFunctions, httpsCallable } = await import('firebase/functions');
+  //     const functions = getFunctions();
       
-      const resendLink = httpsCallable(functions, 'resendWorkerLink');
-      const result = await resendLink({ workerId: worker.id });
+  //     const resendLink = httpsCallable(functions, 'resendWorkerLink');
+  //     const result = await resendLink({ workerId: worker.id });
 
-      if (result.data.success) {
-        setResendSuccess(true);
-        setTimeout(() => {
-          setResendSuccess(false);
-          // Reload the page to show new access key
-          window.location.reload();
-        }, 2000);
-      }
-    } catch (error) {
-      console.error('Error resending SMS:', error);
-      alert('Failed to send SMS: ' + error.message);
-    } finally {
-      setResending(false);
+  //     if (result.data.success) {
+  //       setResendSuccess(true);
+  //       setTimeout(() => {
+  //         setResendSuccess(false);
+  //         // Reload the page to show new access key
+  //         window.location.reload();
+  //       }, 2000);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error resending SMS:', error);
+  //     alert('Failed to send SMS: ' + error.message);
+  //   } finally {
+  //     setResending(false);
+  //   }
+  // };
+
+
+  const handleResendSMS = async () => {
+  setResending(true);
+  setResendSuccess(false);
+
+  try {
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+
+    // IMPORTANT: specify correct region
+    const functions = getFunctions(undefined, "us-east1");
+
+    const resendLink = httpsCallable(functions, "resendWorkerLink");
+    const result = await resendLink({ workerId: worker.id });
+
+    if (result.data.success) {
+      setResendSuccess(true);
+
+      setTimeout(() => {
+        setResendSuccess(false);
+        window.location.reload();
+      }, 2000);
     }
-  };
+
+  } catch (error) {
+    console.error("Error resending SMS:", error);
+    alert("Failed to send SMS: " + error.message);
+  } finally {
+    setResending(false);
+  }
+};
+
 
   return (
     <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
