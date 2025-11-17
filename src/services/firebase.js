@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDcRWnHywc7uWUqFwb-qLrEV-VfhdVRea8",
@@ -20,10 +21,11 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+const functions = getFunctions(app, 'us-east1');
 
 // Connect to emulators in development
 // IMPORTANT: This must run BEFORE any auth operations
-const USE_EMULATORS = false; // ← SET TO true TO USE EMULATORS
+const USE_EMULATORS = true; // ← SET TO true TO USE EMULATORS
 
 if (USE_EMULATORS && typeof window !== 'undefined') {
   // Only connect once
@@ -43,6 +45,9 @@ if (USE_EMULATORS && typeof window !== 'undefined') {
       
       // Connect to Storage Emulator
       connectStorageEmulator(storage, "127.0.0.1", 9199);
+
+      // Connect to Functions Emulator
+      connectFunctionsEmulator(functions, "127.0.0.1", 5001);
       
       emulatorsConnected = true;
       
@@ -50,6 +55,7 @@ if (USE_EMULATORS && typeof window !== 'undefined') {
       console.log('   - Auth: http://127.0.0.1:9099');
       console.log('   - Firestore: http://127.0.0.1:8080');
       console.log('   - Storage: http://127.0.0.1:9199');
+      console.log('   - Functions: http://127.0.0.1:5001'); 
       console.log('   - UI: http://127.0.0.1:4000');
     } catch (error) {
       console.error('❌ Failed to connect to emulators:', error);

@@ -58,6 +58,7 @@ exports.sendWorkerClockInLink = onDocumentCreated(
 // Callable function to manually resend SMS to a worker
 exports.resendWorkerLink = onCall(
     {
+      region: "us-east1",
       secrets: [twilioSid, twilioToken, twilioPhone],
       memory: "256MiB",
       cors: [
@@ -65,6 +66,7 @@ exports.resendWorkerLink = onCall(
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://192.168.1.50:3000",
+        "https://192.168.1.50:3000", // <-- Add this line!
         "https://workbase-8dfe2.firebaseapp.com",
       ],
     },

@@ -376,7 +376,7 @@ export default function ProjectDetailsPage() {
             </div>
           </div>
 
-          {/* Right Column - Project Info */}
+          {/* Right Column - Project Info & Documents */}
           <div className="space-y-6">
             {/* Project Information */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -434,45 +434,55 @@ export default function ProjectDetailsPage() {
               </div>
             </div>
 
-            {/* Time Entry Breakdown */}
+            {/* Project Documents */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="text-green-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">Entry Status</h2>
+                <FileText className="text-purple-600" size={24} />
+                <h2 className="text-xl font-bold text-gray-900">Documents</h2>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                {/* Contracts */}
+                <button className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+                  <div className="flex items-center gap-2">
+                    <FileText className="text-blue-600" size={20} />
+                    <span className="font-semibold text-gray-900">Contracts</span>
+                  </div>
+                  <span className="text-sm text-blue-600 font-medium">View</span>
+                </button>
+
+                {/* Permits */}
+                <button className="w-full flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="text-green-600" size={20} />
-                    <span className="font-semibold text-gray-900">Approved</span>
+                    <span className="font-semibold text-gray-900">Permits</span>
                   </div>
-                  <span className="text-xl font-bold text-green-600">{approvedCount}</span>
-                </div>
+                  <span className="text-sm text-green-600 font-medium">View</span>
+                </button>
 
-                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                {/* Plans */}
+                <button className="w-full flex items-center justify-between p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition">
                   <div className="flex items-center gap-2">
-                    <Clock className="text-yellow-600" size={20} />
-                    <span className="font-semibold text-gray-900">Pending</span>
+                    <FileText className="text-orange-600" size={20} />
+                    <span className="font-semibold text-gray-900">Plans</span>
                   </div>
-                  <span className="text-xl font-bold text-yellow-600">{pendingCount}</span>
-                </div>
+                  <span className="text-sm text-orange-600 font-medium">View</span>
+                </button>
 
-                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                {/* Photos */}
+                <button className="w-full flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
                   <div className="flex items-center gap-2">
-                    <XCircle className="text-red-600" size={20} />
-                    <span className="font-semibold text-gray-900">Rejected</span>
+                    <Activity className="text-purple-600" size={20} />
+                    <span className="font-semibold text-gray-900">Photos</span>
                   </div>
-                  <span className="text-xl font-bold text-red-600">{rejectedCount}</span>
-                </div>
+                  <span className="text-sm text-purple-600 font-medium">View</span>
+                </button>
 
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
-                  <div className="flex items-center gap-2">
-                    <Activity className="text-blue-600" size={20} />
-                    <span className="font-semibold text-gray-900">Total</span>
-                  </div>
-                  <span className="text-xl font-bold text-blue-600">{timeEntries.length}</span>
-                </div>
+                {/* Upload New Document */}
+                <button className="w-full flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition border-2 border-dashed border-gray-300">
+                  <FileText className="text-gray-600" size={20} />
+                  <span className="font-semibold text-gray-700">Upload Document</span>
+                </button>
               </div>
             </div>
           </div>
