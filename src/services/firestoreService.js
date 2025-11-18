@@ -10,7 +10,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
-  setDoc
+  setDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -28,6 +28,24 @@ export const firestoreService = {
     }
   },
 
+  // Method to get documents from a top-level collection with optional queries
+  getCollection: async (collectionName, queryConditions = []) => {
+    try {
+      let q = collection(db, collectionName);
+
+      queryConditions.forEach(condition => {
+        q = query(q, where(condition.field, condition.operator, condition.value));
+      });
+
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return { success: true, data };
+    } catch (error) {
+      console.error(`Error getting collection ${collectionName}:`, error);
+      return { success: false, error: error.message };
+    }
+  },
+
   // Read document
   async getById(collectionName, id) {
     try {
@@ -40,6 +58,17 @@ export const firestoreService = {
         return { success: false, error: 'Document not found' };
       }
     } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Method to create a document in a top-level collection
+  createDocument: async (collectionName, data) => {
+    try {
+      const docRef = await addDoc(collection(db, collectionName), data);
+      return { success: true, id: docRef.id };
+    } catch (error) {
+      console.error(`Error creating document in ${collectionName}:`, error);
       return { success: false, error: error.message };
     }
   },

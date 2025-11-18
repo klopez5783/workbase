@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { firestoreService } from '../services/firestoreService';
+import ProjectDocuments from '../components/ProjectDocuments';
 import {
   Briefcase,
   MapPin,
@@ -19,10 +20,16 @@ import {
   UserCheck,
   Activity
 } from 'lucide-react';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProjectDetailsPage() {
   const navigate = useNavigate();
   const { projectId } = useParams();
+  const { currentUser } = useAuth();
+
+  const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
+  const isAdmin = currentEmployee?.role ===  "admin";
 
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
@@ -31,8 +38,12 @@ export default function ProjectDetailsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    loadProjectDetails();
-  }, [projectId]);
+    if (currentEmployee) {
+      console.log('Current user:', currentEmployee.name);
+      console.log('User role:', currentEmployee.role);
+      loadProjectDetails();
+    }
+  }, [projectId, currentEmployee]);
 
   const loadProjectDetails = async () => {
     try {
@@ -435,56 +446,11 @@ export default function ProjectDetailsPage() {
             </div>
 
             {/* Project Documents */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="text-purple-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">Documents</h2>
-              </div>
-
-              <div className="space-y-3">
-                {/* Contracts */}
-                <button className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
-                  <div className="flex items-center gap-2">
-                    <FileText className="text-blue-600" size={20} />
-                    <span className="font-semibold text-gray-900">Contracts</span>
-                  </div>
-                  <span className="text-sm text-blue-600 font-medium">View</span>
-                </button>
-
-                {/* Permits */}
-                <button className="w-full flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="text-green-600" size={20} />
-                    <span className="font-semibold text-gray-900">Permits</span>
-                  </div>
-                  <span className="text-sm text-green-600 font-medium">View</span>
-                </button>
-
-                {/* Plans */}
-                <button className="w-full flex items-center justify-between p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition">
-                  <div className="flex items-center gap-2">
-                    <FileText className="text-orange-600" size={20} />
-                    <span className="font-semibold text-gray-900">Plans</span>
-                  </div>
-                  <span className="text-sm text-orange-600 font-medium">View</span>
-                </button>
-
-                {/* Photos */}
-                <button className="w-full flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
-                  <div className="flex items-center gap-2">
-                    <Activity className="text-purple-600" size={20} />
-                    <span className="font-semibold text-gray-900">Photos</span>
-                  </div>
-                  <span className="text-sm text-purple-600 font-medium">View</span>
-                </button>
-
-                {/* Upload New Document */}
-                <button className="w-full flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition border-2 border-dashed border-gray-300">
-                  <FileText className="text-gray-600" size={20} />
-                  <span className="font-semibold text-gray-700">Upload Document</span>
-                </button>
-              </div>
-            </div>
+            <ProjectDocuments 
+              projectId={project.id}        // or however you access the current project ID
+              projectName={project.name}    // or however you access the project name
+              readOnly={false}  // true for workers, false for admins
+            />
           </div>
         </div>
       </div>
