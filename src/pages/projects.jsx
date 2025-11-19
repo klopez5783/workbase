@@ -222,13 +222,6 @@ export default function ProjectsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          {/* <button
-            onClick={() => navigate(-1)}
-            className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
-          >
-            <ArrowLeft size={20} />
-            Back
-          </button> */}
 
           <div className="flex items-center justify-between">
             <div>

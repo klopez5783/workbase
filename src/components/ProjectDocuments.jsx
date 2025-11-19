@@ -237,7 +237,7 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
           onClose={() => setSelectedCategory(null)}
           // --- CHANGE 2: Update onDelete to call deleteDocument directly on 'projectFiles' ---
           onDelete={async (docId) => {
-            await firestoreService.deleteDocument('projectFiles', docId);
+            await firestoreService.delete('projectFiles', docId);
             loadDocuments();
           }}
           // --- END CHANGE 2 ---
