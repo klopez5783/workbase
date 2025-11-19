@@ -29,7 +29,7 @@ export default function ProjectManagement() {
     try {
       setLoading(true);
       const result = await firestoreService.getAll('projects');
-      
+
       if (result.success && result.data) {
         // Convert Firestore data to project objects
         const projectObjects = result.data.map(doc => ({
@@ -46,9 +46,15 @@ export default function ProjectManagement() {
           geofenceRadius: doc.geofenceRadius || 100,
           createdAt: doc.createdAt,
           updatedAt: doc.updatedAt,
+          createdBy: doc.createdBy || null,
         }));
-        
-        setProjects(projectObjects);
+
+        // Filter projects to show only those created by the current admin
+        const userProjects = projectObjects.filter(
+          project => project.createdBy === currentUser.uid
+        );
+
+        setProjects(userProjects);
       }
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -148,7 +154,7 @@ export default function ProjectManagement() {
           🔒 Admin Access
         </p>
         <p className="text-blue-700 text-sm mt-1">
-          You have full control to create, edit, and delete projects. Changes will be visible to all assigned employees.
+          You can create, edit, and delete your own projects. Only projects you create will be visible to you.
         </p>
       </div>
 

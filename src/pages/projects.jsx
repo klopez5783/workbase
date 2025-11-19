@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../services/firestoreService';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Briefcase,
   MapPin,
@@ -23,6 +24,7 @@ import ProjectForm from '../features/projects/components/ProjectForm';
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   // Data states
   const [projects, setProjects] = useState([]);
@@ -49,10 +51,14 @@ export default function ProjectsPage() {
     try {
       setLoading(true);
 
-      // Load projects
+      // Load projects and filter by current admin
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
-        setProjects(projectsResult.data);
+        // Filter projects to show only those created by the current admin
+        const userProjects = projectsResult.data.filter(
+          project => project.createdBy === currentUser?.uid
+        );
+        setProjects(userProjects);
       }
 
       // Load time entries for statistics
