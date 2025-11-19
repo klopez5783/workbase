@@ -23,8 +23,13 @@ service cloud.firestore {
   }
     
     match /projects/{projectId} {
-    allow read: if true; // ✅ Allows anyone to read (workers need to see job sites)
-    allow create, update, delete: if isAdmin();
+    // Allow public read for workers (including non-authenticated workers using access keys)
+    // This is needed for geofencing and clock-in functionality
+    allow read: if true;
+    // Admins can only create projects (createdBy will be set to their uid)
+    allow create: if isAdmin() && request.resource.data.createdBy == request.auth.uid;
+    // Admins can only update/delete their own projects
+    allow update, delete: if isAdmin() && resource.data.createdBy == request.auth.uid;
   }
     
     match /employees/{employeeId} {

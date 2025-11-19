@@ -4,8 +4,15 @@ import { firestoreService } from '../services/firestoreService';
 /**
  * Custom hook to fetch and manage projects as objects from Firebase
  * Returns projects in a structured object format
+ * @param {Object} options - Filter options
+ * @param {string} options.userId - Filter by assigned employee
+ * @param {string} options.createdBy - Filter by project creator (admin)
  */
-export function useProjects(userId = null) {
+export function useProjects(options = {}) {
+  const { userId = null, createdBy = null } = typeof options === 'string'
+    ? { userId: options }
+    : options;
+
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +24,7 @@ export function useProjects(userId = null) {
         setError(null);
 
         const result = await firestoreService.getAll('projects');
-        
+
         if (result.success && result.data) {
           // Transform Firestore documents into project objects
           const projectObjects = result.data.map(doc => ({
@@ -33,12 +40,13 @@ export function useProjects(userId = null) {
             clientName: doc.clientName || '',
             clientPhone: doc.clientPhone || '',
             status: doc.status || 'active',
-            assignedEmployees: Array.isArray(doc.assignedEmployees) 
-              ? doc.assignedEmployees 
+            assignedEmployees: Array.isArray(doc.assignedEmployees)
+              ? doc.assignedEmployees
               : [],
             geofenceRadius: doc.geofenceRadius || 100,
             createdAt: doc.createdAt || new Date().toISOString(),
             updatedAt: doc.updatedAt || new Date().toISOString(),
+            createdBy: doc.createdBy || null,
             // Additional fields
             budget: doc.budget || null,
             startDate: doc.startDate || null,
@@ -46,12 +54,21 @@ export function useProjects(userId = null) {
             description: doc.description || '',
           }));
 
-          // Filter by user if userId is provided
-          const filteredProjects = userId 
-            ? projectObjects.filter(project => 
-                project.assignedEmployees.includes(userId)
-              )
-            : projectObjects;
+          // Filter by creator if createdBy is provided (for admin project access control)
+          let filteredProjects = projectObjects;
+
+          if (createdBy) {
+            filteredProjects = filteredProjects.filter(project =>
+              project.createdBy === createdBy
+            );
+          }
+
+          // Filter by assigned employee if userId is provided
+          if (userId) {
+            filteredProjects = filteredProjects.filter(project =>
+              project.assignedEmployees.includes(userId)
+            );
+          }
 
           setProjects(filteredProjects);
         } else {
@@ -67,12 +84,12 @@ export function useProjects(userId = null) {
     };
 
     fetchProjects();
-  }, [userId]);
+  }, [userId, createdBy]);
 
   const refreshProjects = async () => {
     setLoading(true);
     const result = await firestoreService.getAll('projects');
-    
+
     if (result.success && result.data) {
       const projectObjects = result.data.map(doc => ({
         id: doc.id,
@@ -87,17 +104,27 @@ export function useProjects(userId = null) {
         geofenceRadius: doc.geofenceRadius || 100,
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
+        createdBy: doc.createdBy || null,
       }));
 
-      const filteredProjects = userId 
-        ? projectObjects.filter(project => 
-            project.assignedEmployees.includes(userId)
-          )
-        : projectObjects;
+      // Apply the same filtering logic as in fetchProjects
+      let filteredProjects = projectObjects;
+
+      if (createdBy) {
+        filteredProjects = filteredProjects.filter(project =>
+          project.createdBy === createdBy
+        );
+      }
+
+      if (userId) {
+        filteredProjects = filteredProjects.filter(project =>
+          project.assignedEmployees.includes(userId)
+        );
+      }
 
       setProjects(filteredProjects);
     }
-    
+
     setLoading(false);
   };
 
@@ -115,7 +142,7 @@ export function useProjects(userId = null) {
 export async function getProjectById(projectId) {
   try {
     const result = await firestoreService.getById('projects', projectId);
-    
+
     if (result.success && result.data) {
       return {
         id: result.data.id,
@@ -130,9 +157,10 @@ export async function getProjectById(projectId) {
         geofenceRadius: result.data.geofenceRadius || 100,
         createdAt: result.data.createdAt,
         updatedAt: result.data.updatedAt,
+        createdBy: result.data.createdBy || null,
       };
     }
-    
+
     return null;
   } catch (error) {
     console.error('Error fetching project:', error);

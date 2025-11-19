@@ -3,8 +3,12 @@ import { Loader, MapPin, X } from 'lucide-react';
 import { useProjectStore } from '../../projects/store/projectstore';
 import { firestoreService } from '../../../services/firestoreService';
 import LocationPicker from './LocationPicker';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useEmployeeStore } from '../../employees/store/employeeStore';
 
 export default function ProjectForm({ onClose, existingProject = null }) {
+  const { currentUser } = useAuth();
+  const { currentEmployee } = useEmployeeStore();
   const [name, setName] = useState(existingProject?.name || '');
   const [address, setAddress] = useState(existingProject?.address || '');
   const [clientName, setClientName] = useState(existingProject?.clientName || '');
@@ -53,6 +57,8 @@ export default function ProjectForm({ onClose, existingProject = null }) {
       assignedEmployees: existingProject?.assignedEmployees || [],
       createdAt: existingProject?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      // Add createdBy field for new projects to track the admin who created it
+      ...(existingProject ? {} : { createdBy: currentUser?.uid || currentEmployee?.uid }),
     };
 
     try {
