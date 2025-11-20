@@ -3,6 +3,7 @@ import { Plus, Briefcase, Loader, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import ProjectForm from '../../features/projects/components/ProjectForm';
 import ProjectCard from '../../features/projects/components/ProjectCard';
 import AssignWorkersModal from '../../features/projects/components/AssignWorkersModal';
@@ -16,6 +17,7 @@ export default function ProjectManagement() {
   const [assigningProject, setAssigningProject] = useState(null);
 
   const { currentUser } = useAuth();
+  const { currentEmployee } = useEmployeeStore();
   const navigate = useNavigate();
 
   // Load projects from Firestore
@@ -24,7 +26,10 @@ export default function ProjectManagement() {
   }, []);
 
   const loadProjects = async () => {
-    if (!currentUser) return;
+    if (!currentEmployee?.companyId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -49,12 +54,12 @@ export default function ProjectManagement() {
           createdBy: doc.createdBy || null,
         }));
 
-        // Filter projects to show only those created by the current admin
-        const userProjects = projectObjects.filter(
-          project => project.createdBy === currentUser.uid
+        // Filter projects to show only those belonging to the current company
+        const companyProjects = projectObjects.filter(
+          project => project.createdBy === currentEmployee.companyId
         );
 
-        setProjects(userProjects);
+        setProjects(companyProjects);
       }
     } catch (error) {
       console.error('Error loading projects:', error);

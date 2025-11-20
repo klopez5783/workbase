@@ -1,4 +1,4 @@
-import { User, LogOut, Settings, Users,House  } from 'lucide-react';
+import { User, LogOut, Settings, Users, House, Building2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import { useNavigate } from 'react-router-dom';
@@ -57,6 +57,16 @@ export default function TopBar({ title = 'WorkBase' }) {
                 <div className="border-b border-gray-200 py-1">
                   <button
                     onClick={() => {
+                      navigate('/admin/company');
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"
+                  >
+                    <Building2 size={16} />
+                    Manage Company
+                  </button>
+                  <button
+                    onClick={() => {
                       navigate('/admin/projects');
                       setShowMenu(false);
                     }}
@@ -65,20 +75,26 @@ export default function TopBar({ title = 'WorkBase' }) {
                     <House size={16} />
                     Manage Projects
                   </button>
-                  <button
-                    onClick={() => {
-                      navigate('/admin/workers');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"
-                  >
-                    <Users size={16} />
-                    Manage Workers
-                  </button>
                   <Link className='className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"' to="/profile">
                     <Settings size={16} />
                     Profile Settings
                   </Link>
+                </div>
+              )}
+
+              {/* Worker Menu Items */}
+              {!isAdmin && (
+                <div className="border-b border-gray-200 py-1">
+                  <button
+                    onClick={() => {
+                      navigate('/company');
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"
+                  >
+                    <Building2 size={16} />
+                    View Company
+                  </button>
                 </div>
               )}
 
