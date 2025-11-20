@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../services/firestoreService';
 import { useAuth } from '../contexts/AuthContext';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
 import {
   Briefcase,
   MapPin,
@@ -25,6 +26,7 @@ import ProjectForm from '../features/projects/components/ProjectForm';
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { currentEmployee } = useEmployeeStore();
 
   // Data states
   const [projects, setProjects] = useState([]);
@@ -51,14 +53,14 @@ export default function ProjectsPage() {
     try {
       setLoading(true);
 
-      // Load projects and filter by current admin
+      // Load projects and filter by current company
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
-        // Filter projects to show only those created by the current admin
-        const userProjects = projectsResult.data.filter(
-          project => project.createdBy === currentUser?.uid
+        // Filter projects to show only those belonging to the current company
+        const companyProjects = projectsResult.data.filter(
+          project => project.createdBy === currentEmployee?.companyId
         );
-        setProjects(userProjects);
+        setProjects(companyProjects);
       }
 
       // Load time entries for statistics

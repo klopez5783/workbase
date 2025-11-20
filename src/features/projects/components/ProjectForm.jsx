@@ -57,8 +57,8 @@ export default function ProjectForm({ onClose, existingProject = null }) {
       assignedEmployees: existingProject?.assignedEmployees || [],
       createdAt: existingProject?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      // Add createdBy field for new projects to track the admin who created it
-      ...(existingProject ? {} : { createdBy: currentUser?.uid || currentEmployee?.uid }),
+      // Add createdBy field for new projects to track the company (using companyId)
+      ...(existingProject ? {} : { createdBy: currentEmployee?.companyId }),
     };
 
     try {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, UserPlus, Users, Loader, CheckCircle } from 'lucide-react';
 import { firestoreService } from '../../../services/firestoreService';
+import { useEmployeeStore } from '../../employees/store/employeeStore';
 
 export default function AssignWorkersModal({ project, onClose, onSuccess }) {
   const [workers, setWorkers] = useState([]);
@@ -8,6 +9,7 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { currentEmployee } = useEmployeeStore();
 
   useEffect(() => {
     loadWorkers();
@@ -16,12 +18,18 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
   const loadWorkers = async () => {
     try {
       setLoading(true);
-      const result = await firestoreService.getAll('workers');
-      
+
+      // Load workers from users collection that belong to the current company
+      const result = await firestoreService.getAll('users');
+
       if (result.success && result.data) {
-        setWorkers(result.data);
+        // Filter to only workers that belong to the current company
+        const companyWorkers = result.data.filter(
+          user => user.role === 'worker' && user.companyId === currentEmployee?.companyId
+        );
+        setWorkers(companyWorkers);
         // Set initially assigned workers
-        setAssignedWorkerIds(project.assignedWorkers || []);
+        setAssignedWorkerIds(project.assignedWorkers || project.assignedEmployees || []);
       }
     } catch (error) {
       console.error('Error loading workers:', error);
@@ -110,9 +118,9 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
           {workers.length === 0 ? (
             <div className="text-center py-12">
               <Users size={64} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No Workers Yet</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No Workers in Company</h3>
               <p className="text-gray-600">
-                Create workers first before assigning them to projects.
+                Add workers to your company first before assigning them to projects.
               </p>
             </div>
           ) : (
@@ -150,7 +158,7 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
                           <p className={`text-sm ${
                             isAssigned ? 'text-blue-700' : 'text-gray-600'
                           }`}>
-                            {worker.phone}
+                            {worker.email || worker.phone || 'No contact info'}
                           </p>
                         </div>
                       </div>
