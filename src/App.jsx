@@ -14,6 +14,8 @@ import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Projects from './pages/projects';
 import ProjectManagement from './pages/admin/ProjectManagement';
+import CompanyManagement from './pages/admin/CompanyManagement';
+import CompanyView from './pages/CompanyView';
 import WorkerManagement from './pages/admin/WorkerManagement';
 import WorkerClockIn from './pages/WorkerClockIn';
 import ProfileSettings from './pages/ProfileSettings';
@@ -91,6 +93,8 @@ function App() {
             email: userData.email,
             role: userData.role,
             status: userData.status,
+            companyId: userData.companyId || null,
+            createdAt: userData.createdAt,
           });
         }
       };
@@ -126,6 +130,7 @@ return (
           <Route path="reports" element={<Reports />} />
           <Route path="documents" element={<Documents />} />
           <Route path="projects" element={<Projects />} />
+          <Route path="company" element={<CompanyView />} />
           <Route path="profile" element={<ProfileSettings />} />
           <Route path="daily-work-log" element={<DailyWorkLog />} />
           <Route path="daily-reports" element={<DailyReportsViewer />} />
@@ -163,13 +168,23 @@ return (
           />
 
 
-            <Route
-          path="/admin/projects"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <ProjectManagement />
-            </ProtectedRoute>
-          } /> 
+          <Route
+            path="admin/projects"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <ProjectManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="admin/company"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <CompanyManagement />
+              </ProtectedRoute>
+            }
+          />
 
         </Route>//end Route tag
 

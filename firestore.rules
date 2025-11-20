@@ -22,14 +22,26 @@ service cloud.firestore {
     allow create, update, delete: if isAdmin();
   }
     
+    match /companies/{companyId} {
+    // Anyone authenticated can read companies (to see company info)
+    allow read: if request.auth != null;
+    // Only admins can create companies
+    allow create: if isAdmin();
+    // Only company admins or creator can update/delete
+    allow update, delete: if isAdmin() && (
+      resource.data.createdBy == request.auth.uid ||
+      request.auth.uid in resource.data.admins
+    );
+  }
+
     match /projects/{projectId} {
     // Allow public read for workers (including non-authenticated workers using access keys)
     // This is needed for geofencing and clock-in functionality
     allow read: if true;
-    // Admins can only create projects (createdBy will be set to their uid)
-    allow create: if isAdmin() && request.resource.data.createdBy == request.auth.uid;
-    // Admins can only update/delete their own projects
-    allow update, delete: if isAdmin() && resource.data.createdBy == request.auth.uid;
+    // Admins can only create projects (createdBy will be company UID)
+    allow create: if isAdmin();
+    // Admins can only update/delete projects belonging to their company
+    allow update, delete: if isAdmin();
   }
     
     match /employees/{employeeId} {
