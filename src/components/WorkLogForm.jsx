@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, X, Loader, Upload, ArrowLeftFromLine } from 'lucide-react';
+import { Camera, X, Loader, Upload, CircleArrowLeft } from 'lucide-react';
 import { firestoreService } from '../services/firestoreService';
 import { storageService } from '../services/storageServices';
 
@@ -114,7 +114,7 @@ export default function WorkLogForm({
           onClick={onCancel}
           className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
         >
-           <ArrowLeftFromLine size={50} /> Back to Projects
+           <CircleArrowLeft size={24} /> Back to Projects
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Daily Work Log</h1>
         <p className="text-gray-600 text-sm mt-1">{projectName}</p>

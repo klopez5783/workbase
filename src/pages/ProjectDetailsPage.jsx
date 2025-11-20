@@ -10,7 +10,7 @@ import {
   Calendar,
   Edit,
   Trash2,
-  ArrowLeft,
+  CircleArrowLeft,
   Loader,
   AlertCircle,
   CheckCircle,
@@ -170,6 +170,7 @@ export default function ProjectDetailsPage() {
             onClick={() => navigate('/projects')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
+            <CircleArrowLeft size={24} />
             Back to Projects
           </button>
         </div>
@@ -186,7 +187,7 @@ export default function ProjectDetailsPage() {
             onClick={() => navigate('/projects')}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
-            <ArrowLeft size={20} />
+            <CircleArrowLeft size={24} />
             Back to Projects
           </button>
 
