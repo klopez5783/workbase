@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { firestoreService } from '../services/firestoreService';
-import { 
-  Calendar, 
-  Download, 
-  Printer, 
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
+import {
+  Calendar,
+  Download,
+  Printer,
   ArrowLeft,
-  ChevronDown, 
+  ChevronDown,
   Loader,
   Clock,
   User,
@@ -29,6 +30,7 @@ export default function TimecardReport() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const projectIdFromUrl = searchParams.get('projectId');
+  const { currentEmployee } = useEmployeeStore();
 
   // Data states
   const [projects, setProjects] = useState([]);
@@ -94,12 +96,20 @@ export default function TimecardReport() {
 
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
-        setProjects(projectsResult.data);
+        // Filter projects by company
+        const companyProjects = projectsResult.data.filter(
+          project => project.createdBy === currentEmployee?.companyId
+        );
+        setProjects(companyProjects);
       }
 
       const employeesResult = await firestoreService.getAll('users');
       if (employeesResult.success) {
-        setEmployees(employeesResult.data.filter(u => u.role === 'worker'));
+        // Filter workers by company
+        const companyWorkers = employeesResult.data.filter(
+          u => u.role === 'worker' && u.companyId === currentEmployee?.companyId
+        );
+        setEmployees(companyWorkers);
       }
 
       const entriesResult = await firestoreService.getAll('timeEntries');

@@ -29,11 +29,11 @@ export default function AdminTools() {
   // Load projects
   useEffect(() => {
     const loadProjects = async () => {
-      if (!currentUser) return;
+      if (!currentUser || !currentEmployee) return;
 
       try {
         const result = await firestoreService.getAll('projects');
-        
+
         if (result.success && result.data) {
           const projectObjects = result.data.map(doc => ({
             id: doc.id,
@@ -42,19 +42,25 @@ export default function AdminTools() {
             clientName: doc.clientName || '',
             status: doc.status || 'active',
             assignedEmployees: doc.assignedEmployees || [],
+            createdBy: doc.createdBy || null,
           }));
-          
-          setProjects(projectObjects);
+
+          // Filter projects to show only those belonging to the current company
+          const companyProjects = projectObjects.filter(
+            project => project.createdBy === currentEmployee.companyId
+          );
+
+          setProjects(companyProjects);
         }
       } catch (error) {
         console.error('Error loading projects:', error);
       }
-      
+
       setLoading(false);
     };
 
     loadProjects();
-  }, [currentUser]);
+  }, [currentUser, currentEmployee]);
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);

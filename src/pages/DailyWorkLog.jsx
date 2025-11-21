@@ -59,13 +59,23 @@ export default function DailyWorkLog() {
       // Get assigned projects
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
-        // Filter projects assigned to this employee
-        const assignedProjects = projectsResult.data.filter(project => 
-          project.assignedEmployees?.includes(currentEmployee.id) || 
-          !project.assignedEmployees || 
-          project.assignedEmployees.length === 0
-        );
-        setProjects(assignedProjects);
+        let filteredProjects = projectsResult.data;
+
+        // For admins: filter by company
+        if (isAdmin) {
+          filteredProjects = filteredProjects.filter(project =>
+            project.createdBy === currentEmployee.companyId
+          );
+        } else {
+          // For workers: filter by assigned projects
+          filteredProjects = filteredProjects.filter(project =>
+            project.assignedEmployees?.includes(currentEmployee.id) ||
+            !project.assignedEmployees ||
+            project.assignedEmployees.length === 0
+          );
+        }
+
+        setProjects(filteredProjects);
       }
 
       // Get today's work logs
