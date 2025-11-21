@@ -27,6 +27,7 @@ import AdminTools from './pages/admin/AdminTools';
 import TimecardReport from './pages/TimecardReport';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectHoursPage from './pages/ProjectHoursPage';
+import SMSTerms from './pages/SMSTerms';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -111,7 +112,8 @@ return (
         {/* Public Routes */}
         <Route path="/login" element={currentUser ? <Navigate to="/" /> : <Login />} />
         <Route path="/signup" element={currentUser ? <Navigate to="/" /> : <Signup />} />
-        
+        <Route path="/sms-terms" element={<SMSTerms />} />
+
         {/* Worker Clock-In (Public) */}
         <Route path="/worker/:accessKey" element={<WorkerClockIn />} />
 
