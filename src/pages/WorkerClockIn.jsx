@@ -4,12 +4,17 @@ import { Clock, MapPin, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { firestoreService } from '../services/firestoreService';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { calculateDistance } from '../shared/utils/distance';
+import { useAuth } from '../contexts/AuthContext';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
+import JoinCompanyModal from '../components/JoinCompanyModal';
 
 export default function WorkerClockIn() {
   const { accessKey } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+  const { currentUser } = useAuth();
+  const { currentEmployee, setCurrentEmployee } = useEmployeeStore();
+
   const [worker, setWorker] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
@@ -19,6 +24,11 @@ export default function WorkerClockIn() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [requestingSent, setRequestingSent] = useState(false);
+
+  // Company join states
+  const [showJoinCompanyModal, setShowJoinCompanyModal] = useState(false);
+  const [companyToJoin, setCompanyToJoin] = useState(null);
+  const [joiningCompany, setJoiningCompany] = useState(false);
 
 
   const { getCurrentLocation } = useGeolocation();
@@ -137,16 +147,88 @@ export default function WorkerClockIn() {
       setActiveShift(shiftResult.data[0]);
     }
 
+    // Check if worker needs to join a company
+    console.log('Checking company join status...');
+    console.log('Current user:', currentUser);
+    console.log('Current employee:', currentEmployee);
+
+    if (currentUser && currentEmployee && !currentEmployee.companyId && assignedProjects.length > 0) {
+      console.log('Worker has no company, needs to join');
+
+      // Get the company from the first project
+      const firstProject = assignedProjects[0];
+      if (firstProject.createdBy) {
+        console.log('Fetching company:', firstProject.createdBy);
+        const companyResult = await firestoreService.get('companies', firstProject.createdBy);
+
+        if (companyResult.success && companyResult.data) {
+          console.log('Company found:', companyResult.data);
+          setCompanyToJoin(companyResult.data);
+          setShowJoinCompanyModal(true);
+        }
+      }
+    }
+
     console.log('✅ Setting loading to false');
     setLoading(false); // ← CRITICAL: This must be called!
     console.log('=== END loadWorkerData ===');
-    
+
   } catch (err) {
     console.error('ERROR in loadWorkerData:', err);
     setError('Failed to load data: ' + err.message);
     setLoading(false); // ← Make sure this is here too
   }
 };
+
+  const handleAcceptJoin = async () => {
+    if (!companyToJoin || !currentUser || !currentEmployee) return;
+
+    try {
+      setJoiningCompany(true);
+
+      // Update worker's user profile with companyId
+      const updateUserResult = await firestoreService.update('users', currentUser.uid, {
+        companyId: companyToJoin.id,
+        updatedAt: new Date().toISOString(),
+      });
+
+      if (!updateUserResult.success) {
+        throw new Error('Failed to update user profile');
+      }
+
+      // Add worker to company's workers array
+      const currentWorkers = companyToJoin.workers || [];
+      const updateCompanyResult = await firestoreService.update('companies', companyToJoin.id, {
+        workers: [...currentWorkers, currentUser.uid],
+        updatedAt: new Date().toISOString(),
+      });
+
+      if (!updateCompanyResult.success) {
+        throw new Error('Failed to add worker to company');
+      }
+
+      // Update currentEmployee state
+      setCurrentEmployee({
+        ...currentEmployee,
+        companyId: companyToJoin.id,
+      });
+
+      // Close modal and show success
+      setShowJoinCompanyModal(false);
+      setSuccess(`✓ Successfully joined ${companyToJoin.name}! You can now clock in.`);
+
+    } catch (err) {
+      console.error('Error joining company:', err);
+      setError('Failed to join company: ' + err.message);
+    } finally {
+      setJoiningCompany(false);
+    }
+  };
+
+  const handleDeclineJoin = () => {
+    setShowJoinCompanyModal(false);
+    setError('You must join a company to clock in at job sites. Please contact your supervisor.');
+  };
 
   const handleAutoClockIn = async (projectId) => {
     setActionLoading(true);
@@ -381,8 +463,19 @@ export default function WorkerClockIn() {
 )}
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-      <div className="max-w-md mx-auto p-5 pt-8">
+    <>
+      {/* Join Company Modal */}
+      {showJoinCompanyModal && companyToJoin && (
+        <JoinCompanyModal
+          company={companyToJoin}
+          onAccept={handleAcceptJoin}
+          onDecline={handleDeclineJoin}
+          loading={joiningCompany}
+        />
+      )}
+
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+        <div className="max-w-md mx-auto p-5 pt-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
@@ -501,5 +594,6 @@ export default function WorkerClockIn() {
         </div>
       </div>
     </div>
+    </>
   );
 }
