@@ -126,11 +126,12 @@ export default function WorkerClockIn() {
     console.log('Loading projects...');
     const projectsResult = await firestoreService.getAll('projects');
     console.log('Projects result:', projectsResult);
-    
+
+    let assignedProjects = [];
     if (projectsResult.success) {
-      const assignedProjects = projectsResult.data.filter(project => 
-        project.assignedWorkers?.includes(workerData.id) || 
-        !project.assignedWorkers || 
+      assignedProjects = projectsResult.data.filter(project =>
+        project.assignedWorkers?.includes(workerData.id) ||
+        !project.assignedWorkers ||
         project.assignedWorkers.length === 0
       );
       console.log('Assigned projects:', assignedProjects);
