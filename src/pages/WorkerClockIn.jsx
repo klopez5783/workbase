@@ -38,8 +38,11 @@ export default function WorkerClockIn() {
   const autoProjectId = searchParams.get('project');
 
   useEffect(() => {
-    loadWorkerData();
-    }, [accessKey]);
+    // Only load if we have the accessKey and auth is ready
+    if (accessKey) {
+      loadWorkerData();
+    }
+  }, [accessKey]);
 
   // Auto clock-in/out if URL parameters present
   useEffect(() => {
