@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Users, CheckCircle, AlertCircle, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
+import Alert from './Alert';
 
 export default function WorkerLinkStatus() {
   const { currentUser } = useAuth();
@@ -91,23 +92,15 @@ export default function WorkerLinkStatus() {
 
   // Show alert for setup needed
   return (
-    <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 flex-1">
-          <AlertCircle className="text-yellow-600 mt-0.5" size={20} />
-          <div>
-            <p className="font-semibold text-yellow-900 text-sm">Clock-In Setup Required</p>
-            <p className="text-xs text-yellow-700 mt-1">{status.message}</p>
-          </div>
-        </div>
-        <Link
-          to="/profile"
-          className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 flex-shrink-0"
-        >
-          <Settings size={14} />
-          Setup
-        </Link>
-      </div>
-    </div>
+    <Alert
+    shadeType="yellow"
+    text="Clock-In Setup Required"
+    subText={status.message}
+    actionButton={{
+      text: 'Setup',
+      link: '/profile',
+      icon: Settings
+    }}
+  />
   );
 }

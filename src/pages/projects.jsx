@@ -19,9 +19,11 @@ import {
   Search,
   Filter,
   ArrowLeft,
-  AlertCircle
+  AlertCircle,
+  Building2
 } from 'lucide-react';
 import ProjectForm from '../features/projects/components/ProjectForm';
+import Alert from '../components/Alert';
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [showCompanyAlert, setShowCompanyAlert] = useState(false);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -174,6 +177,15 @@ export default function ProjectsPage() {
     setShowDeleteConfirm(true);
   };
 
+  const handleCompanyCheck = () => {
+    if(currentEmployee?.companyId) 
+      {setShowForm(true)} 
+    else 
+      {
+        setShowCompanyAlert(true)
+      }
+  }
+
   const confirmDelete = async () => {
     if (!projectToDelete) return;
 
@@ -228,15 +240,26 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-5 pb-24">
       <div className="max-w-7xl mx-auto">
+
+      {/* show Alert if no company */}
+      {showCompanyAlert && (
+        <div className="mb-6">
+          <Alert
+            shadeType="red"
+            text="Create Company Required"
+            subText="You must create a company profile before adding projects."
+            actionButton={{
+              text: 'Create Company',
+              link: '/company',
+              icon: Building2
+            }}
+            onClose={() => setShowCompanyAlert(false)}
+          />
+        </div>
+      )}
+
         {/* Header */}
         <div className="mb-6">
-          {/* <button
-            onClick={() => navigate(-1)}
-            className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
-          >
-            <ArrowLeft size={20} />
-            Back
-          </button> */}
 
           <div className="flex items-center justify-between">
             <div>
@@ -247,7 +270,7 @@ export default function ProjectsPage() {
             </div>
 
             <button
-              onClick={() => setShowForm(true)}
+              onClick={ handleCompanyCheck}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
             >
               <Plus size={20} />
@@ -376,7 +399,7 @@ export default function ProjectsPage() {
             </p>
             {!searchTerm && (
               <button
-                onClick={() => setShowForm(true)}
+                onClick={ handleCompanyCheck }
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2"
               >
                 <Plus size={20} />
@@ -554,7 +577,7 @@ export default function ProjectsPage() {
           existingProject={editingProject}
         />
       )}
-
     </div>
   );
+  
 }

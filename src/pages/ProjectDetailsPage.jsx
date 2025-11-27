@@ -19,6 +19,8 @@ import {
   UserCheck,
   Activity
 } from 'lucide-react';
+import AssignWorkersModal from '../features/projects/components/AssignWorkersModal';
+
 
 export default function ProjectDetailsPage() {
   const navigate = useNavigate();
@@ -29,6 +31,21 @@ export default function ProjectDetailsPage() {
   const [timeEntries, setTimeEntries] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [error, setError] = useState('');
+  const [showAssignWorkers, setShowAssignWorkers] = useState(false);
+  const [assigningProject, setAssigningProject] = useState(null);
+
+  const handleAssignWorkers = (projectID) => {
+    const project = firestoreService.getById('projects', projectID);
+    setAssigningProject(project);
+    setShowAssignWorkers(true);
+  };
+
+  const handleCloseAssignWorkers = async () => {
+    setShowAssignWorkers(false);
+    setAssigningProject(null);
+    // Reload projects to show updated assignments
+    await loadProjects();
+  };
 
   useEffect(() => {
     loadProjectDetails();
@@ -239,13 +256,16 @@ export default function ProjectDetailsPage() {
           </div>
 
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-purple-100 rounded-lg mb-2">
-                <Users className="text-purple-600" size={24} />
+            <button
+            onClick={handleAssignWorkers(projectId)}>
+              <div className="flex flex-col items-center text-center">
+                <div className="p-3 bg-purple-100 rounded-lg mb-2">
+                  <Users className="text-purple-600" size={24} />
+                </div>
+                <p className="text-gray-600 text-xs mb-1">Workers</p>
+                <p className="text-3xl font-bold text-gray-900">{workers.length}</p>
               </div>
-              <p className="text-gray-600 text-xs mb-1">Workers</p>
-              <p className="text-3xl font-bold text-gray-900">{workers.length}</p>
-            </div>
+            </button>
           </div>
 
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
@@ -488,6 +508,16 @@ export default function ProjectDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Assign Workers Modal */}
+      {showAssignWorkers && assigningProject && (
+        <AssignWorkersModal
+          project={assigningProject}
+          onClose={handleCloseAssignWorkers}
+          onSuccess={handleCloseAssignWorkers}
+        />
+      )}
+
     </div>
   );
 }

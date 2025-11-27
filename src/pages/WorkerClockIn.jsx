@@ -152,18 +152,21 @@ export default function WorkerClockIn() {
     }
 
     // Check if worker needs to join a company
+    console.log("*".repeat(30));
     console.log('Checking company join status...');
     console.log('Current user:', currentUser);
     console.log('Current employee:', currentEmployee);
+    console.log("*".repeat(30));
 
     if (currentUser && currentEmployee && !currentEmployee.companyId && assignedProjects.length > 0) {
       console.log('Worker has no company, needs to join');
 
       // Get the company from the first project
       const firstProject = assignedProjects[0];
+      console.log('\n\nFirst assigned project:', firstProject);
       if (firstProject.createdBy) {
         console.log('Fetching company:', firstProject.createdBy);
-        const companyResult = await firestoreService.get('companies', firstProject.createdBy);
+        const companyResult = await firestoreService.getById('companies', firstProject.createdBy);
 
         if (companyResult.success && companyResult.data) {
           console.log('Company found:', companyResult.data);
