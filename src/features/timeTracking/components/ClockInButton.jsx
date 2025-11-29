@@ -1,227 +1,85 @@
-import { useState, useEffect } from 'react';
 import { Clock, MapPin, AlertCircle, CheckCircle, Loader, X } from 'lucide-react';
-import { useEmployeeStore } from '../../employees/store/employeeStore';
+import { useWorkerClockIn } from '../../employees/hooks/userWorkerClockIn';
+import JoinCompanyModal from '../../../components/JoinCompanyModal';
+import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useEmployeeStore } from '../../employees/store/employeeStore';
 import { firestoreService } from '../../../services/firestoreService';
-import { useGeolocation } from '../../../hooks/useGeolocation';
-import { calculateDistance } from '../../../shared/utils/distance';
 
 export default function ClockInButton() {
   const { currentUser } = useAuth();
-  const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
+  const { currentEmployee, setCurrentEmployee } = useEmployeeStore();
   
-  const [worker, setWorker] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('');
-  const [activeShift, setActiveShift] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [locationError, setLocationError] = useState(null);
+  const {
+    worker,
+    assignedProjects,
+    selectedProject,
+    setSelectedProject,
+    activeShift,
+    loading,
+    actionLoading,
+    error,
+    setError,
+    success,
+    setSuccess,
+    locationError,
+    setLocationError,
+    clockIn,      // ✅ Use these from the hook
+    clockOut,     // ✅ Use these from the hook
+  } = useWorkerClockIn();
 
-  const { getCurrentLocation } = useGeolocation();
+  const [showJoinCompanyModal, setShowJoinCompanyModal] = useState(false);
+  const [companyToJoin, setCompanyToJoin] = useState(null);
+  const [joiningCompany, setJoiningCompany] = useState(false);
 
-  // Filter assigned projects
-  const assignedProjects = projects.filter(project => 
-    project.assignedWorkers?.includes(worker?.id)
-  );
+  // ✅ Add the missing handler functions
+  const handleAcceptJoin = async () => {
+    if (!companyToJoin || !currentUser || !currentEmployee) return;
 
-  useEffect(() => {
-    if (currentUser && currentEmployee) {
-      loadWorkerData();
-    }
-  }, [currentUser, currentEmployee]);
-
-  // Auto-dismiss success message after 5 seconds
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => setSuccess(''), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
-
-  // Auto-dismiss error after 5 seconds if no worker
-  useEffect(() => {
-    if (error && !worker) {
-      const timer = setTimeout(() => setError(''), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, worker]);
-
-  // Auto-dismiss location error after 10 seconds
-  useEffect(() => {
-    if (locationError) {
-      const timer = setTimeout(() => setLocationError(null), 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [locationError]);
-
-  const loadWorkerData = async () => {
     try {
-      setLoading(true);
+      setJoiningCompany(true);
 
-      const userResult = await firestoreService.query('users', [
-        { field: 'uid', operator: '==', value: currentUser.uid }
-      ]);
+      // Update worker's user profile with companyId
+      const updateUserResult = await firestoreService.update('users', currentUser.uid, {
+        companyId: companyToJoin.id,
+        updatedAt: new Date().toISOString(),
+      });
 
-      if (!userResult.success || userResult.data.length === 0) {
-        setError('User profile not found');
-        setLoading(false);
-        return;
+      if (!updateUserResult.success) {
+        throw new Error('Failed to update user profile');
       }
 
-      const userData = userResult.data[0];
-      const userPhone = userData.phone || userData.phoneNumber;
+      // Add worker to company's workers array
+      const currentWorkers = companyToJoin.workers || [];
+      const updateCompanyResult = await firestoreService.update('companies', companyToJoin.id, {
+        workers: [...currentWorkers, currentUser.uid],
+        updatedAt: new Date().toISOString(),
+      });
 
-      if (!userPhone) {
-        setError('No phone number on file. Please contact your administrator.');
-        setLoading(false);
-        return;
+      if (!updateCompanyResult.success) {
+        throw new Error('Failed to add worker to company');
       }
 
-      const workerResult = await firestoreService.query('workers', [
-        { field: 'phoneRaw', operator: '==', value: userPhone.replace(/\D/g, '') }
-      ]);
+      // Update local employee state
+      setCurrentEmployee({
+        ...currentEmployee,
+        companyId: companyToJoin.id,
+      });
 
-      if (!workerResult.success || workerResult.data.length === 0) {
-        setError('Not registered as a worker. Please contact your administrator.');
-        setLoading(false);
-        return;
-      }
-
-      const workerData = workerResult.data[0];
-      setWorker(workerData);
-
-      const projectsResult = await firestoreService.getAll('projects');
-      if (projectsResult.success) {
-        setProjects(projectsResult.data);
-      }
-
-      const shiftResult = await firestoreService.query('timeEntries', [
-        { field: 'workerId', operator: '==', value: workerData.id },
-        { field: 'status', operator: '==', value: 'active' }
-      ]);
-
-      if (shiftResult.success && shiftResult.data.length > 0) {
-        setActiveShift(shiftResult.data[0]);
-      }
-
-      setLoading(false);
+      // Close modal and show success
+      setShowJoinCompanyModal(false);
+      setSuccess(`✓ Successfully joined ${companyToJoin.name}! You can now clock in.`);
     } catch (err) {
-      console.error('Error loading worker data:', err);
-      setError('Failed to load data: ' + err.message);
-      setLoading(false);
+      console.error('Error joining company:', err);
+      setError('Failed to join company: ' + err.message);
+    } finally {
+      setJoiningCompany(false);
     }
   };
 
-  const onClockIn = async () => {
-    if (!selectedProject) {
-      setLocationError({ message: 'Please select a job site', canOverride: false });
-      return;
-    }
-
-    setActionLoading(true);
-    setError('');
-    setSuccess('');
-    setLocationError(null);
-
-    try {
-      const userLocation = await getCurrentLocation();
-      const project = projects.find(p => p.id === selectedProject);
-      
-      if (!project) {
-        throw new Error('Project not found');
-      }
-
-      const distance = calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        project.location.latitude,
-        project.location.longitude
-      );
-
-      const isWithinGeofence = distance <= project.geofenceRadius;
-
-      if (!isWithinGeofence) {
-      setError(
-        `❌ You're too far from the job site!\n\n` +
-        `Your distance: ${Math.round(distance)}m\n` +
-        `Required: Within ${project.geofenceRadius}m\n\n` +
-        `Please move closer to the job site to clock in.`
-      );
-      setActionLoading(false);
-      return; // ← STOP HERE, don't create time entry
-    }
-
-      const timeEntry = {
-        workerId: worker.id,
-        workerName: worker.name,
-        workerPhone: worker.phone,
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
-        projectId: project.id,
-        projectName: project.name,
-        clockIn: new Date().toISOString(),
-        clockInLocation: {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          address: project.location.address,
-        },
-        distanceFromSite: Math.round(distance),
-        verified: isWithinGeofence,
-        status: isWithinGeofence ? 'active' : 'flagged',
-        notes: isWithinGeofence ? '' : 'Clocked in outside geofence',
-        clockInMethod: 'app',
-      };
-
-      const result = await firestoreService.create('timeEntries', timeEntry);
-
-      if (result.success) {
-        setActiveShift({ ...timeEntry, id: result.id });
-        setSuccess('✓ Clocked in successfully!');
-      }
-    } catch (err) {
-      setError('Failed to clock in: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const onClockOut = async () => {
-    if (!activeShift) return;
-
-    setActionLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const userLocation = await getCurrentLocation();
-      const now = new Date();
-      const start = new Date(activeShift.clockIn);
-      const hours = (now - start) / (1000 * 60 * 60);
-
-      const updateData = {
-        clockOut: now.toISOString(),
-        clockOutLocation: {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-        },
-        hours: Number(hours.toFixed(2)),
-        status: 'completed',
-        updatedAt: now.toISOString(),
-      };
-
-      await firestoreService.update('timeEntries', activeShift.id, updateData);
-
-      setSuccess(`✓ Clocked out! Total hours: ${hours.toFixed(2)}`);
-      setActiveShift(null);
-      setSelectedProject('');
-    } catch (err) {
-      setError('Failed to clock out: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
+  const handleDeclineJoin = () => {
+    setShowJoinCompanyModal(false);
+    setError('You must join a company to clock in at job sites. Please contact your supervisor.');
   };
 
   // Loading state
@@ -258,7 +116,7 @@ export default function ClockInButton() {
     return null;
   }
 
-  // Active shift view
+  // Active shift view - ✅ Fixed double braces
   if (activeShift) {
     return (
       <div className="space-y-4">
@@ -297,9 +155,9 @@ export default function ClockInButton() {
           </div>
         </div>
 
-        {/* Clock Out Button */}
+        {/* Clock Out Button - ✅ Fixed function name */}
         <button
-          onClick={onClockOut}
+          onClick={clockOut}
           disabled={actionLoading}
           className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -419,9 +277,9 @@ export default function ClockInButton() {
         </div>
       )}
 
-      {/* Clock In Button */}
+      {/* Clock In Button - ✅ Fixed function name */}
       <button
-        onClick={onClockIn}
+        onClick={clockIn}
         disabled={actionLoading || !selectedProject || assignedProjects.length === 0}
         className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
       >
@@ -443,6 +301,16 @@ export default function ClockInButton() {
         <MapPin size={14} className="inline mr-1" />
         Your location will be verified when you clock in
       </p>
+
+      {/* Join Company Modal */}
+      {showJoinCompanyModal && companyToJoin && (
+        <JoinCompanyModal
+          company={companyToJoin}
+          onAccept={handleAcceptJoin}
+          onDecline={handleDeclineJoin}
+          loading={joiningCompany}
+        />
+      )}
     </div>
   );
 }

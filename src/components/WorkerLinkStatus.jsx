@@ -47,10 +47,22 @@ export default function WorkerLinkStatus() {
       ]);
 
       if (workerResult.success && workerResult.data.length > 0) {
+        const workerData = workerResult.data[0];
+        
+        // ✅ Update worker with userId if not already set or if it's different
+        if (!workerData.userId || workerData.userId !== currentUser.uid) {
+          console.log('🔗 Linking worker to user account...');
+          await firestoreService.update('workers', workerData.id, {
+            userId: currentUser.uid,
+            updatedAt: new Date().toISOString(),
+          });
+          console.log('✅ Worker linked successfully');
+        }
+
         setStatus({
           type: 'linked',
-          message: `Linked to worker: ${workerResult.data[0].name}`,
-          workerName: workerResult.data[0].name,
+          message: `Linked to worker: ${workerData.name}`,
+          workerName: workerData.name,
         });
       } else {
         setStatus({
@@ -93,14 +105,14 @@ export default function WorkerLinkStatus() {
   // Show alert for setup needed
   return (
     <Alert
-    shadeType="yellow"
-    text="Clock-In Setup Required"
-    subText={status.message}
-    actionButton={{
-      text: 'Setup',
-      link: '/profile',
-      icon: Settings
-    }}
-  />
+      shadeType="yellow"
+      text="Clock-In Setup Required"
+      subText={status.message}
+      actionButton={{
+        text: 'Setup',
+        link: '/profile',
+        icon: Settings
+      }}
+    />
   );
 }

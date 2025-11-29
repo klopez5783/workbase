@@ -34,8 +34,7 @@ export default function ProjectDetailsPage() {
   const [showAssignWorkers, setShowAssignWorkers] = useState(false);
   const [assigningProject, setAssigningProject] = useState(null);
 
-  const handleAssignWorkers = (projectID) => {
-    const project = firestoreService.getById('projects', projectID);
+  const handleAssignWorkers = () => {
     setAssigningProject(project);
     setShowAssignWorkers(true);
   };
@@ -44,7 +43,7 @@ export default function ProjectDetailsPage() {
     setShowAssignWorkers(false);
     setAssigningProject(null);
     // Reload projects to show updated assignments
-    await loadProjects();
+    await loadProjectDetails();
   };
 
   useEffect(() => {
@@ -256,8 +255,7 @@ export default function ProjectDetailsPage() {
           </div>
 
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <button
-            onClick={handleAssignWorkers(projectId)}>
+            <button onClick={() => handleAssignWorkers()}>
               <div className="flex flex-col items-center text-center">
                 <div className="p-3 bg-purple-100 rounded-lg mb-2">
                   <Users className="text-purple-600" size={24} />

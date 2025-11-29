@@ -1,214 +1,42 @@
-import { useState, useEffect } from 'react';
-import { Clock, MapPin, Loader, AlertCircle, CheckCircle } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { useEmployeeStore } from '../features/employees/store/employeeStore';
-import { firestoreService } from '../services/firestoreService';
-import { useGeolocation } from '../hooks/useGeolocation';
-import { calculateDistance } from '../shared/utils/distance';
-import { X } from 'lucide-react';
+import { useState } from 'react';
+import { Clock, Loader, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { useWorkerClockIn } from '../features/employees/hooks/userWorkerClockIn';
 
 export default function FloatingClockInButton() {
-  const { currentUser } = useAuth();
-  const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
-  
-  const [worker, setWorker] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('');
-  const [activeShift, setActiveShift] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const {
+    worker,
+    assignedProjects,
+    selectedProject,
+    setSelectedProject,
+    activeShift,
+    loading,
+    actionLoading,
+    error,
+    setError,
+    success,
+    clockIn,
+    clockOut,
+  } = useWorkerClockIn();
+
   const [showModal, setShowModal] = useState(false);
 
-  const { getCurrentLocation } = useGeolocation();
-
-  useEffect(() => {
-    if (currentUser && currentEmployee) {
-      loadWorkerData();
-    }
-  }, [currentUser, currentEmployee]);
-
-  // ✅ ADD THIS - Auto-dismiss error after 5 seconds
-  useEffect(() => {
-    if (error && !worker) {
-      const timer = setTimeout(() => setError(''), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, worker]);
-
-  const loadWorkerData = async () => {
-    try {
-      setLoading(true);
-
-      const userResult = await firestoreService.query('users', [
-        { field: 'uid', operator: '==', value: currentUser.uid }
-      ]);
-
-      if (!userResult.success || userResult.data.length === 0) {
-        setError('User profile not found');
-        setLoading(false);
-        return;
-      }
-
-      const userData = userResult.data[0];
-      const userPhone = userData.phone || userData.phoneNumber;
-
-      if (!userPhone) {
-        setError('No phone number on file. Please contact your administrator.');
-        setLoading(false);
-        return;
-      }
-
-      const workerResult = await firestoreService.query('workers', [
-        { field: 'phoneRaw', operator: '==', value: userPhone.replace(/\D/g, '') }
-      ]);
-
-      if (!workerResult.success || workerResult.data.length === 0) {
-        setError('Not registered as a worker. Please contact your administrator.');
-        setLoading(false);
-        return;
-      }
-
-      const workerData = workerResult.data[0];
-      setWorker(workerData);
-
-      const projectsResult = await firestoreService.getAll('projects');
-      if (projectsResult.success) {
-        const assignedProjects = projectsResult.data.filter(project => 
-          project.assignedWorkers?.includes(workerData.id)
-        );
-        setProjects(assignedProjects);
-      }
-
-      const shiftResult = await firestoreService.query('timeEntries', [
-        { field: 'workerId', operator: '==', value: workerData.id },
-        { field: 'status', operator: '==', value: 'active' }
-      ]);
-
-      if (shiftResult.success && shiftResult.data.length > 0) {
-        setActiveShift(shiftResult.data[0]);
-      }
-
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading worker data:', err);
-      setError('Failed to load data: ' + err.message);
-      setLoading(false);
-    }
-  };
-
+  // Handle clock in with modal auto-close
   const handleClockIn = async () => {
-    if (!selectedProject) {
-      setError('Please select a job site');
-      return;
-    }
-
-    setActionLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const userLocation = await getCurrentLocation();
-      const project = projects.find(p => p.id === selectedProject);
-      
-      if (!project) {
-        throw new Error('Project not found');
-      }
-
-      const distance = calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        project.location.latitude,
-        project.location.longitude
-      );
-
-      const isWithinGeofence = distance <= project.geofenceRadius;
-
-      if (!isWithinGeofence) {
-      setError(
-        `❌ You're too far from the job site!\n\n` +
-        `Your distance: ${Math.round(distance)}m\n` +
-        `Required: Within ${project.geofenceRadius}m\n\n` +
-        `Please move closer to the job site to clock in.`
-      );
-      setActionLoading(false);
-      return; // ← STOP HERE, don't create time entry
-    }
-
-      const timeEntry = {
-        workerId: worker.id,
-        workerName: worker.name,
-        workerPhone: worker.phone,
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
-        projectId: project.id,
-        projectName: project.name,
-        clockIn: new Date().toISOString(),
-        clockInLocation: {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          address: project.location.address,
-        },
-        distanceFromSite: Math.round(distance),
-        verified: isWithinGeofence,
-        status: isWithinGeofence ? 'active' : 'flagged',
-        notes: isWithinGeofence ? '' : 'Clocked in outside geofence',
-        clockInMethod: 'app',
-      };
-
-      const result = await firestoreService.create('timeEntries', timeEntry);
-
-      if (result.success) {
-        setActiveShift({ ...timeEntry, id: result.id });
-        setSuccess('✓ Clocked in successfully!');
-        setTimeout(() => setShowModal(false), 2000);
-      }
-    } catch (err) {
-      setError('Failed to clock in: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleClockOut = async () => {
-    if (!activeShift) return;
-
-    setActionLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const userLocation = await getCurrentLocation();
-      const now = new Date();
-      const start = new Date(activeShift.clockIn);
-      const hours = (now - start) / (1000 * 60 * 60);
-
-      const updateData = {
-        clockOut: now.toISOString(),
-        clockOutLocation: {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-        },
-        hours: Number(hours.toFixed(2)),
-        status: 'completed',
-        updatedAt: now.toISOString(),
-      };
-
-      await firestoreService.update('timeEntries', activeShift.id, updateData);
-
-      setSuccess(`✓ Clocked out! Total hours: ${hours.toFixed(2)}`);
-      setActiveShift(null);
-      setSelectedProject('');
+    const result = await clockIn();
+    if (result.success) {
       setTimeout(() => setShowModal(false), 2000);
-    } catch (err) {
-      setError('Failed to clock out: ' + err.message);
-    } finally {
-      setActionLoading(false);
     }
   };
 
-  // ✅ CONDITIONAL RETURNS AFTER ALL HOOKS
+  // Handle clock out with modal auto-close
+  const handleClockOut = async () => {
+    const result = await clockOut();
+    if (result.success) {
+      setTimeout(() => setShowModal(false), 2000);
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center p-4">
@@ -217,6 +45,7 @@ export default function FloatingClockInButton() {
     );
   }
 
+  // Error state (no worker found)
   if (error && !worker) {
     return (
       <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full px-5">
@@ -235,6 +64,7 @@ export default function FloatingClockInButton() {
     );
   }
 
+  // No worker found
   if (!worker) {
     return null;
   }
@@ -310,7 +140,7 @@ export default function FloatingClockInButton() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Select Job Site
                   </label>
-                  {projects.length === 0 ? (
+                  {assignedProjects.length === 0 ? (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                       <p className="text-yellow-800 text-sm">
                         You're not assigned to any projects.
@@ -323,7 +153,7 @@ export default function FloatingClockInButton() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                     >
                       <option value="">Choose a project...</option>
-                      {projects.map((project) => (
+                      {assignedProjects.map((project) => (
                         <option key={project.id} value={project.id}>
                           {project.name}
                         </option>
