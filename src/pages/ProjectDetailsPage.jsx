@@ -17,9 +17,11 @@ import {
   TrendingUp,
   FileText,
   UserCheck,
-  Activity
+  Activity,
+  CircleArrowLeft
 } from 'lucide-react';
 import AssignWorkersModal from '../features/projects/components/AssignWorkersModal';
+import ProjectForm from '../features/projects/components/ProjectForm';
 
 
 export default function ProjectDetailsPage() {
@@ -33,6 +35,8 @@ export default function ProjectDetailsPage() {
   const [error, setError] = useState('');
   const [showAssignWorkers, setShowAssignWorkers] = useState(false);
   const [assigningProject, setAssigningProject] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
 
   const handleAssignWorkers = () => {
     setAssigningProject(project);
@@ -49,6 +53,19 @@ export default function ProjectDetailsPage() {
   useEffect(() => {
     loadProjectDetails();
   }, [projectId]);
+
+  const handleEdit = (projectId) => {
+    const project = firestoreService.getById('projects', projectId);
+    setEditingProject(project);
+    setShowForm(true);
+  };
+
+   const handleCloseForm = async () => {
+    setShowForm(false);
+    setEditingProject(null);
+    // Refresh projects after form closes
+    await loadProjects();
+  };
 
   const loadProjectDetails = async () => {
     try {
@@ -175,6 +192,7 @@ export default function ProjectDetailsPage() {
             onClick={() => navigate('/projects')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
+            <CircleArrowLeft size={20} /> 
             Back to Projects
           </button>
         </div>
@@ -191,7 +209,7 @@ export default function ProjectDetailsPage() {
             onClick={() => navigate('/projects')}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
-            <ArrowLeft size={20} />
+            <CircleArrowLeft size={25} /> 
             Back to Projects
           </button>
 
@@ -232,7 +250,7 @@ export default function ProjectDetailsPage() {
                 View Hours
               </button>
               <button
-                onClick={() => navigate(`/edit-project/${projectId}`)}
+                onClick={() => handleEdit(projectId)}
                 className="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2"
               >
                 <Edit size={18} />
@@ -515,6 +533,14 @@ export default function ProjectDetailsPage() {
           onSuccess={handleCloseAssignWorkers}
         />
       )}
+
+      {/* Form Modal */}
+        {showForm && (
+          <ProjectForm
+            onClose={handleCloseForm}
+            existingProject={editingProject}
+          />
+        )}
 
     </div>
   );
