@@ -25,7 +25,7 @@ const functions = getFunctions(app, 'us-east1');
 
 // Connect to emulators in development
 // IMPORTANT: This must run BEFORE any auth operations
-const USE_EMULATORS = true; // ← SET TO true TO USE EMULATORS
+const USE_EMULATORS = false; // ← SET TO true TO USE EMULATORS
 
 if (USE_EMULATORS && typeof window !== 'undefined') {
   // Only connect once

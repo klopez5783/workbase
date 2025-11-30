@@ -18,10 +18,12 @@ import {
   TrendingUp,
   FileText,
   UserCheck,
-  Activity
+  Activity,
+  CircleArrowLeft
 } from 'lucide-react';
-import { useEmployeeStore } from '../features/employees/store/employeeStore';
-import { useAuth } from '../contexts/AuthContext';
+import AssignWorkersModal from '../features/projects/components/AssignWorkersModal';
+import ProjectForm from '../features/projects/components/ProjectForm';
+
 
 export default function ProjectDetailsPage() {
   const navigate = useNavigate();
@@ -36,14 +38,39 @@ export default function ProjectDetailsPage() {
   const [timeEntries, setTimeEntries] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [error, setError] = useState('');
+  const [showAssignWorkers, setShowAssignWorkers] = useState(false);
+  const [assigningProject, setAssigningProject] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+
+  const handleAssignWorkers = () => {
+    setAssigningProject(project);
+    setShowAssignWorkers(true);
+  };
+
+  const handleCloseAssignWorkers = async () => {
+    setShowAssignWorkers(false);
+    setAssigningProject(null);
+    // Reload projects to show updated assignments
+    await loadProjectDetails();
+  };
 
   useEffect(() => {
-    if (currentEmployee) {
-      console.log('Current user:', currentEmployee.name);
-      console.log('User role:', currentEmployee.role);
-      loadProjectDetails();
-    }
-  }, [projectId, currentEmployee]);
+    loadProjectDetails();
+  }, [projectId]);
+
+  const handleEdit = (projectId) => {
+    const project = firestoreService.getById('projects', projectId);
+    setEditingProject(project);
+    setShowForm(true);
+  };
+
+   const handleCloseForm = async () => {
+    setShowForm(false);
+    setEditingProject(null);
+    // Refresh projects after form closes
+    await loadProjects();
+  };
 
   const loadProjectDetails = async () => {
     try {
@@ -170,7 +197,7 @@ export default function ProjectDetailsPage() {
             onClick={() => navigate('/projects')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
-            <CircleArrowLeft size={24} />
+            <CircleArrowLeft size={20} /> 
             Back to Projects
           </button>
         </div>
@@ -187,7 +214,7 @@ export default function ProjectDetailsPage() {
             onClick={() => navigate('/projects')}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
-            <CircleArrowLeft size={24} />
+            <CircleArrowLeft size={25} /> 
             Back to Projects
           </button>
 
@@ -228,7 +255,7 @@ export default function ProjectDetailsPage() {
                 View Hours
               </button>
               <button
-                onClick={() => navigate(`/edit-project/${projectId}`)}
+                onClick={() => handleEdit(projectId)}
                 className="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2"
               >
                 <Edit size={18} />
@@ -251,13 +278,15 @@ export default function ProjectDetailsPage() {
           </div>
 
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-purple-100 rounded-lg mb-2">
-                <Users className="text-purple-600" size={24} />
+            <button onClick={() => handleAssignWorkers()}>
+              <div className="flex flex-col items-center text-center">
+                <div className="p-3 bg-purple-100 rounded-lg mb-2">
+                  <Users className="text-purple-600" size={24} />
+                </div>
+                <p className="text-gray-600 text-xs mb-1">Workers</p>
+                <p className="text-3xl font-bold text-gray-900">{workers.length}</p>
               </div>
-              <p className="text-gray-600 text-xs mb-1">Workers</p>
-              <p className="text-3xl font-bold text-gray-900">{workers.length}</p>
-            </div>
+            </button>
           </div>
 
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
@@ -455,6 +484,24 @@ export default function ProjectDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Assign Workers Modal */}
+      {showAssignWorkers && assigningProject && (
+        <AssignWorkersModal
+          project={assigningProject}
+          onClose={handleCloseAssignWorkers}
+          onSuccess={handleCloseAssignWorkers}
+        />
+      )}
+
+      {/* Form Modal */}
+        {showForm && (
+          <ProjectForm
+            onClose={handleCloseForm}
+            existingProject={editingProject}
+          />
+        )}
+
     </div>
   );
 }
