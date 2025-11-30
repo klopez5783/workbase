@@ -4,6 +4,7 @@ import { FileText, Loader, Search, CircleArrowLeft, Filter, Calendar, User, MapP
 import WorkSummaryGenerator from '../../components/WorkSummaryGenerator'; // Add this import
 import { Sparkles } from 'lucide-react'; // Add Sparkles icon
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 
 export default function AdminWorkLogs() {
   const [workLogs, setWorkLogs] = useState([]);
@@ -18,6 +19,7 @@ export default function AdminWorkLogs() {
   const projectIdFromUrl = searchParams.get('projectId')
   const location = useLocation();
   const returnToProject = location.state?.returnToProject;
+  const { currentEmployee } = useEmployeeStore();
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,16 +62,24 @@ export default function AdminWorkLogs() {
         setWorkLogs(sortedLogs);
       }
 
-      // Load projects
+      // Load projects - filter by company
       const projectsResult = await firestoreService.getAll('projects');
       if (projectsResult.success) {
-        setProjects(projectsResult.data);
+        // Filter projects to show only those belonging to the current company
+        const companyProjects = projectsResult.data.filter(
+          project => project.createdBy === currentEmployee?.companyId
+        );
+        setProjects(companyProjects);
       }
 
-      // Load employees
+      // Load employees - filter by company
       const employeesResult = await firestoreService.getAll('users');
       if (employeesResult.success) {
-        setEmployees(employeesResult.data.filter(user => user.role === 'worker'));
+        // Only show workers from the current company
+        const companyWorkers = employeesResult.data.filter(
+          user => user.role === 'worker' && user.companyId === currentEmployee?.companyId
+        );
+        setEmployees(companyWorkers);
       }
 
       setLoading(false);

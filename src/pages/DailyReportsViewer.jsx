@@ -44,11 +44,15 @@ export default function DailyReportsViewer() {
     try {
       setLoading(true);
       const result = await firestoreService.getAll('projects');
-      
+
       if (result.success && result.data) {
-        setProjects(result.data);
-        if (result.data.length > 0) {
-          setSelectedProject(result.data[0]);
+        // Filter projects by company
+        const companyProjects = result.data.filter(
+          project => project.createdBy === currentEmployee?.companyId
+        );
+        setProjects(companyProjects);
+        if (companyProjects.length > 0) {
+          setSelectedProject(companyProjects[0]);
         }
       }
     } catch (err) {

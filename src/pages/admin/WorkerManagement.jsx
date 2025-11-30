@@ -3,6 +3,7 @@ import { Plus, Users, Loader, Trash2, Send, Copy, CheckCircle, ArrowLeft } from 
 import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import { AlertCircle } from 'lucide-react';
 
 
@@ -11,6 +12,7 @@ export default function WorkerManagement() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const { currentUser } = useAuth();
+  const { currentEmployee } = useEmployeeStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,17 +53,20 @@ export default function WorkerManagement() {
     console.log('Worker ID:', worker.id);
     console.log('Worker access key:', worker.accessKey);
 
-    // Get all projects
+    // Get all projects (filter by company)
     const projectsResult = await firestoreService.getAll('projects');
     console.log('All projects:', projectsResult.data);
-    
+
     if (projectsResult.success) {
+      // Filter to only company projects that have this worker assigned
       const projectsWithWorker = projectsResult.data.filter(project => {
         console.log(`Project: ${project.name}`);
+        console.log('  createdBy:', project.createdBy);
         console.log('  assignedWorkers:', project.assignedWorkers);
         console.log('  includes worker.id?', project.assignedWorkers?.includes(worker.id));
-        
-        return project.assignedWorkers?.includes(worker.id);
+
+        return project.createdBy === currentEmployee?.companyId &&
+               project.assignedWorkers?.includes(worker.id);
       });
 
       console.log(`Found ${projectsWithWorker.length} projects with this worker`);

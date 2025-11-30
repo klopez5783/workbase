@@ -67,6 +67,16 @@ export default function TopBar({ title = 'WorkBase' }) {
                   </button>
                   <button
                     onClick={() => {
+                      navigate('/admin/workers');
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"
+                  >
+                    <Users size={16} />
+                    Manage Workers
+                  </button>
+                  <button
+                    onClick={() => {
                       navigate('/admin/projects');
                       setShowMenu(false);
                     }}
