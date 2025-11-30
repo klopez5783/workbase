@@ -10,7 +10,6 @@ import {
   Calendar,
   Edit,
   Trash2,
-  CircleArrowLeft,
   Loader,
   AlertCircle,
   CheckCircle,
@@ -23,6 +22,8 @@ import {
 } from 'lucide-react';
 import AssignWorkersModal from '../features/projects/components/AssignWorkersModal';
 import ProjectForm from '../features/projects/components/ProjectForm';
+import { useAuth } from '../contexts/AuthContext';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
 
 
 export default function ProjectDetailsPage() {

@@ -25,7 +25,7 @@ export function useWorkerClockIn() {
   // Calculate assigned projects
   const assignedProjects = worker && projects.length > 0
     ? projects.filter(project => 
-        project.assignedWorkers?.includes(worker.userId)
+        project.assignedWorkers?.includes(worker.id)
       )
     : [];
 
@@ -33,6 +33,13 @@ export function useWorkerClockIn() {
   const loadWorkerData = async () => {
     try {
       setLoading(true);
+
+      // ✅ COMPANY CHECK - Users must have a company before loading worker data
+      if (currentUser && currentEmployee && !currentEmployee.companyId) {
+        setError('Please join a company before clocking in. Contact your administrator.');
+        setLoading(false);
+        return;
+      }
 
       // Get user profile
       const userResult = await firestoreService.query('users', [
@@ -96,6 +103,12 @@ export function useWorkerClockIn() {
 
   // Clock in function
   const clockIn = async () => {
+    // ✅ Company check before clock-in
+    if (currentUser && currentEmployee && !currentEmployee.companyId) {
+      setError('You must join a company before clocking in. Contact your administrator.');
+      return { success: false };
+    }
+
     if (!selectedProject) {
       setLocationError({ message: 'Please select a job site', canOverride: false });
       return { success: false };
