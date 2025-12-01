@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Clock, Loader, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useWorkerClockIn } from '../features/employees/hooks/userWorkerClockIn';
+import JoinCompanyViaCode from './JoinCompanyViaCode';
 
 export default function FloatingClockInButton() {
   const {
@@ -16,9 +17,22 @@ export default function FloatingClockInButton() {
     success,
     clockIn,
     clockOut,
+    loadWorkerData,
   } = useWorkerClockIn();
 
   const [showModal, setShowModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+
+  // Check if error is about joining a company
+  const isCompanyError = error && error.toLowerCase().includes('join a company');
+
+  // Handle successful company join
+  const handleJoinSuccess = async () => {
+    setShowJoinModal(false);
+    setError('');
+    // Reload worker data after joining company
+    await loadWorkerData();
+  };
 
   // Handle clock in with modal auto-close
   const handleClockIn = async () => {
@@ -48,19 +62,39 @@ export default function FloatingClockInButton() {
   // Error state (no worker found)
   if (error && !worker) {
     return (
-      <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full px-5">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-yellow-800 text-sm font-medium flex-1">{error}</p>
-            <button
-              onClick={() => setError('')}
-              className="text-yellow-600 hover:text-yellow-800 transition flex-shrink-0"
-            >
-              <X size={20} />
-            </button>
+      <>
+        {/* Join Company Modal */}
+        {showJoinModal && (
+          <JoinCompanyViaCode
+            onClose={() => setShowJoinModal(false)}
+            onSuccess={handleJoinSuccess}
+          />
+        )}
+
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full px-5">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <p className="text-yellow-800 text-sm font-medium">{error}</p>
+                {isCompanyError && (
+                  <button
+                    onClick={() => setShowJoinModal(true)}
+                    className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
+                  >
+                    Join a Company
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setError('')}
+                className="text-yellow-600 hover:text-yellow-800 transition flex-shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
