@@ -1,7 +1,7 @@
 import { Clock, MapPin, AlertCircle, CheckCircle, Loader, X } from 'lucide-react';
 import { useWorkerClockIn } from '../../employees/hooks/userWorkerClockIn';
 import JoinCompanyModal from '../../../components/JoinCompanyModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useEmployeeStore } from '../../employees/store/employeeStore';
 import { firestoreService } from '../../../services/firestoreService';
@@ -26,11 +26,23 @@ export default function ClockInButton() {
     setLocationError,
     clockIn,      // ✅ Use these from the hook
     clockOut,     // ✅ Use these from the hook
+    errorType,        // ✅ Get errorType from hook
+    setErrorType,     // ✅ Get setErrorType from hook
   } = useWorkerClockIn();
+
 
   const [showJoinCompanyModal, setShowJoinCompanyModal] = useState(false);
   const [companyToJoin, setCompanyToJoin] = useState(null);
   const [joiningCompany, setJoiningCompany] = useState(false);
+  const [ShowNoCompanyModal, setShowNoCompanyModal] = useState(false);
+
+  
+  useEffect(() => {
+  if (error && !worker) {
+    setShowNoCompanyModal(true);
+  }
+}, [error, worker]);
+
 
   // ✅ Add the missing handler functions
   const handleAcceptJoin = async () => {
@@ -92,24 +104,35 @@ export default function ClockInButton() {
   }
 
   // Error state (no worker found)
-  if (error && !worker) {
+  if(ShowNoCompanyModal) {
     return (
       <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1">
-            <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
-            <p className="text-yellow-800 text-sm font-medium flex-1">{error}</p>
-          </div>
-          <button
-            onClick={() => setError('')}
-            className="text-yellow-600 hover:text-yellow-800 transition flex-shrink-0"
-          >
-            <X size={20} />
-          </button>
-        </div>
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3 flex-1">
+        <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
+        <p className="text-yellow-800 text-sm font-medium flex-1">
+          {error || "You must join a company before clocking in."}
+        </p>
       </div>
-    );
-  }
+
+      <button
+        onClick={() => {
+          setShowJoinModal(true);       // open join modal
+        }}
+        className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
+      >
+        Join a Company
+      </button>
+
+      <button
+        onClick={() => setShowNoWorkerModal(false)}   // THIS closes the modal
+        className="text-yellow-600 hover:text-yellow-800 transition flex-shrink-0"
+      >
+        <X size={20} />
+      </button>
+    </div>
+  </div>
+  )}
 
   // No worker found
   if (!worker) {

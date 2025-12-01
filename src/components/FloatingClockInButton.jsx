@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock, Loader, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useWorkerClockIn } from '../features/employees/hooks/userWorkerClockIn';
 import JoinCompanyViaCode from './JoinCompanyViaCode';
@@ -22,14 +22,14 @@ export default function FloatingClockInButton() {
 
   const [showModal, setShowModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [errorType, setErrorType] = useState(null);
 
   // Check if error is about joining a company
-  const isCompanyError = error && error.toLowerCase().includes('join a company');
+  // Auto-open Join modal when worker has no company
 
   // Handle successful company join
   const handleJoinSuccess = async () => {
     setShowJoinModal(false);
-    setError('');
     // Reload worker data after joining company
     await loadWorkerData();
   };
@@ -76,14 +76,7 @@ export default function FloatingClockInButton() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <p className="text-yellow-800 text-sm font-medium">{error}</p>
-                {isCompanyError && (
-                  <button
-                    onClick={() => setShowJoinModal(true)}
-                    className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
-                  >
-                    Join a Company
-                  </button>
-                )}
+                <span>Floading Button Modal</span>
               </div>
               <button
                 onClick={() => setError('')}
