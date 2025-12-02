@@ -23,15 +23,24 @@ service cloud.firestore {
   }
     
     match /companies/{companyId} {
-    // Anyone authenticated can read companies (to see company info)
+    // Anyone authenticated can read companies (to see company info and validate join codes)
     allow read: if request.auth != null;
-    // Only admins can create companies
+    // Only admins can create companies (includes joinCode generation)
     allow create: if isAdmin();
-    // Only company admins or creator can update/delete
+    // Only company admins or creator can update/delete (includes joinCode regeneration)
     allow update, delete: if isAdmin() && (
       resource.data.createdBy == request.auth.uid ||
       request.auth.uid in resource.data.admins
     );
+  }
+
+    match /companyInvitations/{invitationId} {
+    // Only admins can read invitation logs
+    allow read: if isAdmin();
+    // Cloud functions can create invitation logs
+    allow create: if true;
+    // No updates or deletes allowed
+    allow update, delete: if false;
   }
 
     match /projects/{projectId} {

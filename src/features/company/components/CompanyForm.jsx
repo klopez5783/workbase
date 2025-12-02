@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Loader, Building2 } from 'lucide-react';
 import { firestoreService } from '../../../services/firestoreService';
 import { useAuth } from '../../../contexts/AuthContext';
+import { generateUniqueCompanyCode } from '../../../utils/companyCode';
 
 export default function CompanyForm({ onClose, existingCompany = null }) {
   const { currentUser } = useAuth();
@@ -20,16 +21,21 @@ export default function CompanyForm({ onClose, existingCompany = null }) {
     setLoading(true);
     setError('');
 
-    const companyData = {
-      name: companyName.trim(),
-      createdBy: existingCompany?.createdBy || currentUser?.uid,
-      admins: existingCompany?.admins || [currentUser?.uid],
-      workers: existingCompany?.workers || [],
-      createdAt: existingCompany?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
     try {
+      const companyData = {
+        name: companyName.trim(),
+        createdBy: existingCompany?.createdBy || currentUser?.uid,
+        admins: existingCompany?.admins || [currentUser?.uid],
+        workers: existingCompany?.workers || [],
+        createdAt: existingCompany?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Generate unique join code for new companies
+      if (!existingCompany) {
+        companyData.joinCode = await generateUniqueCompanyCode();
+      }
+
       if (existingCompany) {
         // Update existing company
         await firestoreService.update('companies', existingCompany.id, companyData);
