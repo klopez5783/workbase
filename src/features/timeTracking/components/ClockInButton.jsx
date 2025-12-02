@@ -1,10 +1,9 @@
 import { Clock, MapPin, AlertCircle, CheckCircle, Loader, X } from 'lucide-react';
 import { useWorkerClockIn } from '../../employees/hooks/userWorkerClockIn';
-import JoinCompanyModal from '../../../components/JoinCompanyModal';
+import JoinCompanyViaCode from '../../../components/JoinCompanyViaCode'; // ✅ Import this
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useEmployeeStore } from '../../employees/store/employeeStore';
-import { firestoreService } from '../../../services/firestoreService';
 
 export default function ClockInButton() {
   const { currentUser } = useAuth();
@@ -24,74 +23,40 @@ export default function ClockInButton() {
     setSuccess,
     locationError,
     setLocationError,
-    clockIn,      // ✅ Use these from the hook
-    clockOut,     // ✅ Use these from the hook
-    errorType,        // ✅ Get errorType from hook
-    setErrorType,     // ✅ Get setErrorType from hook
+    clockIn,
+    clockOut,
+    loadWorkerData, // ✅ Add this
   } = useWorkerClockIn();
 
+  const [showCodeModal, setShowCodeModal] = useState(false); // ✅ Changed name
+  const [showNoCompanyModal, setShowNoCompanyModal] = useState(false);
 
-  const [showJoinCompanyModal, setShowJoinCompanyModal] = useState(false);
-  const [companyToJoin, setCompanyToJoin] = useState(null);
-  const [joiningCompany, setJoiningCompany] = useState(false);
-  const [ShowNoCompanyModal, setShowNoCompanyModal] = useState(false);
-
-  
   useEffect(() => {
-  if (error && !worker) {
-    setShowNoCompanyModal(true);
-  }
-}, [error, worker]);
-
-
-  // ✅ Add the missing handler functions
-  const handleAcceptJoin = async () => {
-    if (!companyToJoin || !currentUser || !currentEmployee) return;
-
-    try {
-      setJoiningCompany(true);
-
-      // Update worker's user profile with companyId
-      const updateUserResult = await firestoreService.update('users', currentUser.uid, {
-        companyId: companyToJoin.id,
-        updatedAt: new Date().toISOString(),
-      });
-
-      if (!updateUserResult.success) {
-        throw new Error('Failed to update user profile');
-      }
-
-      // Add worker to company's workers array
-      const currentWorkers = companyToJoin.workers || [];
-      const updateCompanyResult = await firestoreService.update('companies', companyToJoin.id, {
-        workers: [...currentWorkers, currentUser.uid],
-        updatedAt: new Date().toISOString(),
-      });
-
-      if (!updateCompanyResult.success) {
-        throw new Error('Failed to add worker to company');
-      }
-
-      // Update local employee state
-      setCurrentEmployee({
-        ...currentEmployee,
-        companyId: companyToJoin.id,
-      });
-
-      // Close modal and show success
-      setShowJoinCompanyModal(false);
-      setSuccess(`✓ Successfully joined ${companyToJoin.name}! You can now clock in.`);
-    } catch (err) {
-      console.error('Error joining company:', err);
-      setError('Failed to join company: ' + err.message);
-    } finally {
-      setJoiningCompany(false);
+    if (error && !worker) {
+      setShowNoCompanyModal(true);
     }
-  };
+  }, [error, worker]);
 
-  const handleDeclineJoin = () => {
-    setShowJoinCompanyModal(false);
-    setError('You must join a company to clock in at job sites. Please contact your supervisor.');
+  // ✅ Handle successful company join
+  const handleJoinSuccess = async (companyData) => {
+    console.log('Successfully joined company:', companyData);
+    
+    // Update employee store with new company
+    setCurrentEmployee({
+      ...currentEmployee,
+      companyId: companyData.companyId,
+    });
+
+    // Close modals and clear error
+    setShowCodeModal(false);
+    setShowNoCompanyModal(false);
+    setError('');
+    
+    // Show success message
+    setSuccess(`✓ Successfully joined ${companyData.companyName}! You can now clock in.`);
+
+    // Reload worker data to reflect company change
+    await loadWorkerData();
   };
 
   // Loading state
@@ -103,43 +68,45 @@ export default function ClockInButton() {
     );
   }
 
-  // Error state (no worker found)
-  if(ShowNoCompanyModal) {
+  // Error state (no company)
+  if (showNoCompanyModal) {
     return (
-      <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4">
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex items-start gap-3 flex-1">
-        <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
-        <p className="text-yellow-800 text-sm font-medium flex-1">
-          {error || "You must join a company before clocking in."}
-        </p>
-      </div>
+      <>
+        {/* Code Entry Modal */}
+        {showCodeModal && (
+          <JoinCompanyViaCode
+            onClose={() => setShowCodeModal(false)}
+            onSuccess={handleJoinSuccess}
+          />
+        )}
 
-      <button
-        onClick={() => {
-          setShowJoinModal(true);       // open join modal
-        }}
-        className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
-      >
-        Join a Company
-      </button>
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4">
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={24} />
+              <p className="text-yellow-800 text-sm font-medium flex-1">
+                {error || "You must join a company before clocking in."}
+              </p>
+            </div>
 
-      <button
-        onClick={() => setShowNoWorkerModal(false)}   // THIS closes the modal
-        className="text-yellow-600 hover:text-yellow-800 transition flex-shrink-0"
-      >
-        <X size={20} />
-      </button>
-    </div>
-  </div>
-  )}
+            <button
+              onClick={() => setShowCodeModal(true)}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
+            >
+              Join a Company
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   // No worker found
   if (!worker) {
     return null;
   }
 
-  // Active shift view - ✅ Fixed double braces
+  // Active shift view
   if (activeShift) {
     return (
       <div className="space-y-4">
@@ -178,7 +145,7 @@ export default function ClockInButton() {
           </div>
         </div>
 
-        {/* Clock Out Button - ✅ Fixed function name */}
+        {/* Clock Out Button */}
         <button
           onClick={clockOut}
           disabled={actionLoading}
@@ -300,7 +267,7 @@ export default function ClockInButton() {
         </div>
       )}
 
-      {/* Clock In Button - ✅ Fixed function name */}
+      {/* Clock In Button */}
       <button
         onClick={clockIn}
         disabled={actionLoading || !selectedProject || assignedProjects.length === 0}
@@ -324,16 +291,6 @@ export default function ClockInButton() {
         <MapPin size={14} className="inline mr-1" />
         Your location will be verified when you clock in
       </p>
-
-      {/* Join Company Modal */}
-      {showJoinCompanyModal && companyToJoin && (
-        <JoinCompanyModal
-          company={companyToJoin}
-          onAccept={handleAcceptJoin}
-          onDecline={handleDeclineJoin}
-          loading={joiningCompany}
-        />
-      )}
     </div>
   );
 }
