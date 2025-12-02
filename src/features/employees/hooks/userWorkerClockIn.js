@@ -26,7 +26,7 @@ export function useWorkerClockIn() {
   // Calculate assigned projects
   const assignedProjects = worker && projects.length > 0
     ? projects.filter(project => 
-        project.assignedWorkers?.includes(worker.id)
+        project.assignedWorkers?.includes(worker.userId)
       )
     : [];
 
