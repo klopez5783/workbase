@@ -19,13 +19,14 @@ export function useWorkerClockIn() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [locationError, setLocationError] = useState(null);
+  const [errorType, setErrorType] = useState(null);
 
   const { getCurrentLocation } = useGeolocation();
 
   // Calculate assigned projects
   const assignedProjects = worker && projects.length > 0
     ? projects.filter(project => 
-        project.assignedWorkers?.includes(worker.id)
+        project.assignedWorkers?.includes(worker.userId)
       )
     : [];
 
@@ -238,12 +239,14 @@ export function useWorkerClockIn() {
   }, [success]);
 
   // Auto-dismiss error after 5 seconds if no worker
-  useEffect(() => {
-    if (error && !worker) {
-      const timer = setTimeout(() => setError(''), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, worker]);
+    useEffect(() => {
+    // Only auto-dismiss if errorType is explicitly set to 'dismissible'
+    // If errorType is null, treat as persistent (don't auto-dismiss)
+        if (error && !worker) {
+            const timer = setTimeout(() => setError(''), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error, worker]);
 
   // Auto-dismiss location error after 10 seconds
   useEffect(() => {
@@ -274,5 +277,7 @@ export function useWorkerClockIn() {
     clockIn,
     clockOut,
     loadWorkerData,
+    errorType,
+    setErrorType,
   };
 }

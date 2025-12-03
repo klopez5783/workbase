@@ -129,3 +129,112 @@ exports.resendWorkerLink = onCall(
       }
     }
 );
+
+// Callable function to send company invitation via SMS
+exports.sendCompanyInvite = onCall(
+    {
+      region: "us-east1",
+      secrets: [twilioSid, twilioToken, twilioPhone],
+      memory: "256MiB",
+      cors: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://192.168.1.50:3000",
+        "https://192.168.1.50:3000",
+        "https://workbase-8dfe2.firebaseapp.com",
+      ],
+    },
+    async (request) => {
+      const {phoneNumber, companyId, companyName, joinCode} = request.data;
+
+      // Validate required fields
+      if (!phoneNumber || !companyId || !companyName || !joinCode) {
+        throw new Error("Phone number, company ID, company name, and join code are required");
+      }
+
+      // Validate phone number format (should be 10 digits)
+      if (phoneNumber.length !== 10) {
+        throw new Error("Phone number must be 10 digits");
+      }
+
+      try {
+        // Format phone number for Twilio (add +1 for US)
+        const formattedPhone = `+1${phoneNumber}`;
+
+        // Get company to verify it exists
+        const companyDoc = await admin.firestore()
+            .collection("companies")
+            .doc(companyId)
+            .get();
+
+        if (!companyDoc.exists) {
+          throw new Error("Company not found");
+        }
+
+        // Verify join code matches
+        const companyData = companyDoc.data();
+        if (companyData.joinCode !== joinCode) {
+          throw new Error("Join code mismatch");
+        }
+
+        const client = twilio(twilioSid.value(), twilioToken.value());
+
+        // Generate join link
+        const baseUrl = "https://workbase-8dfe2.firebaseapp.com";
+        const joinLink = `${baseUrl}/join-company?code=${joinCode}`;
+
+        // SMS message with both code and link
+        const message = `You've been invited to join ${companyName}!\n\n` +
+          `Join Code: ${joinCode}\n\n` +
+          `Or click here to join automatically: ${joinLink}\n\n` +
+          `Download the app and enter the code, or click the link to join instantly.`;
+
+        // Send SMS
+        const result = await client.messages.create({
+          body: message,
+          from: twilioPhone.value(),
+          to: formattedPhone,
+        });
+
+        // Log invitation for audit trail
+        await admin.firestore()
+            .collection("companyInvitations")
+            .add({
+              companyId: companyId,
+              companyName: companyName,
+              phoneNumber: formattedPhone,
+              joinCode: joinCode,
+              sentAt: admin.firestore.FieldValue.serverTimestamp(),
+              sentBy: request.auth?.uid || "unknown",
+              messageSid: result.sid,
+              status: "sent",
+            });
+
+        console.log("Company invitation sent successfully:", result.sid);
+        return {success: true, messageSid: result.sid};
+      } catch (error) {
+        console.error("Error sending company invitation:", error);
+
+        // Log failed invitation attempt
+        try {
+          await admin.firestore()
+              .collection("companyInvitations")
+              .add({
+                companyId: companyId,
+                companyName: companyName,
+                phoneNumber: `+1${phoneNumber}`,
+                joinCode: joinCode,
+                sentAt: admin.firestore.FieldValue.serverTimestamp(),
+                sentBy: request.auth?.uid || "unknown",
+                status: "failed",
+                error: error.message,
+              });
+        } catch (logError) {
+          console.error("Error logging failed invitation:", logError);
+        }
+
+        throw new Error(error.message);
+      }
+    }
+);

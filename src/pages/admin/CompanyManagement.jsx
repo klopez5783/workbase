@@ -5,6 +5,7 @@ import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import CompanyForm from '../../features/company/components/CompanyForm';
+import CompanyCodeDisplay from '../../components/CompanyCodeDisplay';
 
 export default function CompanyManagement() {
   const [company, setCompany] = useState(null);
@@ -128,6 +129,14 @@ export default function CompanyManagement() {
     }
   };
 
+  const handleCodeRegenerated = (newCode) => {
+    // Update local company state with new join code
+    setCompany(prev => ({
+      ...prev,
+      joinCode: newCode
+    }));
+  };
+
   if (loading) {
     return (
       <div className="p-5 flex items-center justify-center min-h-screen">
@@ -232,6 +241,14 @@ export default function CompanyManagement() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Company Join Code Section */}
+      <div className="mb-6">
+        <CompanyCodeDisplay
+          company={company}
+          onCodeRegenerated={handleCodeRegenerated}
+        />
       </div>
 
       {/* Workers Section */}

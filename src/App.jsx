@@ -28,6 +28,7 @@ import TimecardReport from './pages/TimecardReport';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectHoursPage from './pages/ProjectHoursPage';
 import SMSTerms from './pages/SMSTerms';
+import JoinCompany from './pages/JoinCompany';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -113,6 +114,7 @@ return (
         <Route path="/login" element={currentUser ? <Navigate to="/" /> : <Login />} />
         <Route path="/signup" element={currentUser ? <Navigate to="/" /> : <Signup />} />
         <Route path="/sms-terms" element={<SMSTerms />} />
+        <Route path="/join-company" element={<JoinCompany />} />
 
         {/* Worker Clock-In (Public) */}
         <Route path="/worker/:accessKey" element={<WorkerClockIn />} />
