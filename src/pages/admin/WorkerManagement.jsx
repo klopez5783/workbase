@@ -185,6 +185,7 @@ export default function WorkerManagement() {
         <AddWorkerForm
           onClose={() => setShowAddForm(false)}
           onSuccess={handleAddWorker}
+          companyId={currentEmployee?.companyId}
         />
       )}
     </div>
@@ -359,7 +360,7 @@ function WorkerCard({ worker, onDelete }) {
   );
 }
 
-function AddWorkerForm({ onClose, onSuccess }) {
+function AddWorkerForm({ onClose, onSuccess, companyId }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -388,7 +389,7 @@ function AddWorkerForm({ onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  
+
   if (!name.trim()) {
     setError('Please enter worker name');
     return;
@@ -402,6 +403,11 @@ function AddWorkerForm({ onClose, onSuccess }) {
   const digits = phone.replace(/\D/g, '');
   if (digits.length !== 10) {
     setError('Please enter a valid 10-digit phone number');
+    return;
+  }
+
+  if (!companyId) {
+    setError('You must be part of a company to add workers');
     return;
   }
 
@@ -420,6 +426,7 @@ function AddWorkerForm({ onClose, onSuccess }) {
       accessKeyCreatedAt: now.toISOString(),
       accessKeyExpiresAt: expiresAt.toISOString(), // 🔥 Expires in 30 minutes
       status: 'active',
+      companyId: companyId,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     }; 
