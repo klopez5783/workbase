@@ -99,7 +99,7 @@ export default function WorkerClockIn() {
           return;
         }
       }
-
+      console.log("Setting worker data:", workerData);
       setWorker(workerData);
 
       // Load projects assigned to this worker
