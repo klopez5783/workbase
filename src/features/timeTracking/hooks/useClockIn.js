@@ -4,6 +4,7 @@ import { useLocationVerification } from './useLocationVerification';
 import { useEmployeeStore } from '../../employees/store/employeeStore';
 import { useTimeTrackingStore } from '../store/timeTrackingStore';
 import { useProjectStore } from '../../projects/store/projectstore';
+import { isAssignedToProject } from '../../../utils/workerUserLink';
 
 export const useClockIn = () => {
   const [loading, setLoading] = useState(false);
@@ -27,8 +28,14 @@ export const useClockIn = () => {
         throw new Error('Project not found');
       }
 
-      const isAssigned = (project.assignedEmployees || []).includes(currentEmployee?.id);
-      if (!isAssigned) {
+      // Check if authenticated user is assigned (checks both new and legacy arrays)
+      const assigned = isAssignedToProject(
+        project,
+        currentEmployee?.id,
+        currentEmployee?.uid || currentEmployee?.id
+      );
+
+      if (!assigned) {
         throw new Error('You are not assigned to this project');
       }
 

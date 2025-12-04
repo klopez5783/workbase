@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, UserPlus, Users, Loader, CheckCircle } from 'lucide-react';
+import { X, UserPlus, Users, Loader, CheckCircle, Shield, Smartphone } from 'lucide-react';
 import { firestoreService } from '../../../services/firestoreService';
 import { useEmployeeStore } from '../../employees/store/employeeStore';
+import { getUserType, categorizeAssignments } from '../../../utils/workerUserLink';
 
 export default function AssignWorkersModal({ project, onClose, onSuccess }) {
-  const [workers, setWorkers] = useState([]);
-  const [assignedWorkerIds, setAssignedWorkerIds] = useState([]);
+  const [people, setPeople] = useState([]); // Combined users and workers
+  const [assignedPeopleIds, setAssignedPeopleIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -19,18 +20,54 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
     try {
       setLoading(true);
 
-      // Load workers from users collection that belong to the current company
-      const result = await firestoreService.getAll('users');
+      // Load authenticated Users (workers with accounts)
+      const usersResult = await firestoreService.getAll('users');
+      const companyUsers = usersResult.success && usersResult.data
+        ? usersResult.data.filter(
+            user => user.role === 'worker' && user.companyId === currentEmployee?.companyId
+          ).map(user => ({
+            ...user,
+            type: 'user',
+            displayId: user.uid || user.id,
+            icon: 'shield'
+          }))
+        : [];
 
-      if (result.success && result.data) {
-        // Filter to only workers that belong to the current company
-        const companyWorkers = result.data.filter(
-          user => user.role === 'worker' && user.companyId === currentEmployee?.companyId
-        );
-        setWorkers(companyWorkers);
-        // Set initially assigned workers
-        setAssignedWorkerIds(project.assignedWorkers || project.assignedEmployees || []);
-      }
+      // Load SMS-only Workers (no user account)
+      const workersResult = await firestoreService.getAll('workers');
+      const companyWorkers = workersResult.success && workersResult.data
+        ? workersResult.data.filter(
+            worker => worker.companyId === currentEmployee?.companyId
+          )
+        : [];
+
+      // Filter out workers that have linked user accounts (avoid duplicates)
+      const userPhones = new Set(
+        companyUsers.map(user => (user.phoneRaw || user.phone || '').replace(/\D/g, ''))
+      );
+
+      const smsOnlyWorkers = companyWorkers
+        .filter(worker => {
+          const workerPhone = (worker.phoneRaw || worker.phone || '').replace(/\D/g, '');
+          return !userPhones.has(workerPhone);
+        })
+        .map(worker => ({
+          ...worker,
+          type: 'worker',
+          displayId: worker.id,
+          icon: 'smartphone'
+        }));
+
+      // Combine both lists
+      const allPeople = [...companyUsers, ...smsOnlyWorkers];
+      setPeople(allPeople);
+
+      // Set initially assigned people (merge both arrays)
+      const assignedEmployees = project.assignedEmployees || [];
+      const assignedWorkers = project.assignedWorkers || [];
+      const combined = [...assignedEmployees, ...assignedWorkers];
+      setAssignedPeopleIds(combined);
+
     } catch (error) {
       console.error('Error loading workers:', error);
       setError('Failed to load workers');
@@ -39,13 +76,13 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
     }
   };
 
-  const toggleWorker = (workerId) => {
-    if (assignedWorkerIds.includes(workerId)) {
-      // Remove worker
-      setAssignedWorkerIds(assignedWorkerIds.filter(id => id !== workerId));
+  const togglePerson = (personId) => {
+    if (assignedPeopleIds.includes(personId)) {
+      // Remove person
+      setAssignedPeopleIds(assignedPeopleIds.filter(id => id !== personId));
     } else {
-      // Add worker
-      setAssignedWorkerIds([...assignedWorkerIds, workerId]);
+      // Add person
+      setAssignedPeopleIds([...assignedPeopleIds, personId]);
     }
   };
 
@@ -54,10 +91,35 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
     setError('');
 
     try {
-      // Update project with assigned workers
+      // Get the selected people objects
+      const selectedPeople = people.filter(person =>
+        assignedPeopleIds.includes(person.displayId)
+      );
+
+      // Categorize into authenticated Users and SMS Workers
+      const assignedEmployees = [];
+      const assignedWorkers = [];
+
+      selectedPeople.forEach(person => {
+        if (person.type === 'user' && person.uid) {
+          // Authenticated user - add their UID to assignedEmployees
+          assignedEmployees.push(person.uid);
+        } else if (person.type === 'worker' && person.id) {
+          // SMS-only worker - add their ID to assignedWorkers
+          assignedWorkers.push(person.id);
+        }
+      });
+
+      // Update project with both arrays
       await firestoreService.update('projects', project.id, {
-        assignedWorkers: assignedWorkerIds,
+        assignedEmployees: assignedEmployees,
+        assignedWorkers: assignedWorkers,
         updatedAt: new Date().toISOString(),
+      });
+
+      console.log('✅ Assignment saved:', {
+        assignedEmployees: assignedEmployees.length,
+        assignedWorkers: assignedWorkers.length
       });
 
       onSuccess();
@@ -109,13 +171,13 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
             <div className="flex items-center gap-2">
               <Users className="text-blue-600" size={20} />
               <p className="text-blue-900 font-semibold text-sm">
-                {assignedWorkerIds.length} worker{assignedWorkerIds.length !== 1 ? 's' : ''} assigned
+                {assignedPeopleIds.length} worker{assignedPeopleIds.length !== 1 ? 's' : ''} assigned
               </p>
             </div>
           </div>
 
           {/* Workers List */}
-          {workers.length === 0 ? (
+          {people.length === 0 ? (
             <div className="text-center py-12">
               <Users size={64} className="mx-auto text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">No Workers in Company</h3>
@@ -125,13 +187,16 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
             </div>
           ) : (
             <div className="space-y-3">
-              {workers.map((worker) => {
-                const isAssigned = assignedWorkerIds.includes(worker.id);
-                
+              {people.map((person) => {
+                const isAssigned = assignedPeopleIds.includes(person.displayId);
+                const Icon = person.icon === 'shield' ? Shield : Smartphone;
+                const typeLabel = person.type === 'user' ? 'User' : 'SMS Worker';
+                const typeColor = person.type === 'user' ? 'text-green-600' : 'text-orange-600';
+
                 return (
                   <button
-                    key={worker.id}
-                    onClick={() => toggleWorker(worker.id)}
+                    key={person.displayId}
+                    onClick={() => togglePerson(person.displayId)}
                     className={`w-full rounded-xl p-4 border-2 transition-all ${
                       isAssigned
                         ? 'bg-blue-50 border-blue-500'
@@ -146,23 +211,29 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
                           {isAssigned ? (
                             <CheckCircle className="text-white" size={24} />
                           ) : (
-                            <Users className="text-gray-600" size={24} />
+                            <Icon className="text-gray-600" size={24} />
                           )}
                         </div>
                         <div className="text-left">
-                          <p className={`font-bold ${
-                            isAssigned ? 'text-blue-900' : 'text-gray-900'
-                          }`}>
-                            {worker.name}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className={`font-bold ${
+                              isAssigned ? 'text-blue-900' : 'text-gray-900'
+                            }`}>
+                              {person.name}
+                            </p>
+                            <span className={`text-xs ${typeColor} flex items-center gap-1`}>
+                              <Icon size={12} />
+                              {typeLabel}
+                            </span>
+                          </div>
                           <p className={`text-sm ${
                             isAssigned ? 'text-blue-700' : 'text-gray-600'
                           }`}>
-                            {worker.email || worker.phone || 'No contact info'}
+                            {person.email || person.phone || 'No contact info'}
                           </p>
                         </div>
                       </div>
-                      
+
                       {isAssigned && (
                         <div className="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-semibold">
                           Assigned

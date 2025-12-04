@@ -5,6 +5,7 @@ import { useEmployeeStore } from '../../employees/store/employeeStore';
 import { firestoreService } from '../../../services/firestoreService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../shared/utils/distance';
+import { isAssignedToProject } from '../../../utils/workerUserLink';
 
 export function useWorkerClockIn() {
   const { currentUser } = useAuth();
@@ -25,9 +26,15 @@ export function useWorkerClockIn() {
 
   // Calculate assigned projects
   const assignedProjects = worker && projects.length > 0
-    ? projects.filter(project => 
-        project.assignedWorkers?.includes(worker.userId)
-      )
+    ? projects.filter(project => {
+        // Check if worker is assigned using the helper function
+        // This checks both assignedEmployees (if they have a user account) and assignedWorkers
+        return isAssignedToProject(
+          project,
+          worker.id,
+          currentUser?.uid
+        );
+      })
     : [];
 
   // Load worker data
