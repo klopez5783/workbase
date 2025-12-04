@@ -9,12 +9,26 @@ admin.initializeApp();
 const twilioSid = defineSecret("TWILIO_ACCOUNT_SID");
 const twilioToken = defineSecret("TWILIO_AUTH_TOKEN");
 const twilioPhone = defineSecret("TWILIO_PHONE_NUMBER");
+const twilioMessagingServiceSid = defineSecret("TWILIO_MESSAGING_SERVICE_SID"); // ✅ Add this
+
+/**
+ * Formats a phone number to E.164 format for Twilio
+ * @param {string} phone - Phone number (10 digits or already formatted)
+ * @return {string} - Formatted phone number with +1 prefix
+ */
+function formatPhoneForTwilio(phone) {
+  if (!phone) return null;
+  // Remove any non-digit characters
+  const cleaned = phone.replace(/\D/g, "");
+  // Add +1 if not already present
+  return phone.startsWith("+") ? phone : `+1${cleaned}`;
+}
 
 // Automatically send SMS when a new worker is created
 exports.sendWorkerClockInLink = onDocumentCreated(
     {
       document: "workers/{workerId}",
-      secrets: [twilioSid, twilioToken, twilioPhone],
+      secrets: [twilioSid, twilioToken, twilioPhone, twilioMessagingServiceSid],
       memory: "256MiB",
       region: "us-east1",
     },
@@ -25,7 +39,7 @@ exports.sendWorkerClockInLink = onDocumentCreated(
       try {
         const client = twilio(twilioSid.value(), twilioToken.value());
 
-        const workerPhone = worker.phone;
+        const workerPhone = formatPhoneForTwilio(worker.phone);
 
         if (!workerPhone) {
           console.log("No phone number found for worker");
@@ -42,7 +56,7 @@ exports.sendWorkerClockInLink = onDocumentCreated(
         // Send SMS
         const result = await client.messages.create({
           body: message,
-          from: twilioPhone.value(),
+          messagingServiceSid: twilioMessagingServiceSid.value(),
           to: workerPhone,
         });
 
@@ -59,7 +73,7 @@ exports.sendWorkerClockInLink = onDocumentCreated(
 exports.resendWorkerLink = onCall(
     {
       region: "us-east1",
-      secrets: [twilioSid, twilioToken, twilioPhone],
+      secrets: [twilioSid, twilioToken, twilioPhone, twilioMessagingServiceSid],
       memory: "256MiB",
       cors: [
         "http://localhost:5173",
@@ -114,11 +128,15 @@ exports.resendWorkerLink = onCall(
 
         // Send SMS
         const message = `Hi ${worker.name}! Here's your clock-in link (valid for 30 minutes): ${clockInLink}`;
+        
+        console.log("Using Messaging Service SID:", twilioMessagingServiceSid.value());
+        console.log("Sending to phone:", worker.phone);
+        const formattedPhone = formatPhoneForTwilio(worker.phone);
 
         const result = await client.messages.create({
           body: message,
-          from: twilioPhone.value(),
-          to: worker.phone,
+          messagingServiceSid: twilioMessagingServiceSid.value(),
+          to: formattedPhone,
         });
 
         console.log("SMS resent successfully:", result.sid);
@@ -134,7 +152,7 @@ exports.resendWorkerLink = onCall(
 exports.sendCompanyInvite = onCall(
     {
       region: "us-east1",
-      secrets: [twilioSid, twilioToken, twilioPhone],
+      secrets: [twilioSid, twilioToken, twilioPhone, twilioMessagingServiceSid],
       memory: "256MiB",
       cors: [
         "http://localhost:5173",
@@ -193,7 +211,7 @@ exports.sendCompanyInvite = onCall(
         // Send SMS
         const result = await client.messages.create({
           body: message,
-          from: twilioPhone.value(),
+          messagingServiceSid: twilioMessagingServiceSid.value(),
           to: formattedPhone,
         });
 

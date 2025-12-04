@@ -64,7 +64,7 @@ export default function TimecardReport() {
     clockOutDate: '',
     clockOutTime: '',
     status: 'pending',
-    employeeId: '',
+    workerId: '',
     projectId: ''
   });
   const [bulkEditForm, setBulkEditForm] = useState({
@@ -148,7 +148,7 @@ export default function TimecardReport() {
     }
 
     if (selectedEmployee !== 'all') {
-      filtered = filtered.filter(entry => entry.employeeId === selectedEmployee);
+      filtered = filtered.filter(entry => entry.workerId === selectedEmployee);
     }
 
     if (approvalStatus !== 'all') {
@@ -389,8 +389,8 @@ export default function TimecardReport() {
     return project?.name || 'Unknown';
   };
 
-  const getEmployeeName = (employeeId) => {
-    const employee = employees.find(e => e.id === employeeId);
+  const getEmployeeName = (workerId) => {
+    const employee = employees.find(e => e.id === workerId);
     return employee?.name || 'Unknown';
   };
 
@@ -406,7 +406,7 @@ export default function TimecardReport() {
       clockOutDate: clockOutDate.toISOString().split('T')[0],
       clockOutTime: clockOutDate.toTimeString().split(' ')[0].substring(0, 5),
       status: entry.status || 'pending',
-      employeeId: entry.employeeId,
+      workerId: entry.workerId,
       projectId: entry.projectId
     });
     setShowEditModal(true);
@@ -431,7 +431,7 @@ export default function TimecardReport() {
         clockIn: clockIn.toISOString(),
         clockOut: clockOut.toISOString(),
         status: editForm.status,
-        employeeId: editForm.employeeId,
+        workerId: editForm.workerId,
         projectId: editForm.projectId
       };
 
@@ -501,7 +501,7 @@ export default function TimecardReport() {
   };
 
   const groupedEntries = filteredEntries.reduce((acc, entry) => {
-    const empName = getEmployeeName(entry.employeeId);
+    const empName = getEmployeeName(entry.workerId);
     const projName = getProjectName(entry.projectId);
     
     if (!acc[empName]) acc[empName] = {};
@@ -523,7 +523,7 @@ export default function TimecardReport() {
     let csv = 'Employee Name,Date Worked,Project Name,Time In,Time Out,Total Hours,Status\n';
     
     filteredEntries.forEach(entry => {
-      const empName = getEmployeeName(entry.employeeId);
+      const empName = getEmployeeName(entry.workerId);
       const projName = getProjectName(entry.projectId);
       const dateWorked = formatDate(entry.clockIn);
       const timeIn = formatTime(entry.clockIn);
@@ -639,15 +639,6 @@ export default function TimecardReport() {
           </div>
         )}
 
-        {/* Quick Select Options */}
-        {filteredEntries.length > 0 && (
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6 print:hidden">
-            <h3 className="text-sm font-bold text-gray-700 mb-3">Quick Select:</h3>
-            <div className="flex items-center gap-2 flex-wrap">
-            </div>
-          </div>
-        )}
-
         {/* Filters - No Print */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6 print:hidden">
   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -667,6 +658,7 @@ export default function TimecardReport() {
 
     {/* Center: Status Filters */}
     <div className="flex flex-wrap items-center gap-2">
+      <h3 className="text-sm font-bold text-gray-700">Quick Select:</h3>
       <button
         onClick={selectAll}
         className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium text-sm flex items-center gap-1 transition"
@@ -892,8 +884,8 @@ export default function TimecardReport() {
                     Employee
                   </label>
                   <select
-                    value={editForm.employeeId}
-                    onChange={(e) => setEditForm({ ...editForm, employeeId: e.target.value })}
+                    value={editForm.workerId}
+                    onChange={(e) => setEditForm({ ...editForm, workerId: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg"
                   >
                     {employees.map(emp => (

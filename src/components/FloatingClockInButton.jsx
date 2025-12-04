@@ -76,12 +76,11 @@ export default function FloatingClockInButton() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <p className="text-yellow-800 text-sm font-medium">{error}</p>
-                <span>Floading Button Modal</span>
               </div>
               <button
                 onClick={() => setError('')}
                 className="text-yellow-600 hover:text-yellow-800 transition flex-shrink-0"
-              >
+              > 
                 <X size={20} />
               </button>
             </div>

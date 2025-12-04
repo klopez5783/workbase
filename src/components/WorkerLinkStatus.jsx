@@ -4,11 +4,14 @@ import { Users, CheckCircle, AlertCircle, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
 import Alert from './Alert';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
 
 export default function WorkerLinkStatus() {
   const { currentUser } = useAuth();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
+  const isAdmin = currentEmployee?.role === 'admin';
 
   useEffect(() => {
     checkWorkerLink();
@@ -103,16 +106,18 @@ export default function WorkerLinkStatus() {
   }
 
   // Show alert for setup needed
-  return (
+  {if(!isAdmin){
+    return (
     <Alert
-      shadeType="yellow"
-      text="Clock-In Setup Required"
-      subText={status.message}
-      actionButton={{
-        text: 'Setup',
-        link: '/profile',
-        icon: Settings
-      }}
-    />
-  );
+        shadeType="yellow"
+        text="Clock-In Setup Required"
+        subText={status.message}
+        actionButton={{
+          text: 'Setup',
+          link: '/profile',
+          icon: Settings
+        }}
+      />
+    );
+  }}
 }

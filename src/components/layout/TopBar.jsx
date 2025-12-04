@@ -105,6 +105,10 @@ export default function TopBar({ title = 'WorkBase' }) {
                     <Building2 size={16} />
                     View Company
                   </button>
+                  <Link className='className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition"' to="/profile">
+                    <Settings size={16} />
+                    Profile Settings
+                  </Link>
                 </div>
               )}
 
