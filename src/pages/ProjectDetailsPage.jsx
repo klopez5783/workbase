@@ -60,8 +60,7 @@ export default function ProjectDetailsPage() {
     loadProjectDetails();
   }, [projectId]);
 
-  const handleEdit = (projectId) => {
-    const project = firestoreService.getById('projects', projectId);
+  const handleEdit = () => {
     setEditingProject(project);
     setShowForm(true);
   };
@@ -69,18 +68,18 @@ export default function ProjectDetailsPage() {
    const handleCloseForm = async () => {
     setShowForm(false);
     setEditingProject(null);
-    // Refresh projects after form closes
-    await loadProjects();
   };
 
   const loadProjectDetails = async () => {
     try {
       setLoading(true);
 
+      setLoading(true);
+
       // Load project
       const projectResult = await firestoreService.getById('projects', projectId);
       if (projectResult.success) {
-        setProject(projectResult.data);
+      setProject(projectResult.data);
       } else {
         setError('Project not found');
         setLoading(false);
@@ -249,19 +248,19 @@ export default function ProjectDetailsPage() {
             {/* Quick Actions */}
             <div className="flex gap-2 mt-4">
               <button
-                onClick={() => navigate(`/timecard-report?projectId=${projectId}`)}
+                onClick={() => navigate(`/reports/time-card?projectId=${projectId}`)}
                 className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition flex items-center gap-2"
               >
                 <Clock size={18} />
                 View Hours
               </button>
-              <button
-                onClick={() => handleEdit(projectId)}
-                className="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2"
-              >
-                <Edit size={18} />
-                Edit Project
-              </button>
+                <button
+                  onClick={handleEdit}
+                  className="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2"
+                >
+                  <Edit size={18} />
+                  Edit Project
+                </button>
             </div>
           </div>
         </div>

@@ -563,7 +563,7 @@ export default function TimecardReport() {
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
             <CircleArrowLeft size={24} />
-            Back To Admin Tools
+            Back
           </button>
 
           <div className="flex items-center justify-between">

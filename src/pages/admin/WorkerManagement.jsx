@@ -23,6 +23,8 @@ export default function WorkerManagement() {
     try {
       setLoading(true);
       const result = await firestoreService.getAll('workers');
+      console.log("=======Loading Workers=======");
+      console.log("Current Employee:", currentEmployee);
       
       if (result.success && result.data) {
         setWorkers(result.data);
@@ -430,7 +432,7 @@ function AddWorkerForm({ onClose, onSuccess, companyId }) {
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     }; 
-
+    console.log("========Creating Worker========");
     console.log('Creating worker with data:', workerData);
 
     const result = await firestoreService.create('workers', workerData);
