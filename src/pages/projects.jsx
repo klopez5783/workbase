@@ -273,13 +273,58 @@ export default function ProjectsPage() {
               onClick={ handleCompanyCheck}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
             >
-              <Plus size={20} />
+              <Plus size={25} />
               New Project
             </button>
           </div>
         </div>
 
-        {/* Search and Filters */}
+        
+
+        {/* Projects Grid */}
+        {sortedProjects.length === 0 ? (
+          <div className="bg-white rounded-xl p-12 text-center">
+            <Briefcase size={64} className="mx-auto text-gray-300 mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {projects.length === 0 ? 'No Projects Yet' : 'No Projects Found'}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {searchTerm
+                ? 'Try adjusting your search terms'
+                : projects.length === 0
+                ? 'Get started by creating your first project'
+                : statusFilter === 'completed'
+                ? 'No completed projects yet. Active projects will appear here once marked as completed.'
+                : statusFilter === 'active'
+                ? 'No active projects. Check the "All" or "Completed" filter to see other projects.'
+                : 'No projects match your current filters'}
+            </p>
+            {!searchTerm && projects.length === 0 && (
+              <button
+                onClick={ handleCompanyCheck }
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Create Project
+              </button>
+            )}
+            {projects.length > 0 && (
+              <button
+                onClick={() => {
+                  setStatusFilter('all');
+                  setSearchTerm('');
+                }}
+                className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition inline-flex items-center gap-2"
+              >
+                <Filter size={20} />
+                Clear Filters
+              </button>
+            )}
+          </div>
+        ) : (
+
+          <>
+            {/* Search and Filters */}
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
@@ -331,7 +376,7 @@ export default function ProjectsPage() {
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
             <div className="flex flex-col items-center text-center">
               <div className="p-3 bg-blue-100 rounded-lg mb-2">
@@ -387,146 +432,129 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Projects Grid */}
-        {sortedProjects.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center">
-            <Briefcase size={64} className="mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No Projects Found</h3>
-            <p className="text-gray-600 mb-6">
-              {searchTerm
-                ? 'Try adjusting your search terms'
-                : 'Get started by creating your first project'}
-            </p>
-            {!searchTerm && (
-              <button
-                onClick={ handleCompanyCheck }
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Create Project
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedProjects.map((project) => {
-              const stats = getProjectStats(project.id);
-              
-              return (
-                <div
-                  key={project.id}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  {/* Project Header */}
-                  <div className={`p-4 ${
-                    project.status === 'active' 
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                      : 'bg-gradient-to-r from-gray-500 to-gray-600'
-                  } text-white`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold mb-1 line-clamp-2">{project.name}</h3>
-                        {project.clientName && (
-                          <p className="text-blue-100 text-sm truncate">Client: {project.clientName}</p>
-                        )}
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ml-2 flex-shrink-0 ${
-                        project.status === 'active'
-                          ? 'bg-green-400 text-green-900'
-                          : 'bg-gray-400 text-gray-900'
-                      }`}>
-                        {project.status || 'Active'}
-                      </span>
-                    </div>
-                    
-                    {project.address && (
-                      <div className="flex items-start gap-2 text-blue-100 text-xs">
-                        <MapPin size={14} className="mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">{project.address}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Project Stats */}
-                  <div className="p-4">
-                    {/* Main Stats Row */}
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
-                          <Clock size={14} />
-                          <span>Total Hours</span>
+          
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {sortedProjects.map((project) => {
+                const stats = getProjectStats(project.id);
+                
+                return (
+                  <div
+                    key={project.id}
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                  >
+                    {/* Project Header */}
+                    <div className={`p-4 ${
+                      project.status === 'active' 
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
+                        : 'bg-gradient-to-r from-gray-500 to-gray-600'
+                    } text-white`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold mb-1 line-clamp-2">{project.name}</h3>
+                          {project.clientName && (
+                            <p className="text-blue-100 text-sm truncate">Client: {project.clientName}</p>
+                          )}
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ml-2 flex-shrink-0 ${
+                          project.status === 'active'
+                            ? 'bg-green-400 text-green-900'
+                            : 'bg-gray-400 text-gray-900'
+                        }`}>
+                          {project.status || 'Active'}
+                        </span>
                       </div>
                       
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
-                          <Users size={14} />
-                          <span>Workers</span>
+                      {project.address && (
+                        <div className="flex items-start gap-2 text-blue-100 text-xs">
+                          <MapPin size={14} className="mt-0.5 flex-shrink-0" />
+                          <span className="line-clamp-2">{project.address}</span>
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">{stats.uniqueWorkers}</p>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Secondary Stats Row */}
-                    <div className="grid grid-cols-2 gap-3 mb-3 text-center">
-                      <div>
-                        <p className="text-gray-600 text-xs mb-1">Time Entries</p>
-                        <p className="text-lg font-bold text-gray-900">{stats.totalEntries}</p>
+                    {/* Project Stats */}
+                    <div className="p-4">
+                      {/* Main Stats Row */}
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
+                            <Clock size={14} />
+                            <span>Total Hours</span>
+                          </div>
+                          <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
+                            <Users size={14} />
+                            <span>Workers</span>
+                          </div>
+                          <p className="text-2xl font-bold text-gray-900">{stats.uniqueWorkers}</p>
+                        </div>
                       </div>
-                      
-                      <div>
-                        <p className="text-gray-600 text-xs mb-1">Pending</p>
-                        <p className="text-lg font-bold text-orange-600">{stats.pendingApprovals}</p>
-                      </div>
-                    </div>
 
-                    {/* Last Activity */}
-                    {stats.lastActivity && (
-                      <div className="bg-gray-50 rounded-lg p-2 mb-3 text-center">
-                        <p className="text-gray-600 text-xs mb-1">Last Activity</p>
-                        <p className="text-xs font-semibold text-gray-900">
-                          {getRelativeTime(stats.lastActivity.clockIn)}
-                        </p>
+                      {/* Secondary Stats Row */}
+                      <div className="grid grid-cols-2 gap-3 mb-3 text-center">
+                        <div>
+                          <p className="text-gray-600 text-xs mb-1">Time Entries</p>
+                          <p className="text-lg font-bold text-gray-900">{stats.totalEntries}</p>
+                        </div>
+                        
+                        <div>
+                          <p className="text-gray-600 text-xs mb-1">Pending</p>
+                          <p className="text-lg font-bold text-orange-600">{stats.pendingApprovals}</p>
+                        </div>
                       </div>
-                    )}
 
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => handleViewProject(project.id)}
-                        className="bg-blue-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1"
-                      >
-                        <Eye size={16} />
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleViewTimecard(project.id)}
-                        className="bg-green-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-1"
-                      >
-                        <Clock size={16} />
-                        Hours
-                      </button>
-                      <button
-                        onClick={() => handleEdit(project)}
-                        className="bg-gray-200 text-gray-700 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition flex items-center justify-center gap-1"
-                      >
-                        <Edit size={16} />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProject(project)}
-                        className="bg-red-100 text-red-600 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-red-200 transition flex items-center justify-center gap-1"
-                      >
-                        <Trash2 size={16} />
-                        Delete
-                      </button>
+                      {/* Last Activity */}
+                      {stats.lastActivity && (
+                        <div className="bg-gray-50 rounded-lg p-2 mb-3 text-center">
+                          <p className="text-gray-600 text-xs mb-1">Last Activity</p>
+                          <p className="text-xs font-semibold text-gray-900">
+                            {getRelativeTime(stats.lastActivity.clockIn)}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => handleViewProject(project.id)}
+                          className="bg-blue-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1"
+                        >
+                          <Eye size={16} />
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleViewTimecard(project.id)}
+                          className="bg-green-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-1"
+                        >
+                          <Clock size={16} />
+                          Hours
+                        </button>
+                        <button
+                          onClick={() => handleEdit(project)}
+                          className="bg-gray-200 text-gray-700 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition flex items-center justify-center gap-1"
+                        >
+                          <Edit size={16} />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProject(project)}
+                          className="bg-red-100 text-red-600 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-red-200 transition flex items-center justify-center gap-1"
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+          </>
+          
         )}
       </div>
 

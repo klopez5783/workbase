@@ -9,8 +9,34 @@ import { useEmployeeStore } from '../../employees/store/employeeStore';
 export default function ProjectForm({ onClose, existingProject = null }) {
   const { currentUser } = useAuth();
   const { currentEmployee } = useEmployeeStore();
+  
+  // Parse existing address if editing
+  const parseAddress = (fullAddress) => {
+    if (!fullAddress) return { street: '', apt: '', city: '', state: 'Ohio', zip: '' };
+    
+    // Try to parse the address (this is a simple parser, may need refinement)
+    const parts = fullAddress.split(',').map(p => p.trim());
+    if (parts.length >= 3) {
+      const street = parts[0] || '';
+      const city = parts[1] || '';
+      const stateZip = parts[2]?.split(' ') || [];
+      const state = stateZip[0] || 'Ohio';
+      const zip = stateZip[1] || '';
+      
+      return { street, apt: '', city, state, zip };
+    }
+    
+    return { street: fullAddress, apt: '', city: '', state: 'Ohio', zip: '' };
+  };
+
+  const initialAddress = existingProject?.address ? parseAddress(existingProject.address) : { street: '', apt: '', city: '', state: 'Ohio', zip: '' };
+
   const [name, setName] = useState(existingProject?.name || '');
-  const [address, setAddress] = useState(existingProject?.address || '');
+  const [streetAddress, setStreetAddress] = useState(initialAddress.street);
+  const [aptSuite, setAptSuite] = useState(initialAddress.apt);
+  const [city, setCity] = useState(initialAddress.city);
+  const [state, setState] = useState(initialAddress.state);
+  const [zipCode, setZipCode] = useState(initialAddress.zip);
   const [clientName, setClientName] = useState(existingProject?.clientName || '');
   const [clientPhone, setClientPhone] = useState(existingProject?.clientPhone || '');
   const [geofenceRadius, setGeofenceRadius] = useState(existingProject?.geofenceRadius || 100);
@@ -19,21 +45,46 @@ export default function ProjectForm({ onClose, existingProject = null }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // US states list
+  const states = [
+    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 
+    'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 
+    'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 
+    'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 
+    'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 
+    'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 
+    'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 
+    'Wisconsin', 'Wyoming'
+  ];
+
   const { addProject, updateProject } = useProjectStore();
+
+  // Construct full address from separate fields
+  const getFullAddress = () => {
+    const addressParts = [streetAddress];
+    if (aptSuite) addressParts[0] += ` ${aptSuite}`;
+    addressParts.push(city);
+    addressParts.push(`${state} ${zipCode}`);
+    return addressParts.filter(Boolean).join(', ');
+  };
 
   const handleLocationSet = (selectedLocation) => {
     setLocation(selectedLocation);
     setShowLocationPicker(false);
-    // Update address field with the selected location's address
+    // Update address fields with the selected location's address if available
     if (selectedLocation.address) {
-      setAddress(selectedLocation.address);
+      const parsed = parseAddress(selectedLocation.address);
+      setStreetAddress(parsed.street);
+      setCity(parsed.city);
+      setState(parsed.state);
+      setZipCode(parsed.zip);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!name || !address || !clientName) {
+    if (!name || !streetAddress || !city || !state || !zipCode || !clientName) {
       setError('Please fill in all required fields');
       return;
     }
@@ -46,15 +97,18 @@ export default function ProjectForm({ onClose, existingProject = null }) {
     setLoading(true);
     setError('');
 
+    const fullAddress = getFullAddress();
+
     const projectData = {
       name,
-      address,
+      address: fullAddress,
       location,
       geofenceRadius: Number(geofenceRadius),
       clientName,
       clientPhone,
       status: 'active',
       assignedEmployees: existingProject?.assignedEmployees || [],
+      assignedWorkers: existingProject?.assignedWorkers || [],
       createdAt: existingProject?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       // Add createdBy field for new projects to track the company (using companyId)
@@ -64,7 +118,8 @@ export default function ProjectForm({ onClose, existingProject = null }) {
     try {
       if (existingProject) {
         // Update existing project
-        await firestoreService.update('projects', existingProject.firestoreId, projectData);
+        const projectId = existingProject.firestoreId || existingProject.id;
+        await firestoreService.update('projects', projectId, projectData);
         updateProject(existingProject.id, projectData);
       } else {
         // Create new project
@@ -82,9 +137,9 @@ export default function ProjectForm({ onClose, existingProject = null }) {
       onClose();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -126,19 +181,72 @@ export default function ProjectForm({ onClose, existingProject = null }) {
             />
           </div>
 
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Job Site Address *
-            </label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="123 Oak St, Columbus, OH"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
+          {/* Address Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Job Site Address *</h3>
+            
+            {/* Street Address */}
+            <div>
+              <input
+                type="text"
+                value={streetAddress}
+                onChange={(e) => setStreetAddress(e.target.value)}
+                placeholder="Street address"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+
+            {/* Apartment/Suite (Optional) */}
+            <div>
+              <input
+                type="text"
+                value={aptSuite}
+                onChange={(e) => setAptSuite(e.target.value)}
+                placeholder="Apartment, suite, etc. (optional)"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* City, State, ZIP Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <select
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  required
+                >
+                  {states.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={zipCode}
+                  onChange={(e) => setZipCode(e.target.value)}
+                  placeholder="ZIP code"
+                  maxLength="5"
+                  pattern="[0-9]{5}"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+            </div>
           </div>
 
           {/* Location Picker */}
@@ -189,7 +297,7 @@ export default function ProjectForm({ onClose, existingProject = null }) {
                 <LocationPicker
                   initialLocation={location}
                   onLocationSet={handleLocationSet}
-                  address={address}
+                  address={getFullAddress()}
                 />
               </div>
             )}
