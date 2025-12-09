@@ -22,8 +22,8 @@ import {
   AlertCircle,
   Building2
 } from 'lucide-react';
-import ProjectForm from '../features/projects/components/ProjectForm';
 import Alert from '../components/Alert';
+import ProjectFormSelector from '../features/projects/components/ProjectFormSelector';
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
@@ -250,7 +250,7 @@ export default function ProjectsPage() {
             subText="You must create a company profile before adding projects."
             actionButton={{
               text: 'Create Company',
-              link: '/company',
+              link: '/admin/company',
               icon: Building2
             }}
             onClose={() => setShowCompanyAlert(false)}
@@ -600,10 +600,11 @@ export default function ProjectsPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <ProjectForm
-          onClose={handleCloseForm}
-          existingProject={editingProject}
-        />
+        // <ProjectForm
+        //   onClose={handleCloseForm}
+        //   existingProject={editingProject}
+        // />
+        <ProjectFormSelector onClose={handleCloseForm} existingProject={editingProject} />
       )}
     </div>
   );

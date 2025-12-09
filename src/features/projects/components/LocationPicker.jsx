@@ -128,6 +128,30 @@ export default function LocationPicker({ initialLocation, onLocationSet, address
     }
   };
 
+  // Clean address for geocoding by removing suite/apartment numbers
+  const cleanAddressForSearch = (address) => {
+    // Remove common suite/apartment patterns
+    const patterns = [
+      /\s*,?\s*(suite|ste|unit|apt|apartment|#)\s*\.?\s*[a-z0-9\-]+/gi,  // Suite 200, Apt 3B, #405
+      /\s*,?\s*(building|bldg)\s*\.?\s*[a-z0-9\-]+/gi,                     // Building A
+      /\s*,?\s*(floor|fl)\s*\.?\s*[0-9]+/gi,                               // Floor 3
+      /\s*,?\s*(room|rm)\s*\.?\s*[0-9]+/gi,                                // Room 301
+    ];
+    
+    let cleaned = address;
+    patterns.forEach(pattern => {
+      cleaned = cleaned.replace(pattern, '');
+    });
+    
+    // Clean up extra spaces and commas
+    cleaned = cleaned.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
+    
+    console.log('🧹 Original address:', address);
+    console.log('🧹 Cleaned for search:', cleaned);
+    
+    return cleaned;
+  };
+
   const handleUseCurrentLocation = async () => {
     setGettingLocation(true);
     setError('');
@@ -165,40 +189,65 @@ export default function LocationPicker({ initialLocation, onLocationSet, address
   };
 
   const handleSearchAddress = async () => {
-    if (!searchQuery.trim()) {
-      setError('Please enter an address to search');
-      return;
-    }
+  if (!searchQuery.trim()) {
+    setError('Please enter an address to search');
+    return;
+  }
 
-    setSearching(true);
-    setError('');
+  setSearching(true);
+  setError('');
 
-    try {
-      // Use Nominatim (OpenStreetMap) geocoding API
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
-      );
-      const data = await response.json();
+  try {
+    // Clean the address (remove suite/apt numbers)
+    const cleanedQuery = cleanAddressForSearch(searchQuery);
+    const originalQuery = searchQuery;
+    
+    // Use improved API parameters
+    const params = new URLSearchParams({
+      format: 'json',
+      q: cleanedQuery,
+      limit: '5',
+      addressdetails: '1',
+      countrycodes: 'us',
+      layer: 'address',  // ← NEW: Only search addresses
+      email: 'workbase-app@example.com' // ← NEW: Required for usage policy
+    });
 
-      if (data.length > 0) {
-        const result = data[0];
-        const location = {
-          latitude: parseFloat(result.lat),
-          longitude: parseFloat(result.lon),
-          address: result.display_name
-        };
-        setSelectedLocation(location);
-        setMapCenter(location);
-        setSearchQuery(result.display_name);
-      } else {
-        setError('Address not found. Please try a different search.');
+    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+    
+    console.log('🔍 Searching:', cleanedQuery);
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'WorkBase-App/1.0'
       }
-    } catch (err) {
-      setError('Failed to search address. Please try again.');
-    } finally {
-      setSearching(false);
+    });
+    
+    const data = await response.json();
+    
+    console.log('📍 Results:', data.length);
+    
+    if (data.length > 0) {
+      const result = data[0];
+      const location = {
+        latitude: parseFloat(result.lat),
+        longitude: parseFloat(result.lon),
+        address: originalQuery // Keep suite info
+      };
+      
+      setSelectedLocation(location);
+      setMapCenter(location);
+      setSearchQuery(originalQuery);
+    } else {
+      setError('Address not found. Try adjusting your address or use the map.');
     }
-  };
+  } catch (err) {
+    console.error('Error:', err);
+    setError(`Error: ${err.message}`);
+  } finally {
+    setSearching(false);
+  }
+};
 
   const handleConfirm = () => {
     if (!selectedLocation) {
@@ -236,6 +285,9 @@ export default function LocationPicker({ initialLocation, onLocationSet, address
             {searching ? <Loader className="animate-spin" size={20} /> : 'Search'}
           </button>
         </div>
+        <p className="text-xs text-gray-500 mt-2">
+          💡 Include suite/apt numbers - they'll be saved but won't affect the search
+        </p>
       </div>
 
       {/* Current Location Button */}
@@ -264,6 +316,7 @@ export default function LocationPicker({ initialLocation, onLocationSet, address
           <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
+
 
       {/* Map Container */}
       <div className="bg-white rounded-xl overflow-hidden border-2 border-gray-200">

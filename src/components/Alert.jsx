@@ -37,7 +37,7 @@ export default function Alert({
       icon: 'text-red-600',
       textPrimary: 'text-red-900',
       textSecondary: 'text-red-700',
-      buttonBg: 'bg-red-100 hover:bg-red-200',
+      buttonBg: 'bg-red-100 hover:bg-red-300',
       buttonText: 'text-red-800',
       IconComponent: XCircle
     }
@@ -73,9 +73,9 @@ export default function Alert({
           {actionButton && (
             <Link
               to={actionButton.link}
-              className={`${colors.buttonBg} ${colors.buttonText} px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 flex-shrink-0`}
+              className={`${colors.buttonBg} ${colors.buttonText} px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 flex-shrink-0`}
             >
-              {actionButton.icon && <actionButton.icon size={14} />}
+              {actionButton.icon && <actionButton.icon size={16} />}
               {actionButton.text}
             </Link>
           )}
