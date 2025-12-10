@@ -1,5 +1,8 @@
-import { useStore } from '../store/useStore';
+import { useState, useEffect } from 'react';
 import { useTimeTrackingStore } from '../features/timeTracking/store/timeTrackingStore';
+import { useProjectStore } from '../features/projects/store/projectstore';
+import { useEmployeeStore } from '../features/employees/store/employeeStore';
+import { firestoreService } from '../services/firestoreService';
 import BalanceCard from '../components/dashboard/BalanceCard';
 import StatCard from '../components/dashboard/StatCard';
 import QuickActions from '../components/dashboard/QuickActions';
@@ -7,31 +10,83 @@ import ActivityList from '../components/dashboard/ActivityList';
 import WorkerLinkStatus from '../components/WorkerLinkStatus';
 
 export default function Dashboard() {
-  const { receipts, reports } = useStore();
   const { timeEntries, activeShift } = useTimeTrackingStore();
+  const { projects } = useProjectStore();
+  const { currentEmployee } = useEmployeeStore();
+  
+  // State for Firebase data
+  const [receipts, setReceipts] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Calculate today's stats
+  // Fetch receipts and reports from Firebase
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!currentEmployee?.companyId) return;
+
+      setLoading(true);
+      try {
+        // Fetch receipts
+        const receiptsResult = await firestoreService.getAll('receipts', {
+          where: [['companyId', '==', currentEmployee.companyId]]
+        });
+        if (receiptsResult.success) {
+          setReceipts(receiptsResult.data);
+        }
+
+        // Fetch reports
+        const reportsResult = await firestoreService.getAll('reports', {
+          where: [['companyId', '==', currentEmployee.companyId]]
+        });
+        if (reportsResult.success) {
+          setReports(reportsResult.data);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [currentEmployee?.companyId]);
+
+  // Calculate today's receipt stats
   const today = new Date().toDateString();
   const todayReceipts = receipts.filter(
-    (r) => new Date(r.date).toDateString() === today
+    (r) => new Date(r.date || r.createdAt).toDateString() === today
   );
-  const todayExpenses = todayReceipts.reduce((sum, r) => sum + r.amount, 0);
+  const todayExpenses = todayReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
 
+  // Calculate today's time entries
   const todayEntries = timeEntries.filter(
     (e) => new Date(e.clockIn).toDateString() === today
   );
   const todayHours = todayEntries.reduce((sum, e) => sum + (e.hours || 0), 0);
 
+  // Calculate this week's reports
   const weekReports = reports.filter((r) => {
-    const reportDate = new Date(r.date);
+    const reportDate = new Date(r.date || r.createdAt);
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     return reportDate >= weekAgo;
   });
 
+  // Calculate active projects (status === 'active')
+  const activeProjects = projects.filter(p => p.status === 'active');
+  
+  // Calculate on-schedule projects (you can customize this logic)
+  // For now, assuming all active projects are on schedule
+  // You might want to add a 'deadline' or 'status' field to determine this
+  const onScheduleProjects = activeProjects.filter(p => {
+    // Add your logic here, e.g., check if deadline is in the future
+    // or if project has a specific status field
+    return true; // Placeholder
+  });
+
   return (
     <div className="pb-6">
-        <WorkerLinkStatus /> 
-        <BalanceCard />
+      <WorkerLinkStatus /> 
+      <BalanceCard />
 
       {/* Clock In Banner */}
       {activeShift && (
@@ -54,39 +109,40 @@ export default function Dashboard() {
         </div>
       )}
 
+      <QuickActions />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 px-5 mt-4">
         <StatCard
           icon="💰"
           label="Today's Expenses"
-          value={`$${todayExpenses.toFixed(0)}`}
-          subtitle={`${todayReceipts.length} receipts`}
+          value={loading ? '...' : `$${todayExpenses.toFixed(0)}`}
+          subtitle={loading ? 'Loading...' : `${todayReceipts.length} receipts`}
           color="green"
         />
         <StatCard
           icon="⏰"
           label="Hours Today"
-          value={todayHours.toFixed(1)}
-          subtitle={`${todayEntries.length} entries`}
+          value={loading ? '...' : todayHours.toFixed(1)}
+          subtitle={loading ? 'Loading...' : `${todayEntries.length} entries`}
           color="blue"
         />
         <StatCard
           icon="📸"
           label="Reports Sent"
-          value={weekReports.length}
+          value={loading ? '...' : weekReports.length}
           subtitle="This week"
           color="orange"
         />
         <StatCard
           icon="📋"
           label="Active Projects"
-          value="3"
-          subtitle="2 on schedule"
+          value={loading ? '...' : activeProjects.length}
+          subtitle={loading ? 'Loading...' : `${onScheduleProjects.length} on schedule`}
           color="purple"
         />
       </div>
 
-      <QuickActions />
       <ActivityList />
     </div>
   );

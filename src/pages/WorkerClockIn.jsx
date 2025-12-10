@@ -113,14 +113,43 @@ export default function WorkerClockIn() {
         setProjects(assignedProjects);
       }
 
-      // Check for active shift
+      // ✅ IMPROVED: Check for active shift with localStorage persistence
       const shiftResult = await firestoreService.query('timeEntries', [
         { field: 'workerId', operator: '==', value: workerData.id },
         { field: 'status', operator: '==', value: 'active' }
       ]);
 
       if (shiftResult.success && shiftResult.data.length > 0) {
-        setActiveShift(shiftResult.data[0]);
+        const shift = shiftResult.data[0];
+        setActiveShift(shift);
+        // Persist to localStorage for refresh persistence
+        localStorage.setItem(`activeShift_${workerData.id}`, JSON.stringify(shift));
+        console.log('✅ Active shift found and cached:', shift);
+      } else {
+        // Check localStorage for cached shift
+        const cachedShift = localStorage.getItem(`activeShift_${workerData.id}`);
+        if (cachedShift) {
+          try {
+            const parsedShift = JSON.parse(cachedShift);
+            console.log('🔍 Checking cached shift:', parsedShift);
+            
+            // Verify shift is still active in Firestore
+            const verifyResult = await firestoreService.getById('timeEntries', parsedShift.id);
+            if (verifyResult.success && verifyResult.data?.status === 'active') {
+              setActiveShift(verifyResult.data);
+              console.log('✅ Cached shift verified and restored:', verifyResult.data);
+            } else {
+              // Shift no longer active, clear cache
+              localStorage.removeItem(`activeShift_${workerData.id}`);
+              console.log('❌ Cached shift no longer active, cleared');
+            }
+          } catch (err) {
+            console.error('Error parsing cached shift:', err);
+            localStorage.removeItem(`activeShift_${workerData.id}`);
+          }
+        } else {
+          console.log('ℹ️ No active shift found');
+        }
       }
 
       // ✅ COMPANY CHECK - ONLY for authenticated users with a user account
@@ -240,7 +269,9 @@ export default function WorkerClockIn() {
       const result = await firestoreService.create('timeEntries', timeEntry);
 
       if (result.success) {
-        setActiveShift({ ...timeEntry, id: result.id });
+        const newShift = { ...timeEntry, id: result.id };
+        setActiveShift(newShift);
+        localStorage.setItem(`activeShift_${worker.id}`, JSON.stringify(newShift));
         setSuccess(
           isWithinGeofence
             ? '✓ Auto-clocked in successfully!'
@@ -248,6 +279,7 @@ export default function WorkerClockIn() {
         );
       }
     } catch (err) {
+      console.error('Auto clock-in error:', err);
       setError('Failed to auto clock-in: ' + err.message);
     } finally {
       setActionLoading(false);
@@ -278,12 +310,21 @@ export default function WorkerClockIn() {
         updatedAt: now.toISOString(),
       };
 
-      await firestoreService.update('timeEntries', activeShift.id, updateData);
+      console.log('🔄 Clocking out:', { shiftId: activeShift.id, updateData });
 
-      setSuccess(`✓ Auto-clocked out! Total hours: ${hours.toFixed(2)}`);
-      setActiveShift(null);
-      setSelectedProject('');
+      const result = await firestoreService.update('timeEntries', activeShift.id, updateData);
+
+      if (result.success) {
+        console.log('✅ Clock out successful');
+        setSuccess(`✓ Auto-clocked out! Total hours: ${hours.toFixed(2)}`);
+        setActiveShift(null);
+        setSelectedProject('');
+        localStorage.removeItem(`activeShift_${worker.id}`);
+      } else {
+        throw new Error(result.error || 'Failed to update time entry');
+      }
     } catch (err) {
+      console.error('❌ Auto clock-out error:', err);
       setError('Failed to auto clock-out: ' + err.message);
     } finally {
       setActionLoading(false);
@@ -346,13 +387,21 @@ export default function WorkerClockIn() {
         notes: isWithinGeofence ? '' : 'Clocked in outside geofence',
       };
 
+      console.log('🔄 Creating time entry:', timeEntry);
+
       const result = await firestoreService.create('timeEntries', timeEntry);
 
       if (result.success) {
-        setActiveShift({ ...timeEntry, id: result.id });
+        const newShift = { ...timeEntry, id: result.id };
+        console.log('✅ Clock in successful:', newShift);
+        setActiveShift(newShift);
+        localStorage.setItem(`activeShift_${worker.id}`, JSON.stringify(newShift));
         setSuccess('✓ Clocked in successfully!');
+      } else {
+        throw new Error(result.error || 'Failed to create time entry');
       }
     } catch (err) {
+      console.error('❌ Clock in error:', err);
       setError('Failed to clock in: ' + err.message);
     } finally {
       setActionLoading(false);
@@ -360,13 +409,18 @@ export default function WorkerClockIn() {
   };
 
   const handleClockOut = async () => {
-    if (!activeShift) return;
+    if (!activeShift) {
+      setError('No active shift found');
+      return;
+    }
 
     setActionLoading(true);
     setError('');
     setSuccess('');
 
     try {
+      console.log('🔄 Starting clock out for shift:', activeShift);
+      
       const userLocation = await getCurrentLocation();
       const now = new Date();
       const start = new Date(activeShift.clockIn);
@@ -383,13 +437,28 @@ export default function WorkerClockIn() {
         updatedAt: now.toISOString(),
       };
 
-      await firestoreService.update('timeEntries', activeShift.id, updateData);
+      console.log('📤 Updating time entry:', { 
+        id: activeShift.id, 
+        updateData,
+        shiftData: activeShift 
+      });
 
-      setSuccess(`✓ Clocked out! Total hours: ${hours.toFixed(2)}`);
-      setActiveShift(null);
-      setSelectedProject('');
+      const result = await firestoreService.update('timeEntries', activeShift.id, updateData);
+
+      console.log('📥 Update result:', result);
+
+      if (result.success) {
+        console.log('✅ Clock out successful');
+        setSuccess(`✓ Clocked out! Total hours: ${hours.toFixed(2)}`);
+        setActiveShift(null);
+        setSelectedProject('');
+        localStorage.removeItem(`activeShift_${worker.id}`);
+      } else {
+        throw new Error(result.error || 'Failed to update time entry');
+      }
     } catch (err) {
-      setError('Failed to clock out: ' + err.message);
+      console.error('❌ Clock out error:', err);
+      setError(`Failed to clock out: ${err.message}`);
     } finally {
       setActionLoading(false);
     }
@@ -464,7 +533,7 @@ export default function WorkerClockIn() {
             <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 mb-6">
               <div className="flex items-center gap-3">
                 <AlertCircle className="text-red-500" size={24} />
-                <p className="text-red-900 font-medium">{error}</p>
+                <p className="text-red-900 font-medium whitespace-pre-line">{error}</p>
               </div>
             </div>
           )}
