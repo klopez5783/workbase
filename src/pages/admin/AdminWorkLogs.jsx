@@ -50,26 +50,35 @@ export default function AdminWorkLogs() {
       setLoading(true);
       setError('');
 
-      // Load work logs
+      // Load projects first - filter by company
+      const projectsResult = await firestoreService.getAll('projects');
+      let companyProjects = [];
+      if (projectsResult.success) {
+        // Filter projects to show only those belonging to the current company
+        companyProjects = projectsResult.data.filter(
+          project => project.createdBy === currentEmployee?.companyId
+        );
+        setProjects(companyProjects);
+      }
+
+      // Get list of company project IDs
+      const companyProjectIds = companyProjects.map(p => p.id);
+
+      // Load work logs - filter by company projects
       const logsResult = await firestoreService.getAll('workLogs');
       if (logsResult.success) {
+        // Filter logs to only include those from company projects
+        const companyLogs = logsResult.data.filter(
+          log => companyProjectIds.includes(log.projectId)
+        );
+
         // Sort by newest first
-        const sortedLogs = logsResult.data.sort((a, b) => {
+        const sortedLogs = companyLogs.sort((a, b) => {
           const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
           const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
           return dateB - dateA;
         });
         setWorkLogs(sortedLogs);
-      }
-
-      // Load projects - filter by company
-      const projectsResult = await firestoreService.getAll('projects');
-      if (projectsResult.success) {
-        // Filter projects to show only those belonging to the current company
-        const companyProjects = projectsResult.data.filter(
-          project => project.createdBy === currentEmployee?.companyId
-        );
-        setProjects(companyProjects);
       }
 
       // Load employees - filter by company
