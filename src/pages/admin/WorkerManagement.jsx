@@ -19,22 +19,45 @@ export default function WorkerManagement() {
     loadWorkers();
   }, []);
 
-  const loadWorkers = async () => {
-    try {
-      setLoading(true);
-      const result = await firestoreService.getAll('workers');
-      console.log("=======Loading Workers=======");
-      console.log("Current Employee:", currentEmployee);
-      
-      if (result.success && result.data) {
-        setWorkers(result.data);
-      }
-    } catch (error) {
-      console.error('Error loading workers:', error);
-    } finally {
-      setLoading(false);
+const loadWorkers = async () => {
+  try {
+    setLoading(true);
+    
+    const companyId = currentEmployee?.companyId;
+    
+    console.log("=======Loading Workers=======");
+    console.log("Current Employee:", currentEmployee);
+    console.log("Company ID to query:", companyId);
+    console.log("Company ID type:", typeof companyId);
+    
+    if (!companyId) {
+      console.warn('No company ID found');
+      setWorkers([]);
+      return;
     }
-  };
+    
+    const result = await firestoreService.getAll('workers', {
+      where: [['companyId', '==', companyId]]
+    });
+    
+    console.log("Query result:", result);
+    console.log("Number of workers returned:", result.data?.length);
+    console.log("Workers data:", result.data);
+    
+    // Log each worker's companyId to compare
+    result.data?.forEach(worker => {
+      console.log(`Worker ${worker.id}: companyId = ${worker.companyId} (type: ${typeof worker.companyId})`);
+    });
+    
+    if (result.success && result.data) {
+      setWorkers(result.data);
+    }
+  } catch (error) {
+    console.error('Error loading workers:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleAddWorker = async (workerData) => {
     await loadWorkers();

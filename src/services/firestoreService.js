@@ -87,18 +87,29 @@ export const firestoreService = {
   },
 
   // Read all documents
-  async getAll(collectionName) {
-    try {
-      const querySnapshot = await getDocs(collection(db, collectionName));
-      const data = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      return { success: true, data };
-    } catch (error) {
-      return { success: false, error: error.message };
+  async getAll(collectionName, options = {}) {
+  try {
+    let q = collection(db, collectionName);
+    
+    // Apply where clauses if provided
+    if (options.where && Array.isArray(options.where)) {
+      const constraints = options.where.map(([field, operator, value]) => 
+        where(field, operator, value)
+      );
+      q = query(q, ...constraints);
     }
-  },
+    
+    const querySnapshot = await getDocs(q);
+    const data = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+},
 
   // Query documents
   async query(collectionName, conditions = []) {
