@@ -18,10 +18,7 @@ export const useCompanyWorkers = (options = {}) => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log("=======Loading Workers (Hook)=======");
-      console.log("Company ID to query:", companyId);
-      console.log("Company ID type:", typeof companyId);
+
       
       if (!companyId) {
         console.warn('No company ID found for current employee');
@@ -42,14 +39,6 @@ export const useCompanyWorkers = (options = {}) => {
         where: whereclauses
       });
       
-      console.log("Query result:", result);
-      console.log("Number of workers returned:", result.data?.length);
-      console.log("Workers data:", result.data);
-      
-      // Log each worker's companyId to compare
-      result.data?.forEach(worker => {
-        console.log(`Worker ${worker.id}: companyId = ${worker.companyId} (type: ${typeof worker.companyId})`);
-      });
       
       if (result.success && result.data) {
         console.log(`Loaded ${result.data.length} workers`);
