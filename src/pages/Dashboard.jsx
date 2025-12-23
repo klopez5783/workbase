@@ -8,6 +8,8 @@ import StatCard from '../components/dashboard/StatCard';
 import QuickActions from '../components/dashboard/QuickActions';
 import ActivityList from '../components/dashboard/ActivityList';
 import WorkerLinkStatus from '../components/WorkerLinkStatus';
+import { useAuth } from '../contexts/AuthContext';
+import AdminOnboardingWizard from '../features/onboarding/components/AdminOnboardingWizard';
 
 export default function Dashboard() {
   const { timeEntries, activeShift } = useTimeTrackingStore();
@@ -18,7 +20,8 @@ export default function Dashboard() {
   const [receipts, setReceipts] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const { currentUser } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
   // Fetch receipts and reports from Firebase
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +53,33 @@ export default function Dashboard() {
 
     fetchData();
   }, [currentEmployee?.companyId]);
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      const userProfile = await firestoreService.getById('users', currentUser.uid);
+      
+      if (userProfile.success) {
+        const needsOnboarding = 
+          userProfile.data.role === 'admin' && 
+          !userProfile.data.companyId;
+        
+        setShowOnboarding(needsOnboarding);
+      }
+    };
+    
+    if (currentUser) checkOnboarding();
+  }, [currentUser]);
+
+  if (showOnboarding) {
+    return (
+      <AdminOnboardingWizard 
+        onComplete={() => {
+          setShowOnboarding(false);
+          window.location.reload();
+        }}
+      />
+    );
+  }
 
   // Calculate today's receipt stats
   const today = new Date().toDateString();
