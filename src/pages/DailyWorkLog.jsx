@@ -1,114 +1,47 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { firestoreService } from '../services/firestoreService';
-import { FileText, Loader, Plus, Calendar, CircleArrowLeft , CheckCircle, X  } from 'lucide-react';
+import { FileText, Loader, Calendar, CircleArrowLeft, CheckCircle } from 'lucide-react';
 import WorkLogForm from '../components/WorkLogForm';
 import { useEmployeeStore } from '../features/employees/store/employeeStore';
-import { useLocation, useNavigate } from 'react-router-dom'; // ← ADD useLocation, useNavigate
-
+import { useLocation, useNavigate } from 'react-router-dom';
+import ProjectSelectionCard from '../features/projects/components/ProjectSelectionCard';
+import WorkLogSummaryCard from '../components/WorkLogSummaryCard';
+import { useDailyWorkLog } from '../hooks/useDailyWorkLog'; // ← ADD THIS IMPORT
 
 export default function DailyWorkLog() {
-  const { currentUser } = useAuth();
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   const isAdmin = currentEmployee?.role === 'admin';
-  const [projects, setProjects] = useState([]);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ✅ REPLACE all the data loading logic with the hook
+  const { projects, todayLogs, loading, error, refetchData } = useDailyWorkLog(
+    currentEmployee,
+    isAdmin
+  );
+
+  // UI state (not data state)
   const [selectedProject, setSelectedProject] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [todayLogs, setTodayLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const location = useLocation(); 
-  const navigate = useNavigate();
-  const [showAlert, setShowAlert] = useState(false); // Add this
-  const [alertMessage, setAlertMessage] = useState(''); // Add this
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, [currentUser, currentEmployee]);
-
+  // Handle project passed from navigation
   useEffect(() => {
     if (location.state?.selectedProject) {
       const passedProject = location.state.selectedProject;
       setSelectedProject(passedProject);
-      setShowForm(true); // Automatically show the form
+      setShowForm(true);
 
-      // Show alert
       setAlertMessage(`Project selected: ${passedProject.name}`);
       setShowAlert(true);
-      
-      // Auto-hide after 3 seconds
+
       setTimeout(() => {
         setShowAlert(false);
       }, 3000);
-      
-      // Clean up the state
+
       window.history.replaceState({}, document.title);
     }
   }, [location]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-
-      if (!currentEmployee) {
-        setError('Employee profile not found');
-        setLoading(false);
-        return;
-      }
-
-      // Get assigned projects
-      const projectsResult = await firestoreService.getAll('projects');
-      if (projectsResult.success) {
-        let filteredProjects = projectsResult.data;
-
-        // For admins: filter by company
-        if (isAdmin) {
-          filteredProjects = filteredProjects.filter(project =>
-            project.createdBy === currentEmployee.companyId
-          );
-        } else {
-          // For workers: filter by assigned projects
-          filteredProjects = filteredProjects.filter(project =>
-            project.assignedEmployees?.includes(currentEmployee.id) ||
-            !project.assignedEmployees ||
-            project.assignedEmployees.length === 0
-          );
-        }
-
-        setProjects(filteredProjects);
-      }
-
-      // Get today's work logs
-      await loadTodayLogs(currentEmployee.id);
-
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading data:', err);
-      setError('Failed to load data');
-      setLoading(false);
-    }
-  };
-
-  const loadTodayLogs = async (employeeId) => {
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const logsResult = await firestoreService.query('workLogs', [
-        { field: 'employeeId', operator: '==', value: employeeId }
-      ]);
-
-      if (logsResult.success) {
-        const todayOnly = logsResult.data.filter(log => {
-          const logDate = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
-          return logDate >= today;
-        });
-        setTodayLogs(todayOnly);
-      }
-    } catch (err) {
-      console.error('Error loading today logs:', err);
-    }
-  };
 
   const handleSelectProject = (project) => {
     setSelectedProject(project);
@@ -118,7 +51,7 @@ export default function DailyWorkLog() {
   const handleFormSuccess = () => {
     setShowForm(false);
     setSelectedProject(null);
-    loadData(); // Reload to show new log
+    refetchData(); // ← Use refetchData from hook instead of loadData
   };
 
   const handleFormCancel = () => {
@@ -126,10 +59,9 @@ export default function DailyWorkLog() {
     setSelectedProject(null);
   };
 
-   const handleBack = () => {
-    navigate('/admin/tools')
+  const handleBack = () => {
+    navigate('/admin/tools');
   };
-
 
   if (loading) {
     return (
@@ -142,11 +74,16 @@ export default function DailyWorkLog() {
     );
   }
 
-  if (error && !currentEmployee) {
+  if (error) {
     return (
       <div className="p-5">
         <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
           <p className="text-red-900 font-medium">{error}</p>
+          {!isAdmin && !currentEmployee?.companyId && (
+            <p className="text-red-700 text-sm mt-2">
+              Ask your supervisor to add you to a company and assign you to projects.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -181,14 +118,15 @@ export default function DailyWorkLog() {
   // Show project selection
   return (
     <div className="p-5 pb-24">
-      {isAdmin && ( 
+      {isAdmin && (
         <button
-            onClick={handleBack}
-            className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
-          >
-            <CircleArrowLeft  size={20}/> Back to Admin Tools
-          </button>)
-      }
+          onClick={handleBack}
+          className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
+        >
+          <CircleArrowLeft size={20} /> Back to Admin Tools
+        </button>
+      )}
+
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Daily Work Log</h1>
@@ -205,10 +143,10 @@ export default function DailyWorkLog() {
           </div>
           <div>
             <p className="font-semibold text-blue-900">
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                month: 'long', 
-                day: 'numeric' 
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric'
               })}
             </p>
             <p className="text-sm text-blue-700">
@@ -245,9 +183,15 @@ export default function DailyWorkLog() {
       {projects.length === 0 ? (
         <div className="bg-white rounded-xl p-12 text-center">
           <FileText size={64} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Projects Assigned</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {!isAdmin && !currentEmployee?.companyId
+              ? 'Not Assigned to Company'
+              : 'No Projects Assigned'}
+          </h3>
           <p className="text-gray-600">
-            Contact your supervisor to be assigned to projects
+            {!isAdmin && !currentEmployee?.companyId
+              ? 'You need to be added to a company first'
+              : 'Contact your supervisor to be assigned to projects'}
           </p>
         </div>
       ) : (
@@ -256,36 +200,14 @@ export default function DailyWorkLog() {
           <div className="space-y-3">
             {projects.map((project) => {
               const projectLogsToday = todayLogs.filter(log => log.projectId === project.id);
-              
+
               return (
-                <button
+                <ProjectSelectionCard
                   key={project.id}
-                  onClick={() => handleSelectProject(project)}
-                  className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-200 text-left"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-900">{project.name}</p>
-                      <p className="text-sm text-gray-600 mt-1">{project.address}</p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {projectLogsToday.length > 0 ? (
-                          <span className="text-green-600 font-medium">
-                            ✓ {projectLogsToday.length} log{projectLogsToday.length !== 1 ? 's' : ''} today
-                          </span>
-                        ) : (
-                          <span className="text-gray-500">
-                            No logs yet today
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0 ml-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Plus className="text-blue-600" size={20} />
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                  project={project}
+                  onSelect={handleSelectProject}
+                  todayLogsCount={projectLogsToday.length}
+                />
               );
             })}
           </div>
@@ -299,38 +221,12 @@ export default function DailyWorkLog() {
           <div className="space-y-3">
             {todayLogs.map((log) => {
               const logProject = projects.find(p => p.id === log.projectId);
-              const logTime = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
-              
               return (
-                <div key={log.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <FileText className="text-green-600" size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900">{logProject?.name || 'Unknown Project'}</p>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {log.translatedDescription || log.description}
-                      </p>
-                      <div className="flex items-center gap-4 mt-2 flex-wrap">
-                        <p className="text-xs text-gray-500">
-                          {logTime.toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          📸 {log.images?.length || 0} photo{log.images?.length !== 1 ? 's' : ''}
-                        </p>
-                        {log.wasTranslated && (
-                          <p className="text-xs text-purple-600 font-medium">
-                            🌐 Translated
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <WorkLogSummaryCard
+                  key={log.id}
+                  log={log}
+                  project={logProject}
+                />
               );
             })}
           </div>

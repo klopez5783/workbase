@@ -1,6 +1,6 @@
 import { MapPin, Users, Settings, Trash2, UserPlus } from 'lucide-react';
 
-export default function ProjectCard({ project, onEdit, onDelete, onViewDetails, onAssignWorkers }) {
+export default function AdminProjectCard({ project, onEdit, onDelete, onViewDetails, onAssignWorkers }) {
   const statusColors = {
     active: 'bg-green-100 text-green-800',
     completed: 'bg-blue-100 text-blue-800',

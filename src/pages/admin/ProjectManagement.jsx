@@ -5,7 +5,7 @@ import { firestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import ProjectForm from '../../features/projects/components/ProjectForm';
-import ProjectCard from '../../features/projects/components/ProjectCard';
+import ProjectCard from '../../features/projects/components/AdminProjectCard';
 import AssignWorkersModal from '../../features/projects/components/AssignWorkersModal';
 
 export default function ProjectManagement() {
