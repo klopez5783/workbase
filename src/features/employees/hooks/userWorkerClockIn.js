@@ -5,11 +5,24 @@ import { useEmployeeStore } from '../../employees/store/employeeStore';
 import { firestoreService } from '../../../services/firestoreService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../shared/utils/distance';
-import { isAssignedToProject } from '../../../utils/workerUserLink';
 
-export function useWorkerClockIn() {
-  const { currentUser } = useAuth();
-  const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
+export function useWorkerClockIn(accessKey = null) {
+  // const { currentUser } = useAuth();
+  // const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
+
+   let currentUser = null;
+  let currentEmployee = null;
+  let setCurrentEmployee = () => {};
+  
+  try {
+    const auth = useAuth();
+    const employeeStore = useEmployeeStore();
+    currentUser = auth?.currentUser || null;
+    currentEmployee = employeeStore?.currentEmployee || null;
+    setCurrentEmployee = employeeStore?.setCurrentEmployee || (() => {});
+  } catch (err) {
+    console.log('No auth - SMS worker mode');
+  }
   
   const [worker, setWorker] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -21,21 +34,91 @@ export function useWorkerClockIn() {
   const [success, setSuccess] = useState('');
   const [locationError, setLocationError] = useState(null);
   const [errorType, setErrorType] = useState(null);
+  const [isAuthenticatedUser, setIsAuthenticatedUser] = useState(false); // ✅ Track user type
 
   const { getCurrentLocation } = useGeolocation();
 
-  // Calculate assigned projects
+  // ✅ Calculate assigned projects based on user type
   const assignedProjects = worker && projects.length > 0
     ? projects.filter(project => {
-        // Check if worker is assigned using the helper function
-        // This checks both assignedEmployees (if they have a user account) and assignedWorkers
-        return isAssignedToProject(
-          project,
-          worker.id,
-          currentUser?.uid
-        );
+        if (isAuthenticatedUser) {
+          // ✅ For authenticated users: Check assignedEmployees only
+          const assignedEmployees = project.assignedEmployees || [];
+          return assignedEmployees.includes(currentUser?.uid);
+        } else {
+          // ✅ For SMS workers: Check assignedWorkers only
+          const assignedWorkers = project.assignedWorkers || [];
+          return assignedWorkers.includes(worker.id);
+        }
       })
     : [];
+
+
+    const loadWorkerByAccessKey = async (key) => {
+    try {
+      console.log("Loading worker by access key:", key);
+      setLoading(true);
+      
+      // Find worker by access key
+      const workerResult = await firestoreService.query('workers', [
+        { field: 'accessKey', operator: '==', value: key }
+      ]);
+
+      console.log("Worker query result:", workerResult);
+
+      if (!workerResult.success || workerResult.data.length === 0) {
+        setError('Invalid access link. Please contact your supervisor.');
+        setLoading(false);
+        return;
+      }
+
+      const workerData = workerResult.data[0];
+
+      // Check expiration
+      if (workerData.accessKeyExpiresAt) {
+        const now = new Date();
+        const expiresAt = new Date(workerData.accessKeyExpiresAt);
+        if (now > expiresAt) {
+          setError('This access link has expired. Please request a new link.');
+          setWorker(workerData);
+          setLoading(false);
+          return;
+        }
+      }
+
+      console.log("Setting worker:", workerData);
+      setWorker(workerData);
+      setIsAuthenticatedUser(false);  // SMS worker
+
+      // Load assigned projects
+      const projectsResult = await firestoreService.getAll('projects');
+      if (projectsResult.success) {
+        const assigned = projectsResult.data.filter(p =>
+          p.assignedWorkers?.includes(workerData.id)
+        );
+        console.log("Assigned projects:", assigned);
+        setProjects(assigned);
+      }
+
+      // Check for active shift
+      const shiftResult = await firestoreService.query('timeEntries', [
+        { field: 'workerId', operator: '==', value: workerData.id },
+        { field: 'status', operator: '==', value: 'active' }
+      ]);
+
+      if (shiftResult.success && shiftResult.data.length > 0) {
+        const shift = shiftResult.data[0];
+        setActiveShift(shift);
+        console.log("Active shift found:", shift);
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading worker by access key:', err);
+      setError('Failed to load data: ' + err.message);
+      setLoading(false);
+    }
+  };
 
   // Load worker data
   const loadWorkerData = async () => {
@@ -48,6 +131,45 @@ export function useWorkerClockIn() {
         setLoading(false);
         return;
       }
+
+      // ✅ Check if current user is an authenticated user (not SMS worker)
+      if (currentEmployee && currentEmployee.role) {
+        // This is an authenticated user with a profile
+        setIsAuthenticatedUser(true);
+        console.log("✅ Authenticated user detected");
+
+        // For authenticated users, use their employee data directly
+        setWorker({
+          id: currentEmployee.id,
+          name: currentEmployee.name,
+          phone: currentEmployee.phone || currentEmployee.phoneNumber,
+          companyId: currentEmployee.companyId,
+          isAuthenticatedUser: true
+        });
+
+        // Load all projects
+        const projectsResult = await firestoreService.getAll('projects');
+        if (projectsResult.success) {
+          setProjects(projectsResult.data);
+        }
+
+        // Check for active shift using userId
+        const shiftResult = await firestoreService.query('timeEntries', [
+          { field: 'userId', operator: '==', value: currentUser.uid },
+          { field: 'status', operator: '==', value: 'active' }
+        ]);
+
+        if (shiftResult.success && shiftResult.data.length > 0) {
+          setActiveShift(shiftResult.data[0]);
+        }
+
+        setLoading(false);
+        return;
+      }
+
+      // ✅ SMS Worker Flow - Find worker by phone number
+      setIsAuthenticatedUser(false);
+      console.log("✅ SMS worker flow - finding by phone");
 
       // Get user profile
       const userResult = await firestoreService.query('users', [
@@ -82,8 +204,11 @@ export function useWorkerClockIn() {
       }
 
       const workerData = workerResult.data[0];
-      console.log("✅ Found worker:", workerData.name);
-      setWorker(workerData);
+      console.log("✅ Found SMS worker:", workerData.name);
+      setWorker({
+        ...workerData,
+        isAuthenticatedUser: false
+      });
 
       // Load all projects
       const projectsResult = await firestoreService.getAll('projects');
@@ -91,7 +216,7 @@ export function useWorkerClockIn() {
         setProjects(projectsResult.data);
       }
 
-      // Check for active shift
+      // Check for active shift using workerId
       const shiftResult = await firestoreService.query('timeEntries', [
         { field: 'workerId', operator: '==', value: workerData.id },
         { field: 'status', operator: '==', value: 'active' }
@@ -155,12 +280,8 @@ export function useWorkerClockIn() {
         return { success: false };
       }
 
+      // ✅ Build time entry based on user type
       const timeEntry = {
-        workerId: worker.id,
-        workerName: worker.name,
-        workerPhone: worker.phone,
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
         projectId: project.id,
         projectName: project.name,
         clockIn: new Date().toISOString(),
@@ -175,6 +296,22 @@ export function useWorkerClockIn() {
         notes: isWithinGeofence ? '' : 'Clocked in outside geofence',
         clockInMethod: 'app',
       };
+
+      // ✅ Add user-specific or worker-specific fields
+      if (isAuthenticatedUser) {
+        // Authenticated user fields
+        timeEntry.userId = currentUser.uid;
+        timeEntry.userEmail = currentUser.email;
+        timeEntry.userName = currentEmployee.name;
+        timeEntry.userPhone = currentEmployee.phone || currentEmployee.phoneNumber;
+      } else {
+        // SMS worker fields
+        timeEntry.workerId = worker.id;
+        timeEntry.workerName = worker.name;
+        timeEntry.workerPhone = worker.phone;
+        timeEntry.userId = currentUser.uid; // Still include for reference
+        timeEntry.userEmail = currentUser.email;
+      }
 
       const result = await firestoreService.create('timeEntries', timeEntry);
 
@@ -231,11 +368,21 @@ export function useWorkerClockIn() {
   };
 
   // Load data on mount
-  useEffect(() => {
-    if (currentUser && currentEmployee) {
+ useEffect(() => {
+    console.log("useEffect triggered - accessKey:", accessKey, "currentUser:", !!currentUser);
+    
+    if (accessKey) {
+      // SMS worker - load by access key
+      console.log("Loading via access key");
+      loadWorkerByAccessKey(accessKey);
+    } else if (currentUser && currentEmployee) {
+      // Authenticated user - load normally
+      console.log("Loading via auth");
       loadWorkerData();
+    } else {
+      console.log("Waiting for auth or access key...");
     }
-  }, [currentUser, currentEmployee]);
+  }, [accessKey, currentUser, currentEmployee]);
 
   // Auto-dismiss success after 5 seconds
   useEffect(() => {
@@ -246,14 +393,12 @@ export function useWorkerClockIn() {
   }, [success]);
 
   // Auto-dismiss error after 5 seconds if no worker
-    useEffect(() => {
-    // Only auto-dismiss if errorType is explicitly set to 'dismissible'
-    // If errorType is null, treat as persistent (don't auto-dismiss)
-        if (error && !worker) {
-            const timer = setTimeout(() => setError(''), 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [error, worker]);
+  useEffect(() => {
+    if (error && !worker) {
+      const timer = setTimeout(() => setError(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, worker]);
 
   // Auto-dismiss location error after 10 seconds
   useEffect(() => {
@@ -263,8 +408,7 @@ export function useWorkerClockIn() {
     }
   }, [locationError]);
 
-  return {
-    // State
+ return {
     worker,
     projects,
     assignedProjects,
@@ -279,8 +423,7 @@ export function useWorkerClockIn() {
     setSuccess,
     locationError,
     setLocationError,
-    
-    // Functions
+    isAuthenticatedUser,
     clockIn,
     clockOut,
     loadWorkerData,
