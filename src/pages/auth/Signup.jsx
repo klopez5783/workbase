@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Loader, User, Mail, Lock, Phone } from 'lucide-react';
+import { Loader, User, Mail, Lock, Phone, Shield, Briefcase, Info } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
 
@@ -19,10 +19,8 @@ export default function SignUp() {
   const navigate = useNavigate();
 
   const formatPhoneNumber = (value) => {
-    // Remove all non-digits
     const phoneNumber = value.replace(/\D/g, '');
     
-    // Format as (XXX) XXX-XXXX
     if (phoneNumber.length <= 3) {
       return phoneNumber;
     } else if (phoneNumber.length <= 6) {
@@ -45,7 +43,6 @@ export default function SignUp() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.name.trim()) {
       return setError('Please enter your name');
     }
@@ -58,7 +55,6 @@ export default function SignUp() {
       return setError('Please enter your phone number');
     }
 
-    // Validate phone number (must be 10 digits)
     const phoneDigits = formData.phone.replace(/\D/g, '');
     if (phoneDigits.length !== 10) {
       return setError('Please enter a valid 10-digit phone number');
@@ -76,33 +72,30 @@ export default function SignUp() {
     setError('');
 
     try {
-      // Create Firebase Auth account
       const result = await signUp(formData.email, formData.password);
 
       if (result.success && result.user) {
-        // Create user document in Firestore
         const userData = {
           uid: result.user.uid,
           name: formData.name.trim(),
           email: formData.email.toLowerCase().trim(),
           phone: formData.phone,
           phoneRaw: phoneDigits,
-          role: formData.role, // Default role
+          role: formData.role,
           status: 'active',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
-        const firestoreResult = await firestoreService.createUserProfile(result.user.uid, userData); // Call the new function
-        console.log(firestoreResult)
-        //const firestoreResult = await firestoreService.create('users', userData);
+        const firestoreResult = await firestoreService.createUserProfile(result.user.uid, userData);
+        console.log(firestoreResult);
 
         if (firestoreResult.success) {
-            console.log("Firestore user profile created successfully!");
-            navigate('/');
+          console.log("Firestore user profile created successfully!");
+          navigate('/');
         } else {
-            console.error("DEBUG: firestoreResult object:", firestoreResult); // Log the full object
-            throw new Error(firestoreResult.error || 'Failed to create user profile');
+          console.error("DEBUG: firestoreResult object:", firestoreResult);
+          throw new Error(firestoreResult.error || 'Failed to create user profile');
         }
       } else {
         throw new Error(result.error || 'Failed to create account');
@@ -195,39 +188,85 @@ export default function SignUp() {
               📱 Used to link your account with worker clock-in
             </p>
           </div>
-                {/* Role Selection */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Type *
-                </label>
-                <div className="flex items-center gap-6">
-                    {/* Worker Option */}
-                    <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="radio"
-                        name="role"
-                        value="worker"
-                        checked={formData.role === 'worker'}
-                        onChange={handleChange}
-                        className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700 text-sm font-medium">Worker</span>
-                    </label>
 
-                    {/* Admin Option */}
-                    <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="radio"
-                        name="role"
-                        value="admin"
-                        checked={formData.role === 'admin'}
-                        onChange={handleChange}
-                        className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700 text-sm font-medium">Admin</span>
-                    </label>
+          {/* Role Selection - Enhanced */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Account Type *
+            </label>
+            
+            <div className="space-y-3">
+              {/* Admin Option */}
+              <label 
+                className={`
+                  flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all
+                  ${formData.role === 'admin' 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                  }
+                `}
+              >
+                <input
+                  type="radio"
+                  name="role"
+                  value="admin"
+                  checked={formData.role === 'admin'}
+                  onChange={handleChange}
+                  className="mt-1 text-blue-600 focus:ring-blue-500"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Shield size={18} className="text-blue-600" />
+                    <span className="font-semibold text-gray-900">Admin Account</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Create projects, manage workers, view reports, and oversee operations
+                  </p>
                 </div>
+              </label>
+              
+              
+              {/* Worker Option */}
+              <label 
+                className={`
+                  flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all
+                  ${formData.role === 'worker' 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                  }
+                `}
+              >
+                <input
+                  type="radio"
+                  name="role"
+                  value="worker"
+                  checked={formData.role === 'worker'}
+                  onChange={handleChange}
+                  className="mt-1 text-blue-600 focus:ring-blue-500"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Briefcase size={18} className="text-blue-600" />
+                    <span className="font-semibold text-gray-900">Worker Account</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Clock in/out, submit work logs to assigned projects
+                  </p>
+                </div>
+              </label>
             </div>
+
+            {/* Info Box */}
+            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <Info size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-800">
+                  <strong>Not sure?</strong> Choose Worker if you'll be clocking in/out. 
+                  Choose Admin if you're managing a team or company.
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Password */}
           <div>
@@ -274,7 +313,7 @@ export default function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
