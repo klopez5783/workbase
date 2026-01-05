@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, CheckCircle, AlertCircle, Settings } from 'lucide-react';
+import { Users, CheckCircle, AlertCircle, Settings, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
 import Alert from './Alert';
@@ -10,12 +10,44 @@ export default function WorkerLinkStatus() {
   const { currentUser } = useAuth();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showLinkedMessage, setShowLinkedMessage] = useState(true);
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   const isAdmin = currentEmployee?.role === 'admin';
+
+  // ✅ Check if user has already dismissed this message
+  useEffect(() => {
+    if (currentUser) {
+      const dismissedKey = `workerLinkDismissed_${currentUser.uid}`;
+      const wasDismissed = localStorage.getItem(dismissedKey);
+      if (wasDismissed === 'true') {
+        setShowLinkedMessage(false);
+      }
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     checkWorkerLink();
   }, [currentUser]);
+
+  // ✅ Auto-dismiss linked message after 4 seconds
+  useEffect(() => {
+    if (status?.type === 'linked' && showLinkedMessage) {
+      const timer = setTimeout(() => {
+        handleDismiss();
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [status, showLinkedMessage]);
+
+  // ✅ Handle dismissal and save to localStorage
+  const handleDismiss = () => {
+    setShowLinkedMessage(false);
+    if (currentUser) {
+      const dismissedKey = `workerLinkDismissed_${currentUser.uid}`;
+      sessionStorage.setItem(dismissedKey, 'true');  // ← sessionStorage
+    }
+  };
 
   const checkWorkerLink = async () => {
     if (!currentUser) return;
@@ -52,7 +84,7 @@ export default function WorkerLinkStatus() {
       if (workerResult.success && workerResult.data.length > 0) {
         const workerData = workerResult.data[0];
         
-        // ✅ Update worker with userId if not already set or if it's different
+        // Update worker with userId if not already set
         if (!workerData.userId || workerData.userId !== currentUser.uid) {
           console.log('🔗 Linking worker to user account...');
           await firestoreService.update('workers', workerData.id, {
@@ -82,13 +114,18 @@ export default function WorkerLinkStatus() {
   };
 
   if (loading || !status) {
-    return null; // Don't show anything while loading
+    return null;
   }
 
-  // Don't show if already linked (no action needed)
+  // Don't show if linked message is dismissed
+  if (status.type === 'linked' && !showLinkedMessage) {
+    return null;
+  }
+
+  // Show linked message with manual dismiss option
   if (status.type === 'linked') {
     return (
-      <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
+      <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-4 mx-5 mb-4 transition-opacity duration-300">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1">
             <CheckCircle className="text-green-600 mt-0.5" size={20} />
@@ -100,24 +137,34 @@ export default function WorkerLinkStatus() {
               </p>
             </div>
           </div>
+          <button
+            onClick={handleDismiss}
+            className="text-green-600 hover:text-green-800 transition flex-shrink-0"
+          >
+            <X size={18} />
+          </button>
         </div>
       </div>
     );
   }
 
   // Show alert for setup needed
-  {if(!isAdmin){
+  if (!isAdmin) {
     return (
-    <Alert
-        shadeType="yellow"
-        text="Clock-In Setup Required"
-        subText={status.message}
-        actionButton={{
-          text: 'Setup',
-          link: '/profile',
-          icon: Settings
-        }}
-      />
+      <div className="mx-5 mb-4">
+        <Alert
+          shadeType="yellow"
+          text="Clock-In Setup Required"
+          subText={status.message}
+          actionButton={{
+            text: 'Setup',
+            link: '/profile',
+            icon: Settings
+          }}
+        />
+      </div>
     );
-  }}
+  }
+  
+  return null;
 }

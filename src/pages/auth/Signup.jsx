@@ -247,7 +247,7 @@ export default function SignUp() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <Briefcase size={18} className="text-blue-600" />
-                    <span className="font-semibold text-gray-900">Worker Account</span>
+                    <span className="font-semibold text-gray-900">Employee Account</span>
                   </div>
                   <p className="text-sm text-gray-600">
                     Clock in/out, submit work logs to assigned projects
@@ -261,7 +261,7 @@ export default function SignUp() {
               <div className="flex items-start gap-2">
                 <Info size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-800">
-                  <strong>Not sure?</strong> Choose Worker if you'll be clocking in/out. 
+                  <strong>Not sure?</strong> Choose Employee if you'll be clocking in/out. 
                   Choose Admin if you're managing a team or company.
                 </p>
               </div>
