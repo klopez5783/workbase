@@ -389,8 +389,23 @@ export default function TimecardReport() {
     return project?.name || 'Unknown';
   };
 
+
+  //   const getEmployeeName = (workerId) => {
+  //   const employee = employees.find(e => e.id === workerId);
+  //   return employee?.name || 'Unknown';
+  // };
+
+
   const getEmployeeName = (workerId) => {
-    const employee = employees.find(e => e.id === workerId);
+    // Try finding by workerId first
+    let employee = employees.find(e => e.id === workerId);
+    
+    // If not found, try finding in workers collection
+    if (!employee && workerId) {
+      const worker = employees.find(w => w.id === workerId);
+      if (worker) return worker.name;
+    }
+    
     return employee?.name || 'Unknown';
   };
 

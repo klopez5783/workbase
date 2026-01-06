@@ -4,6 +4,9 @@ const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const twilio = require("twilio");
 
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
 admin.initializeApp();
 
 const twilioSid = defineSecret("TWILIO_ACCOUNT_SID");
@@ -69,6 +72,62 @@ exports.sendWorkerClockInLink = onDocumentCreated(
     }
 );
 
+// Delete anonymous users after 7 days of inactivity
+exports.cleanupAnonymousUsers = functions.pubsub
+  .schedule('every 24 hours')
+  .onRun(async (context) => {
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    
+    const listUsersResult = await admin.auth().listUsers(1000);
+    const usersToDelete = [];
+
+    listUsersResult.users.forEach((user) => {
+      // Check if anonymous and inactive for 7+ days
+      if (user.providerData.length === 0) { // Anonymous user
+        const lastSignIn = new Date(user.metadata.lastSignInTime).getTime();
+        if (lastSignIn < sevenDaysAgo) {
+          usersToDelete.push(user.uid);
+        }
+      }
+    });
+
+    // Delete in batches
+    if (usersToDelete.length > 0) {
+      await admin.auth().deleteUsers(usersToDelete);
+      console.log(`Deleted ${usersToDelete.length} inactive anonymous users`);
+    }
+
+    return null;
+  });
+
+
+  exports.cleanupAnonymousUsers = functions.pubsub
+  .schedule('every 24 hours')
+  .onRun(async (context) => {
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    
+    const listUsersResult = await admin.auth().listUsers(1000);
+    const usersToDelete = [];
+
+    listUsersResult.users.forEach((user) => {
+      // Check if anonymous and inactive for 7+ days
+      if (user.providerData.length === 0) { // Anonymous user
+        const lastSignIn = new Date(user.metadata.lastSignInTime).getTime();
+        if (lastSignIn < sevenDaysAgo) {
+          usersToDelete.push(user.uid);
+        }
+      }
+    });
+
+    // Delete in batches
+    if (usersToDelete.length > 0) {
+      await admin.auth().deleteUsers(usersToDelete);
+      console.log(`Deleted ${usersToDelete.length} inactive anonymous users`);
+    }
+
+    return null;
+  });
+
 // Callable function to manually resend SMS to a worker
 exports.resendWorkerLink = onCall(
     {
@@ -79,8 +138,8 @@ exports.resendWorkerLink = onCall(
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
-        "http://192.168.1.50:3000",
-        "https://192.168.1.50:3000", // <-- Add this line!
+        "http://192.168.1.53:3000",
+        "https://192.168.1.53:3000", // <-- Add this line!
         "https://workbase-8dfe2.firebaseapp.com",
       ],
     },

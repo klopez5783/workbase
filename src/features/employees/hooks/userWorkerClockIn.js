@@ -100,16 +100,16 @@ export function useWorkerClockIn(accessKey = null) {
         setProjects(assigned);
       }
 
-      // Check for active shift
-      const shiftResult = await firestoreService.query('timeEntries', [
-        { field: 'workerId', operator: '==', value: workerData.id },
+    // ✅ Check for active shift using WORKERID (not userId!)
+    const shiftResult = await firestoreService.query('timeEntries', [
+        { field: 'workerId', operator: '==', value: workerData.id }, // ← Uses workerId
         { field: 'status', operator: '==', value: 'active' }
       ]);
 
       if (shiftResult.success && shiftResult.data.length > 0) {
         const shift = shiftResult.data[0];
         setActiveShift(shift);
-        console.log("Active shift found:", shift);
+        console.log("✅ Active shift found:", shift);
       }
 
       setLoading(false);
@@ -305,12 +305,12 @@ export function useWorkerClockIn(accessKey = null) {
         timeEntry.userName = currentEmployee.name;
         timeEntry.userPhone = currentEmployee.phone || currentEmployee.phoneNumber;
       } else {
-        // SMS worker fields
-        timeEntry.workerId = worker.id;
+        // ✅ SMS worker fields - workerId is the PRIMARY identifier
+        timeEntry.workerId = worker.id;  // ← This never changes!
         timeEntry.workerName = worker.name;
         timeEntry.workerPhone = worker.phone;
-        timeEntry.userId = currentUser.uid; // Still include for reference
-        timeEntry.userEmail = currentUser.email;
+        // ✅ Store userId for reference, but DON'T rely on it for lookups
+        timeEntry.anonymousUserId = currentUser?.uid; // Optional: for debugging
       }
 
       const result = await firestoreService.create('timeEntries', timeEntry);

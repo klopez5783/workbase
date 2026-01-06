@@ -3,10 +3,32 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Clock, MapPin, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { useWorkerClockIn } from '../features/employees/hooks/userWorkerClockIn';
 import JoinCompanyModal from '../components/JoinCompanyModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function WorkerClockIn() {
   const { accessKey } = useParams();
   const [searchParams] = useSearchParams();
+  const { ensureSMSWorkerAuth } = useAuth();
+
+    // ✅ Authenticate SMS workers before loading data
+  useEffect(() => {
+    const setupAuth = async () => {
+      console.log("=== Setting up authentication ===");
+      console.log("Access Key:", accessKey);
+      
+      const result = await ensureSMSWorkerAuth(accessKey);
+      
+      if (result.success) {
+        console.log("✅ Authentication ready");
+      } else {
+        console.error("❌ Authentication failed:", result.error);
+      }
+      
+      setAuthReady(true);
+    };
+
+    setupAuth();
+  }, [accessKey, ensureSMSWorkerAuth]);
   
   // ✅ Use the hook instead of duplicating logic
   const {
@@ -22,7 +44,7 @@ export default function WorkerClockIn() {
     clockIn,
     clockOut,
     isAuthenticatedUser
-  } = useWorkerClockIn();
+  } = useWorkerClockIn(accessKey);
 
   const [requestingSent, setRequestingSent] = useState(false);
   const [showJoinCompanyModal, setShowJoinCompanyModal] = useState(false);

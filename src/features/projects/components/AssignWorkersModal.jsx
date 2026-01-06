@@ -36,10 +36,16 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
       // Load SMS-only Workers (no user account)
       const workersResult = await firestoreService.getAll('workers');
       const companyWorkers = workersResult.success && workersResult.data
-        ? workersResult.data.filter(
-            worker => worker.companyId === currentEmployee?.companyId
-          )
-        : [];
+      ? workersResult.data.filter(worker => {
+          // Log the data for debugging
+          console.log("Current Employee Company ID:", currentEmployee?.companyId);
+          console.log("Worker Company ID:", worker.companyId);
+          console.log("Worker Data:", worker);
+
+          // Return the actual comparison
+          return worker.companyId === currentEmployee?.companyId;
+        })
+      : []; // Added a fallback (like an empty array) if the condition is false
 
       // Filter out workers that have linked user accounts (avoid duplicates)
       const userPhones = new Set(
@@ -47,10 +53,10 @@ export default function AssignWorkersModal({ project, onClose, onSuccess }) {
       );
 
       const smsOnlyWorkers = companyWorkers
-        .filter(worker => {
-          const workerPhone = (worker.phoneRaw || worker.phone || '').replace(/\D/g, '');
-          return !userPhones.has(workerPhone);
-        })
+        // .filter(worker => {
+        //   const workerPhone = (worker.phoneRaw || worker.phone || '').replace(/\D/g, '');
+        //   return !userPhones.has(workerPhone);
+        // })
         .map(worker => ({
           ...worker,
           type: 'worker',

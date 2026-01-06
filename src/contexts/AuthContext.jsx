@@ -25,6 +25,8 @@ export function AuthProvider({ children }) {
     signUp: authService.signUp,
     signIn: authService.signIn,
     signOut: authService.signOut,
+    signInAnonymous: authService.signInAnonymous,           // ✅ ADD THIS
+    ensureSMSWorkerAuth: authService.ensureSMSWorkerAuth,   // ✅ ADD THIS
   };
 
   return (
