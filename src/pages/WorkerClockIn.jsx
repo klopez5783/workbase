@@ -4,18 +4,28 @@ import { Clock, MapPin, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { useWorkerClockIn } from '../features/employees/hooks/userWorkerClockIn';
 import JoinCompanyModal from '../components/JoinCompanyModal';
 import { useAuth } from '../contexts/AuthContext';
+import { useRef } from 'react';
 
 export default function WorkerClockIn() {
   const { accessKey } = useParams();
   const [searchParams] = useSearchParams();
   const { ensureSMSWorkerAuth } = useAuth();
+  const authAttempted = useRef(false); // ✅ Track if auth was attempted
+
 
     // ✅ Authenticate SMS workers before loading data
   useEffect(() => {
     const setupAuth = async () => {
+
+      if (authAttempted.current) {
+        console.log("⏭️ Auth already attempted, skipping");
+        return;
+      }
+
       console.log("=== Setting up authentication ===");
       console.log("Access Key:", accessKey);
       
+      authAttempted.current = true; // ✅ Mark as attempted
       const result = await ensureSMSWorkerAuth(accessKey);
       
       if (result.success) {
@@ -24,11 +34,10 @@ export default function WorkerClockIn() {
         console.error("❌ Authentication failed:", result.error);
       }
       
-      setAuthReady(true);
     };
 
     setupAuth();
-  }, [accessKey, ensureSMSWorkerAuth]);
+  }, [accessKey]);
   
   // ✅ Use the hook instead of duplicating logic
   const {

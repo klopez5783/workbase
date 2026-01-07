@@ -38,26 +38,52 @@ export function useWorkerClockIn(accessKey = null) {
 
   const { getCurrentLocation } = useGeolocation();
 
-  // ✅ Calculate assigned projects based on user type
-  const assignedProjects = worker && projects.length > 0
-    ? projects.filter(project => {
-        if (isAuthenticatedUser) {
-          // ✅ For authenticated users: Check assignedEmployees only
-          const assignedEmployees = project.assignedEmployees || [];
-          return assignedEmployees.includes(currentUser?.uid);
-        } else {
-          // ✅ For SMS workers: Check assignedWorkers only
-          const assignedWorkers = project.assignedWorkers || [];
-          return assignedWorkers.includes(worker.id);
-        }
-      })
-    : [];
+// ✅ Calculate assigned projects based on email presence (user type)
+const assignedProjects = worker && projects.length > 0
+  ? projects.filter(project => {
+      const assignedWorkers = project.assignedWorkers || [];
+      const assignedEmployees = project.assignedEmployees || [];
+      if (isAuthenticatedUser) {
+        // ==========================================
+        // AUTHENTICATED USER (has email)
+        // ==========================================
+        const isAssigned = assignedEmployees.includes(currentUser?.uid);
+        console.log(`  ✅ User assigned? ${isAssigned}`);
+        return isAssigned;
+        
+      } else {
+        // ==========================================
+        // SMS WORKER (no email, anonymous auth)
+        // ==========================================
+        const inWorkers = assignedWorkers.includes(worker.id);
+        const inEmployees = worker.userId && assignedEmployees.includes(worker.userId);
+        
+        console.log(`  📱 In assignedWorkers? ${inWorkers}`);
+        console.log(`  🔗 In assignedEmployees (via userId)? ${inEmployees}`);
+        
+        const isAssigned = inWorkers || inEmployees;
+        console.log(`  ✅ Final result: ${isAssigned}`);
+        
+        return isAssigned;
+      }
+    })
+  : [];
+
+console.log("\n📋 Total assigned projects:", assignedProjects.length);
+console.log("📋 Project names:", assignedProjects.map(p => p.name));
 
 
     const loadWorkerByAccessKey = async (key) => {
     try {
       console.log("Loading worker by access key:", key);
       setLoading(true);
+
+      // ✅ Check if user is authenticated before querying
+      if (!currentUser) {
+        console.log("⏳ Waiting for authentication...");
+        setLoading(true);
+        return; // Exit early, will retry when currentUser updates
+      }
       
       // Find worker by access key
       const workerResult = await firestoreService.query('workers', [
@@ -120,56 +146,60 @@ export function useWorkerClockIn(accessKey = null) {
     }
   };
 
-  // Load worker data
-  const loadWorkerData = async () => {
-    try {
-      setLoading(true);
+// Load worker data
+const loadWorkerData = async () => {
+  try {
+    setLoading(true);
 
-      // ✅ COMPANY CHECK - Users must have a company before loading worker data
-      if (currentUser && currentEmployee && !currentEmployee.companyId) {
+    // ✅ Determine user type by email presence
+    const hasEmail = !!currentUser?.email;
+    setIsAuthenticatedUser(hasEmail);
+
+    if (hasEmail) {
+      // ==========================================
+      // AUTHENTICATED USER (Email/Password Login)
+      // ==========================================
+      console.log("✅ Authenticated user detected (has email)");
+
+      // Company check
+      if (!currentEmployee?.companyId) {
         setError('Please join a company before clocking in. Contact your administrator.');
         setLoading(false);
         return;
       }
 
-      // ✅ Check if current user is an authenticated user (not SMS worker)
-      if (currentEmployee && currentEmployee.role) {
-        // This is an authenticated user with a profile
-        setIsAuthenticatedUser(true);
-        console.log("✅ Authenticated user detected");
+      // Use employee data directly
+      setWorker({
+        id: currentEmployee.id,
+        name: currentEmployee.name,
+        phone: currentEmployee.phone || currentEmployee.phoneNumber,
+        companyId: currentEmployee.companyId,
+        isAuthenticatedUser: true
+      });
 
-        // For authenticated users, use their employee data directly
-        setWorker({
-          id: currentEmployee.id,
-          name: currentEmployee.name,
-          phone: currentEmployee.phone || currentEmployee.phoneNumber,
-          companyId: currentEmployee.companyId,
-          isAuthenticatedUser: true
-        });
-
-        // Load all projects
-        const projectsResult = await firestoreService.getAll('projects');
-        if (projectsResult.success) {
-          setProjects(projectsResult.data);
-        }
-
-        // Check for active shift using userId
-        const shiftResult = await firestoreService.query('timeEntries', [
-          { field: 'userId', operator: '==', value: currentUser.uid },
-          { field: 'status', operator: '==', value: 'active' }
-        ]);
-
-        if (shiftResult.success && shiftResult.data.length > 0) {
-          setActiveShift(shiftResult.data[0]);
-        }
-
-        setLoading(false);
-        return;
+      // Load all projects
+      const projectsResult = await firestoreService.getAll('projects');
+      if (projectsResult.success) {
+        setProjects(projectsResult.data);
       }
 
-      // ✅ SMS Worker Flow - Find worker by phone number
-      setIsAuthenticatedUser(false);
-      console.log("✅ SMS worker flow - finding by phone");
+      // Check for active shift using userId
+      const shiftResult = await firestoreService.query('timeEntries', [
+        { field: 'userId', operator: '==', value: currentUser.uid },
+        { field: 'status', operator: '==', value: 'active' }
+      ]);
+
+      if (shiftResult.success && shiftResult.data.length > 0) {
+        setActiveShift(shiftResult.data[0]);
+      }
+
+      setLoading(false);
+      
+    } else {
+      // ==========================================
+      // SMS WORKER (Anonymous Auth, No Email)
+      // ==========================================
+      console.log("✅ SMS worker detected (no email)");
 
       // Get user profile
       const userResult = await firestoreService.query('users', [
@@ -227,12 +257,14 @@ export function useWorkerClockIn(accessKey = null) {
       }
 
       setLoading(false);
-    } catch (err) {
-      console.error('Error loading worker data:', err);
-      setError('Failed to load data: ' + err.message);
-      setLoading(false);
     }
-  };
+    
+  } catch (err) {
+    console.error('Error loading worker data:', err);
+    setError('Failed to load data: ' + err.message);
+    setLoading(false);
+  }
+};
 
   // Clock in function
   const clockIn = async () => {
@@ -368,13 +400,18 @@ export function useWorkerClockIn(accessKey = null) {
   };
 
   // Load data on mount
- useEffect(() => {
+  useEffect(() => {
     console.log("useEffect triggered - accessKey:", accessKey, "currentUser:", !!currentUser);
     
     if (accessKey) {
-      // SMS worker - load by access key
-      console.log("Loading via access key");
-      loadWorkerByAccessKey(accessKey);
+      // ✅ SMS worker - only load if authenticated
+      if (currentUser) {
+        console.log("Loading via access key (authenticated)");
+        loadWorkerByAccessKey(accessKey);
+      } else {
+        console.log("⏳ Waiting for anonymous authentication...");
+        setLoading(true); // Show loading state
+      }
     } else if (currentUser && currentEmployee) {
       // Authenticated user - load normally
       console.log("Loading via auth");
