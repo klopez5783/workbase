@@ -69,10 +69,6 @@ const assignedProjects = worker && projects.length > 0
     })
   : [];
 
-console.log("\n📋 Total assigned projects:", assignedProjects.length);
-console.log("📋 Project names:", assignedProjects.map(p => p.name));
-
-
     const loadWorkerByAccessKey = async (key) => {
     try {
       console.log("Loading worker by access key:", key);

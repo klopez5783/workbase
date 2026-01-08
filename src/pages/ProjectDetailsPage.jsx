@@ -74,11 +74,10 @@ export default function ProjectDetailsPage() {
     try {
       setLoading(true);
 
-      setLoading(true);
-
       // Load project
       const projectResult = await firestoreService.getById('projects', projectId);
       if (projectResult.success) {
+        console.log('Loaded project:', projectResult.data);
       setProject(projectResult.data);
       } else {
         setError('Project not found');
@@ -91,18 +90,10 @@ export default function ProjectDetailsPage() {
       if (entriesResult.success) {
         const projectEntries = entriesResult.data.filter(e => e.projectId === projectId);
         setTimeEntries(projectEntries);
-
-        // Get unique workers
-        const uniqueWorkerIds = [...new Set(projectEntries.map(e => e.employeeId))];
         
-        // Load worker details
-        const workersResult = await firestoreService.getAll('users');
-        if (workersResult.success) {
-          const projectWorkers = workersResult.data.filter(w => 
-            uniqueWorkerIds.includes(w.id)
-          );
-          setWorkers(projectWorkers);
-        }
+      const totalWorkers = projectResult.data.assignedWorkers.length + 
+          projectResult.data.assignedEmployees.length;
+          setWorkers(Array(totalWorkers).fill({}));
       }
 
       setLoading(false);
