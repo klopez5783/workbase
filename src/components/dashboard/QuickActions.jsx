@@ -26,33 +26,15 @@ export default function QuickActions() {
         : 'from-blue-500 to-blue-600',
     },
     {
-      icon: Camera,
-      label: 'Scan Receipt',
-      onClick: () => navigate('/receipts'),
-      gradient: 'from-green-500 to-green-600',
-    },
-    {
       icon: Send,
-      label: 'Send Report',
-      onClick: () => navigate('/reports'),
-      gradient: 'from-orange-500 to-orange-600',
-    },
-    {
-      icon: FileText,
-      label: 'View Docs',
-      onClick: () => navigate('/documents'),
-      gradient: 'from-purple-500 to-purple-600',
-    },
+      label: 'Submit Report',
+      onClick: () => navigate('/reports/submit'),
+      gradient: 'from-green-500 to-green-600',
+    }
   ];
 
   // Admin-only actions (matching TopBar navigation)
   const adminActions = [
-    {
-      icon: Building2,
-      label: 'Manage Company',
-      onClick: () => navigate('/admin/company'),
-      gradient: 'from-indigo-500 to-indigo-600',
-    },
     {
       icon: Users,
       label: 'Manage Workers',
@@ -65,10 +47,32 @@ export default function QuickActions() {
       onClick: () => navigate('/admin/projects'),
       gradient: 'from-cyan-500 to-cyan-600',
     },
+    {icon: FileText,
+      label: 'View Work Logs',
+      onClick: () => navigate('/admin/work-logs'),
+      gradient: 'from-yellow-500 to-yellow-600',
+    },
+    {icon: Camera,
+      label: 'Upload Receipt',
+      onClick: () => navigate('/receipts/upload'),
+      gradient: 'from-emerald-500 to-emerald-600',
+    },
+     {
+      icon: Building2,
+      label: 'Manage Company',
+      onClick: () => navigate('/admin/company'),
+      gradient: 'from-indigo-500 to-indigo-600',
+    },
+    {
+      icon: Send,
+      label: "Send Client Report",
+      onClick: () => navigate('/reports/submit'),
+      gradient: 'from-green-500 to-green-600',
+    }
   ];
 
   // Combine actions based on role
-  const actions = isAdmin ? [...baseActions, ...adminActions] : baseActions;
+  const actions = isAdmin ? adminActions : baseActions;
 
   return (
     <div className="px-5 mt-6">

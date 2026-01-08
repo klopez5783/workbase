@@ -269,7 +269,7 @@ export default function ProjectDetailsPage() {
           </div>
 
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <button onClick={() => handleAssignWorkers()}>
+            <button onClick={() => handleAssignWorkers()} className="w-full flex justify-center items-center">
               <div className="flex flex-col items-center text-center">
                 <div className="p-3 bg-purple-100 rounded-lg mb-2">
                   <Users className="text-purple-600" size={24} />
