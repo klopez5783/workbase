@@ -38,7 +38,7 @@ export default function ProjectHoursPage() {
     if (projectId) {
       loadData();
     } else {
-      navigate('/projects');
+      navigate('/admin/projects');
     }
   }, [projectId]);
 

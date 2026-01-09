@@ -205,7 +205,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Not Found</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/admin/projects')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
             <CircleArrowLeft size={20} /> 
@@ -222,7 +222,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/admin/projects')}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
             <CircleArrowLeft size={25} /> 

@@ -11,7 +11,7 @@ export default function BottomNav() {
   // Admin navigation items
   const adminNavItems = [
     { path: '/', icon: Home, label: 'Home' },
-    { path: '/projects', icon: Hammer , label: 'Projects' },
+    { path: '/admin/projects', icon: Hammer , label: 'Projects' },
     { path: '/admin/tools', icon: Briefcase, label: 'Admin' },
   ];
 

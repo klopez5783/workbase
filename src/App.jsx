@@ -133,7 +133,6 @@ return (
           <Route path="time" element={<Time />} />
           <Route path="reports" element={<Reports />} />
           <Route path="documents" element={<Documents />} />
-          <Route path="projects" element={<Projects />} />
           <Route path="company" element={<CompanyView />} />
           <Route path="profile" element={<ProfileSettings />} />
           <Route path="daily-work-log" element={<DailyWorkLog />} />
@@ -176,7 +175,7 @@ return (
             path="admin/projects"
             element={
               <ProtectedRoute requiredRole="admin">
-                <ProjectManagement />
+                <Projects />
               </ProtectedRoute>
             }
           />
