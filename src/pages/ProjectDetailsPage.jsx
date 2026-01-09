@@ -90,10 +90,14 @@ export default function ProjectDetailsPage() {
       if (entriesResult.success) {
         const projectEntries = entriesResult.data.filter(e => e.projectId === projectId);
         setTimeEntries(projectEntries);
-        
-      const totalWorkers = projectResult.data.assignedWorkers.length + 
-          projectResult.data.assignedEmployees.length;
-          setWorkers(Array(totalWorkers).fill({}));
+
+        console.log("=== Loaded Time Entries ===");
+        console.log('\n\nProject time entries:', projectEntries);
+
+        const projectWorkers = [...projectResult.data.assignedWorkers , ...projectResult.data.assignedEmployees];
+        console.log("========== Project Workers ==========");
+        console.log('\n\nProject workers:', projectWorkers);
+        setWorkers(projectWorkers);
       }
 
       setLoading(false);
@@ -131,8 +135,8 @@ export default function ProjectDetailsPage() {
   };
 
   const getWorkerName = (workerId) => {
-    const worker = workers.find(w => w.id === workerId);
-    return worker ? `${worker.firstName} ${worker.lastName}` : 'Unknown Worker';
+    const worker = workers.find(w => w === workerId);
+    return worker ? `${worker}` : 'Unknown Worker';
   };
 
   // Calculate statistics
@@ -154,17 +158,33 @@ export default function ProjectDetailsPage() {
     .slice(0, 5);
 
   // Worker statistics
-  const workerStats = workers.map(worker => {
-    const workerEntries = timeEntries.filter(e => e.employeeId === worker.id);
-    const workerHours = workerEntries.reduce((sum, entry) => 
-      sum + calculateHours(entry.clockIn, entry.clockOut), 0
-    );
-    return {
-      ...worker,
-      totalHours: workerHours,
-      entryCount: workerEntries.length
-    };
-  }).sort((a, b) => b.totalHours - a.totalHours);
+const workerStats = workers.map(worker => {  // worker is a string ID
+  const workerEntries = timeEntries.filter(e => {
+    return e.userId === worker || e.workerId === worker;
+  }).map(entry => ({
+    ...entry,
+    type: entry.userId === worker ? 'user' : 'worker'
+  }));
+  
+  const workerHours = workerEntries.reduce((sum, entry) => 
+    sum + calculateHours(entry.clockIn, entry.clockOut), 0
+  );
+
+  const workerName = workerEntries.length > 0 
+    ? (workerEntries[0].userName || workerEntries[0].workerName || 'Unknown')
+    : 'Unknown';
+
+  return {
+    id: worker,
+    name: workerName,
+    totalHours: workerHours,
+    entryCount: workerEntries.length,
+    type: workerEntries[0]?.type  // ✅ Include type from first entry
+  };
+}).sort((a, b) => b.totalHours - a.totalHours);
+
+  console.log("=== Worker Stats ===");
+  console.log('\n\n', workerStats);
 
   if (loading) {
     return (
@@ -325,11 +345,11 @@ export default function ProjectDetailsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {worker.firstName?.[0]}{worker.lastName?.[0]}
+                          {worker.name?.[0]}
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">
-                            {worker.firstName} {worker.lastName}
+                            {worker.name}
                           </p>
                           <p className="text-sm text-gray-600">
                             {worker.entryCount} {worker.entryCount === 1 ? 'entry' : 'entries'}
@@ -370,7 +390,7 @@ export default function ProjectDetailsPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-bold text-gray-900">
-                            {getWorkerName(entry.employeeId)}
+                            {entry.workerName}
                           </p>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                             entry.status === 'approved'
