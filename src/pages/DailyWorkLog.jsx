@@ -120,7 +120,7 @@ export default function DailyWorkLog() {
     <div className="p-5 pb-24">
       {isAdmin && (
         <button
-          onClick={handleBack}
+          onClick={()=>navigate(-1)}
           className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
         >
           <CircleArrowLeft size={20} /> Back to Admin Tools

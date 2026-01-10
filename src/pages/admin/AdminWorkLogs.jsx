@@ -191,7 +191,7 @@ export default function AdminWorkLogs() {
       {/* Header */}
       <div className="mb-6">
         <button
-            onClick={handleBack}
+            onClick={()=>navigate(-1)}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
           >
             <CircleArrowLeft size={20} /> Back to Admin Tools
