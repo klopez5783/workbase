@@ -10,6 +10,7 @@ import ActivityList from '../components/dashboard/ActivityList';
 import WorkerLinkStatus from '../components/WorkerLinkStatus';
 import { useAuth } from '../contexts/AuthContext';
 import AdminOnboardingWizard from '../features/onboarding/components/AdminOnboardingWizard';
+import LanguageSwitcher from '../components/dashboard/LanguageSwitcher';
 
 export default function Dashboard() {
   const { timeEntries, activeShift } = useTimeTrackingStore();
@@ -138,6 +139,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      <LanguageSwitcher />
 
       <QuickActions />
 
