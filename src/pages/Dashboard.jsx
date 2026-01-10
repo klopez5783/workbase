@@ -11,8 +11,10 @@ import WorkerLinkStatus from '../components/WorkerLinkStatus';
 import { useAuth } from '../contexts/AuthContext';
 import AdminOnboardingWizard from '../features/onboarding/components/AdminOnboardingWizard';
 import LanguageSwitcher from '../components/dashboard/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { timeEntries, activeShift } = useTimeTrackingStore();
   const { projects } = useProjectStore();
   const { currentEmployee } = useEmployeeStore();
@@ -148,28 +150,28 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3 px-5 mt-4">
         <StatCard
           icon="💰"
-          label="Today's Expenses"
+          label={t('dashboard.todayExpenses')}
           value={loading ? '...' : `$${todayExpenses.toFixed(0)}`}
           subtitle={loading ? 'Loading...' : `${todayReceipts.length} receipts`}
           color="green"
         />
         <StatCard
           icon="⏰"
-          label="Hours Today"
+          label={t('dashboard.hoursToday')}
           value={loading ? '...' : todayHours.toFixed(1)}
           subtitle={loading ? 'Loading...' : `${todayEntries.length} entries`}
           color="blue"
         />
         <StatCard
           icon="📸"
-          label="Reports Sent"
+          label={t('dashboard.reportsSent')}
           value={loading ? '...' : weekReports.length}
           subtitle="This week"
           color="orange"
         />
         <StatCard
           icon="📋"
-          label="Active Projects"
+          label={t('dashboard.activeProjects')}
           value={loading ? '...' : activeProjects.length}
           subtitle={loading ? 'Loading...' : `${onScheduleProjects.length} on schedule`}
           color="purple"

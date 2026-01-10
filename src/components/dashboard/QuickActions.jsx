@@ -63,7 +63,7 @@ const adminActions = [
     },
     {
       icon: Building2,
-      label: t('settings.account'),  // "Account" / "Cuenta"
+      label: t('settings.company'),  // "Account" / "Cuenta"
       onClick: () => navigate('/admin/company'),
       gradient: 'from-indigo-500 to-indigo-600',
     },

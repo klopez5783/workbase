@@ -164,7 +164,7 @@
     "auto": "Automático",
     "privacy": "Privacidad",
     "termsOfService": "Términos de Servicio",
-    "account": "Cuenta",
+    "company": "Compañía",
     "changePassword": "Cambiar Contraseña",
     "deleteAccount": "Eliminar Cuenta"
   },
@@ -213,5 +213,11 @@
   },
   "quickActions": {
     "title": "Acciones Rápidas"
-  }
+  },
+    "dashboard": {
+        "todayExpenses": "Gastos de Hoy",
+        "hoursToday": "Horas Hoy",
+        "reportsSent": "Reportes Enviados",
+        "activeProjects": "Proyectos Activos"
+    }
 }

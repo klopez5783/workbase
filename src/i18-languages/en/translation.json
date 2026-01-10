@@ -164,7 +164,7 @@
     "auto": "Auto",
     "privacy": "Privacy",
     "termsOfService": "Terms of Service",
-    "account": "Account",
+    "company": "Company",
     "changePassword": "Change Password",
     "deleteAccount": "Delete Account"
   },
@@ -213,5 +213,11 @@
   },
   "quickActions": {
     "title": "Quick Actions"
+  },
+  "dashboard": {
+      "todayExpenses": "Today's Expenses",
+      "hoursToday": "Hours Today",
+      "reportsSent": "Reports Sent",
+      "activeProjects": "Active Projects"
   }
 }
