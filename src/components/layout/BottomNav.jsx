@@ -1,29 +1,29 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Hammer , Briefcase, Clock, FileText } from 'lucide-react';
+import { Home, Hammer, Briefcase, Clock, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 
 export default function BottomNav() {
+  const { t } = useTranslation();
 
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   const isAdmin = currentEmployee?.role === 'admin';
-  const isWorker = currentEmployee?.role === 'worker';
 
   // Admin navigation items
   const adminNavItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/admin/projects', icon: Hammer , label: 'Projects' },
-    { path: '/admin/tools', icon: Briefcase, label: 'Admin' },
+    { path: '/', icon: Home, label: t('nav.Home') },
+    { path: '/admin/projects', icon: Hammer, label: t('nav.Projects') },
+    { path: '/admin/tools', icon: Briefcase, label: t('nav.Admin Tools') },
   ];
 
   // Worker navigation items
   const workerNavItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/time', icon: Clock, label: 'Time' },
-    { path: '/daily-work-log', icon: FileText, label: 'Log Work' },
+    { path: '/', icon: Home, label: t('nav.home') },
+    { path: '/time', icon: Clock, label: t('timeTracking.timesheet') },
+    { path: '/daily-work-log', icon: FileText, label: t('reports.dailyReport') },
   ];
 
   const navItems = isAdmin ? adminNavItems : workerNavItems;
-
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-bottom z-40">
@@ -43,7 +43,11 @@ export default function BottomNav() {
             {({ isActive }) => (
               <>
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={`text-xs mt-1 ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                <span
+                  className={`text-xs mt-1 ${
+                    isActive ? 'font-semibold' : 'font-medium'
+                  }`}
+                >
                   {label}
                 </span>
               </>

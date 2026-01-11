@@ -22,13 +22,14 @@
     "required": "Required"
   },
   "nav": {
-    "dashboard": "Dashboard",
-    "projects": "Projects",
-    "workers": "Workers",
-    "reports": "Reports",
-    "settings": "Settings",
-    "logout": "Logout",
-    "profile": "Profile"
+    "Home": "Home",
+    "Projects": "Projects",
+    "Workers": "Workers",
+    "Reports": "Reports",
+    "Settings": "Settings",
+    "Logout": "Logout",
+    "profile": "Profile",
+    "Admin Tools": "Admin Tools"
   },
   "auth": {
     "signIn": "Sign In",
@@ -219,5 +220,22 @@
       "hoursToday": "Hours Today",
       "reportsSent": "Reports Sent",
       "activeProjects": "Active Projects"
-  }
+  },
+  "projectCard": {
+        "Client" : "Client :",
+        "Total Hours" : "Total Hours",
+        "Time Entries" : "Time Entries",
+        "Workers" : "Workers",
+        "Pending" : "Pending",
+        "View" : "View Details",
+        "Hours" : "Hours",
+        "Edit" : "Edit Project",
+        "Delete" : "Delete Project"
+    },
+    "projectStats": {
+      "Active Projects": "Active Projects",
+      "Total Hours": "Total Hours",
+      "Active Workers": "Active Workers",
+      "Pending Approvals": "Pending Approvals"
+    }
 }

@@ -24,8 +24,10 @@ import {
 } from 'lucide-react';
 import Alert from '../components/Alert';
 import ProjectFormSelector from '../features/projects/components/ProjectFormSelector';
+import { useTranslation } from 'react-i18next';
 
 export default function ProjectsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { currentEmployee } = useEmployeeStore();
@@ -263,7 +265,7 @@ export default function ProjectsPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{t('projects.title')}</h1>
               <p className="text-gray-600 text-sm mt-1">
                 {sortedProjects.length} {statusFilter === 'all' ? '' : statusFilter} {sortedProjects.length === 1 ? 'project' : 'projects'}
               </p>
@@ -382,7 +384,7 @@ export default function ProjectsPage() {
               <div className="p-3 bg-blue-100 rounded-lg mb-2">
                 <Briefcase className="text-blue-600" size={24} />
               </div>
-              <p className="text-gray-600 text-xs mb-1">Active Projects</p>
+              <p className="text-gray-600 text-xs mb-1">{t('dashboard.activeProjects')}</p>
               <p className="text-3xl font-bold text-gray-900">
                 {projects.filter(p => p.status === 'active').length}
               </p>
@@ -394,7 +396,7 @@ export default function ProjectsPage() {
               <div className="p-3 bg-green-100 rounded-lg mb-2">
                 <Clock className="text-green-600" size={24} />
               </div>
-              <p className="text-gray-600 text-xs mb-1">Total Hours</p>
+              <p className="text-gray-600 text-xs mb-1">{t('projectStats.Total Hours')}</p>
               <p className="text-3xl font-bold text-gray-900">
                 {timeEntries.reduce((sum, entry) => {
                   if (!entry.clockOut) return sum;
@@ -412,7 +414,7 @@ export default function ProjectsPage() {
               <div className="p-3 bg-purple-100 rounded-lg mb-2">
                 <Users className="text-purple-600" size={24} />
               </div>
-              <p className="text-gray-600 text-xs mb-1">Active Workers</p>
+              <p className="text-gray-600 text-xs mb-1">{t('projectStats.Active Workers')}</p>
               <p className="text-3xl font-bold text-gray-900">
                 {employees.length}
               </p>
@@ -424,7 +426,7 @@ export default function ProjectsPage() {
               <div className="p-3 bg-orange-100 rounded-lg mb-2">
                 <AlertCircle className="text-orange-600" size={24} />
               </div>
-              <p className="text-gray-600 text-xs mb-1">Pending Approvals</p>
+              <p className="text-gray-600 text-xs mb-1">{t('projectStats.Pending Approvals')}</p>
               <p className="text-3xl font-bold text-gray-900">
                 {timeEntries.filter(e => e.status === 'pending').length}
               </p>
@@ -452,7 +454,7 @@ export default function ProjectsPage() {
                         <div className="flex-1">
                           <h3 className="text-lg font-bold mb-1 line-clamp-2">{project.name}</h3>
                           {project.clientName && (
-                            <p className="text-blue-100 text-sm truncate">Client: {project.clientName}</p>
+                            <p className="text-blue-100 text-sm truncate">{t('projectCard.Client')} {project.clientName}</p>
                           )}
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ml-2 flex-shrink-0 ${
@@ -479,7 +481,7 @@ export default function ProjectsPage() {
                         <div className="text-center">
                           <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
                             <Clock size={14} />
-                            <span>Total Hours</span>
+                            <span>{t('dashboard.hoursToday')}</span>
                           </div>
                           <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
                         </div>
@@ -487,7 +489,7 @@ export default function ProjectsPage() {
                         <div className="text-center">
                           <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
                             <Users size={14} />
-                            <span>Workers</span>
+                            <span>{t('projectCard.Workers')}</span>
                           </div>
                           <p className="text-2xl font-bold text-gray-900">{stats.uniqueWorkers}</p>
                         </div>
@@ -496,12 +498,12 @@ export default function ProjectsPage() {
                       {/* Secondary Stats Row */}
                       <div className="grid grid-cols-2 gap-3 mb-3 text-center">
                         <div>
-                          <p className="text-gray-600 text-xs mb-1">Time Entries</p>
+                          <p className="text-gray-600 text-xs mb-1">{t('projectCard.Time Entries')}</p>
                           <p className="text-lg font-bold text-gray-900">{stats.totalEntries}</p>
                         </div>
                         
                         <div>
-                          <p className="text-gray-600 text-xs mb-1">Pending</p>
+                          <p className="text-gray-600 text-xs mb-1">{t('projectCard.Pending')}</p>
                           <p className="text-lg font-bold text-orange-600">{stats.pendingApprovals}</p>
                         </div>
                       </div>
@@ -523,28 +525,28 @@ export default function ProjectsPage() {
                           className="bg-blue-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1"
                         >
                           <Eye size={16} />
-                          View
+                          {t('projectCard.View')}
                         </button>
                         <button
                           onClick={() => handleViewTimecard(project.id)}
                           className="bg-green-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-1"
                         >
                           <Clock size={16} />
-                          Hours
+                          {t('projectCard.Hours')}
                         </button>
                         <button
                           onClick={() => handleEdit(project)}
                           className="bg-gray-200 text-gray-700 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition flex items-center justify-center gap-1"
                         >
                           <Edit size={16} />
-                          Edit
+                          {t('projectCard.Edit')}
                         </button>
                         <button
                           onClick={() => handleDeleteProject(project)}
                           className="bg-red-100 text-red-600 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-red-200 transition flex items-center justify-center gap-1"
                         >
                           <Trash2 size={16} />
-                          Delete
+                          {t('projectCard.Delete')}
                         </button>
                       </div>
                     </div>

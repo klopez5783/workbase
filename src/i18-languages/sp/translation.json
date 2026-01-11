@@ -22,13 +22,14 @@
     "required": "Requerido"
   },
   "nav": {
-    "dashboard": "Panel",
-    "projects": "Proyectos",
+    "Home": "Inicio",
+    "Projects": "Proyectos",
     "workers": "Trabajadores",
     "reports": "Reportes",
     "settings": "Configuración",
     "logout": "Cerrar Sesión",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "Admin Tools": "Herramientas de Admin"
   },
   "auth": {
     "signIn": "Iniciar Sesión",
@@ -219,5 +220,22 @@
         "hoursToday": "Horas Hoy",
         "reportsSent": "Reportes Enviados",
         "activeProjects": "Proyectos Activos"
+    },
+    "projectCard": {
+        "Client" : "Cliente :",
+        "Total Hours" : "Horas Totales",
+        "Time Entries" : "Entradas de Tiempo",
+        "Workers" : "Trabajadores",
+        "Pending" : "Pendiente",
+        "View" : "Ver Detalles",
+        "Hours" : "Horas",
+        "Edit" : "Editar Proyecto",
+        "Delete" : "Eliminar Proyecto"
+    },
+    "projectStats": {
+      "Active Projects": "Proyectos Activos",
+      "Total Hours": "Horas Totales",
+      "Active Workers": "Trabajadores Activos",
+      "Pending Approvals": "Aprobaciones Pendientes"
     }
 }
