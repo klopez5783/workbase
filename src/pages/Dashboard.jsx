@@ -132,52 +132,51 @@ export default function Dashboard() {
       <WorkerLinkStatus /> 
       
       {/* Summary Stats */}
-      <div className="px-5 mt-6">
-  <h2 className="text-lg font-bold text-gray-900 mb-3">{t('projectStats.Title')}</h2>
+<div className="px-5 mt-4">
+  <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
   
   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     {/* Table Header */}
-    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-      <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+    {/* <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+      <div className="grid grid-cols-4 gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+        <span>{t('common.Metric')}</span>
+        <span className="text-right">{t('common.Value')}</span>
         <span>{t('common.Metric')}</span>
         <span className="text-right">{t('common.Value')}</span>
       </div>
-    </div>
+    </div> */}
 
-    {/* Table Rows */}
+    {/* Table Rows - 2x2 Grid */}
     <div className="divide-y divide-gray-100">
-      {/* Active Projects Row */}
+      {/* Row 1: Active Projects & Total Hours */}
       <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
-        <div className="grid grid-cols-2 gap-4 items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Briefcase className="text-blue-600" size={18} />
+        <div className="grid grid-cols-4 gap-2 items-center">
+          {/* Active Projects */}
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
+              <Briefcase className="text-blue-600" size={16} />
             </div>
-            <span className="text-sm font-medium text-gray-900">
-              {t('dashboard.activeProjects')}
+            <span className="text-xs font-medium text-gray-900">
+              {t('projectStats.Active Projects')}
             </span>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-gray-900">
               {projects.filter(p => p.status === 'active').length}
             </span>
           </div>
-        </div>
-      </div>
 
-      {/* Total Hours Row */}
-      <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
-        <div className="grid grid-cols-2 gap-4 items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Clock className="text-green-600" size={18} />
+          {/* Total Hours */}
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-green-100 rounded-lg flex-shrink-0">
+              <Clock className="text-green-600" size={16} />
             </div>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-xs font-medium text-gray-900">
               {t('projectStats.Total Hours')}
             </span>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-gray-900">
               {timeEntries.reduce((sum, entry) => {
                 if (!entry.clockOut) return sum;
                 const start = entry.clockIn?.toDate ? entry.clockIn.toDate() : new Date(entry.clockIn);
@@ -190,38 +189,35 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Active Workers Row */}
+      {/* Row 2: Active Workers & Pending Approvals */}
       <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
-        <div className="grid grid-cols-2 gap-4 items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Users className="text-purple-600" size={18} />
+        <div className="grid grid-cols-4 gap-2 items-center">
+          {/* Active Workers */}
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-purple-100 rounded-lg flex-shrink-0">
+              <Users className="text-purple-600" size={16} />
             </div>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-xs font-medium text-gray-900">
               {t('projectStats.Active Workers')}
             </span>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-gray-900">
               {employees.length}
             </span>
           </div>
-        </div>
-      </div>
 
-      {/* Pending Approvals Row */}
-      <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
-        <div className="grid grid-cols-2 gap-4 items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <AlertCircle className="text-orange-600" size={18} />
+          {/* Pending Approvals */}
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-orange-100 rounded-lg flex-shrink-0">
+              <AlertCircle className="text-orange-600" size={16} />
             </div>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-xs font-medium text-gray-900">
               {t('projectStats.Pending Approvals')}
             </span>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-gray-900">
               {timeEntries.filter(e => e.status === 'pending').length}
             </span>
           </div>
