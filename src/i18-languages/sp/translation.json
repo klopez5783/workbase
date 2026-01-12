@@ -19,7 +19,9 @@
     "filter": "Filtrar",
     "download": "Descargar",
     "upload": "Subir",
-    "required": "Requerido"
+    "required": "Requerido",
+    "Metric": "Métrica",
+    "Value": "Valor"
   },
   "nav": {
     "Home": "Inicio",
@@ -65,7 +67,10 @@
     "location": "Ubicación",
     "setLocation": "Establecer Ubicación",
     "geofenceRadius": "Radio de Geocerca",
-    "meters": "metros"
+    "meters": "metros",
+    "project workers": "Trabajadores del Proyecto",
+    "Project Info": "Información del Proyecto",
+    "Status": "Estado"
   },
   "workers": {
     "title": "Trabajadores",
@@ -81,7 +86,28 @@
     "removeWorker": "Eliminar Trabajador",
     "workerDetails": "Detalles del Trabajador",
     "hoursWorked": "Horas Trabajadas",
-    "totalHours": "Total de Horas"
+    "totalHours": "Total de Horas",
+    "No workers assigned yet": "Aún no se han asignado trabajadores"
+  },
+  "Hours": {
+    "title": "Horas",
+    "clockIn": "Registrar Entrada",
+    "clockOut": "Registrar Salida",
+    "date": "Fecha",
+    "worker": "Trabajador",
+    "project": "Proyecto",
+    "startTime": "Hora de Inicio",
+    "endTime": "Hora de Finalización",
+    "duration": "Duración",
+    "status": "Estado",
+    "approved": "Aprobado",
+    "pending": "Pendiente",
+    "rejected": "Rechazado",
+    "noEntries": "No se encontraron entradas de tiempo",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "totalHours": "Total de Horas",
+    "ViewHours": "Ver Horas"
   },
   "timeTracking": {
     "clockIn": "Registrar Entrada",
@@ -233,6 +259,7 @@
         "Delete" : "Eliminar Proyecto"
     },
     "projectStats": {
+        "Title": "Estadísticas de Proyectos",
       "Active Projects": "Proyectos Activos",
       "Total Hours": "Horas Totales",
       "Active Workers": "Trabajadores Activos",

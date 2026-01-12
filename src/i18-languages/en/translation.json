@@ -19,7 +19,9 @@
     "filter": "Filter",
     "download": "Download",
     "upload": "Upload",
-    "required": "Required"
+    "required": "Required",
+    "Metric": "Metric",
+    "Value": "Value"
   },
   "nav": {
     "Home": "Home",
@@ -65,7 +67,9 @@
     "location": "Location",
     "setLocation": "Set Location",
     "geofenceRadius": "Geofence Radius",
-    "meters": "meters"
+    "meters": "meters",
+    "project workers": "Project Workers",
+    "Project Info": "Project Info"
   },
   "workers": {
     "title": "Workers",
@@ -81,7 +85,28 @@
     "removeWorker": "Remove Worker",
     "workerDetails": "Worker Details",
     "hoursWorked": "Hours Worked",
-    "totalHours": "Total Hours"
+    "totalHours": "Total Hours",
+    "No workers assigned yet": "No workers assigned yet"
+  },
+  "Hours": {
+    "title": "Hours",
+    "clockIn": "Clock In",
+    "clockOut": "Clock Out",
+    "date": "Date",
+    "worker": "Worker",
+    "project": "Project",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "duration": "Duration",
+    "status": "Status",
+    "approved": "Approved",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "noEntries": "No time entries found",
+    "approve": "Approve",
+    "reject": "Reject",
+    "totalHours": "Total Hours",
+    "ViewHours": "View Hours"
   },
   "timeTracking": {
     "clockIn": "Clock In",
@@ -233,6 +258,7 @@
         "Delete" : "Delete Project"
     },
     "projectStats": {
+      "Title": "Project Statistics",
       "Active Projects": "Active Projects",
       "Total Hours": "Total Hours",
       "Active Workers": "Active Workers",

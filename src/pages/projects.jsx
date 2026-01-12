@@ -376,64 +376,6 @@ export default function ProjectsPage() {
             </div>
           </div>
         </div>
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-blue-100 rounded-lg mb-2">
-                <Briefcase className="text-blue-600" size={24} />
-              </div>
-              <p className="text-gray-600 text-xs mb-1">{t('dashboard.activeProjects')}</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {projects.filter(p => p.status === 'active').length}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-green-100 rounded-lg mb-2">
-                <Clock className="text-green-600" size={24} />
-              </div>
-              <p className="text-gray-600 text-xs mb-1">{t('projectStats.Total Hours')}</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {timeEntries.reduce((sum, entry) => {
-                  if (!entry.clockOut) return sum;
-                  const start = entry.clockIn?.toDate ? entry.clockIn.toDate() : new Date(entry.clockIn);
-                  const end = entry.clockOut?.toDate ? entry.clockOut.toDate() : new Date(entry.clockOut);
-                  const hours = (end - start) / (1000 * 60 * 60);
-                  return sum + hours;
-                }, 0).toFixed(0)}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-purple-100 rounded-lg mb-2">
-                <Users className="text-purple-600" size={24} />
-              </div>
-              <p className="text-gray-600 text-xs mb-1">{t('projectStats.Active Workers')}</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {employees.length}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-orange-100 rounded-lg mb-2">
-                <AlertCircle className="text-orange-600" size={24} />
-              </div>
-              <p className="text-gray-600 text-xs mb-1">{t('projectStats.Pending Approvals')}</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {timeEntries.filter(e => e.status === 'pending').length}
-              </p>
-            </div>
-          </div>
-        </div>
-
           
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {sortedProjects.map((project) => {
