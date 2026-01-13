@@ -21,7 +21,11 @@
     "upload": "Subir",
     "required": "Requerido",
     "Metric": "Métrica",
-    "Value": "Valor"
+    "Value": "Valor",
+    "RecentActivity": "Actividad Reciente",
+    "all": "Todos",
+    "lastActivity": "Última Actividad",
+    "daysAgo": "días atrás"
   },
   "nav": {
     "Home": "Inicio",
@@ -70,7 +74,9 @@
     "meters": "metros",
     "project workers": "Trabajadores del Proyecto",
     "Project Info": "Información del Proyecto",
-    "Status": "Estado"
+    "Status": "Estado",
+    "backToProjects": "Volver a Proyectos",
+    "searchPlaceholder": "Buscar Proyectos"
   },
   "workers": {
     "title": "Trabajadores",

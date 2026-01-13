@@ -21,7 +21,11 @@
     "upload": "Upload",
     "required": "Required",
     "Metric": "Metric",
-    "Value": "Value"
+    "Value": "Value",
+    "RecentActivity": "Recent Activity",
+    "all": "All",
+    "lastActivity": "Last Activity",
+    "daysAgo": "days ago"
   },
   "nav": {
     "Home": "Home",
@@ -69,7 +73,9 @@
     "geofenceRadius": "Geofence Radius",
     "meters": "meters",
     "project workers": "Project Workers",
-    "Project Info": "Project Info"
+    "Project Info": "Project Info",
+    "backToProjects": "Back to Projects",
+    "searchPlaceholder": "Search Projects"
   },
   "workers": {
     "title": "Workers",

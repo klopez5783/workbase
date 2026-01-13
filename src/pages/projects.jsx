@@ -205,7 +205,7 @@ export default function ProjectsPage() {
   };
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'Never';
+    if (!timestamp) return t('common.never') || 'Never';
     const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -215,16 +215,16 @@ export default function ProjectsPage() {
   };
 
   const getRelativeTime = (timestamp) => {
-    if (!timestamp) return 'Never';
+    if (!timestamp) return t('common.never') || 'Never';
     const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays === 0) return t('timeTracking.today');
+    if (diffDays === 1) return t('common.yesterday') || 'Yesterday';
+    if (diffDays < 7) return `${diffDays} ${t('common.daysAgo') || 'days ago'}`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} ${t('common.weeksAgo') || 'weeks ago'}`;
     return formatDate(timestamp);
   };
 
@@ -233,7 +233,7 @@ export default function ProjectsPage() {
       <div className="p-5 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-          <p className="text-gray-600">Loading projects...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -248,10 +248,10 @@ export default function ProjectsPage() {
         <div className="mb-6">
           <Alert
             shadeType="red"
-            text="Create Company Required"
-            subText="You must create a company profile before adding projects."
+            text={t('alerts.createCompanyRequired') || 'Create Company Required'}
+            subText={t('alerts.createCompanySubtext') || 'You must create a company profile before adding projects.'}
             actionButton={{
-              text: 'Create Company',
+              text: t('alerts.createCompany') || 'Create Company',
               link: '/admin/company',
               icon: Building2
             }}
@@ -262,52 +262,49 @@ export default function ProjectsPage() {
 
         {/* Header */}
         <div className="mb-6">
-
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{t('projects.title')}</h1>
               <p className="text-gray-600 text-sm mt-1">
-                {sortedProjects.length} {statusFilter === 'all' ? '' : statusFilter} {sortedProjects.length === 1 ? 'project' : 'projects'}
+                {sortedProjects.length} {statusFilter === 'all' ? '' : statusFilter} {sortedProjects.length === 1 ? t('projects.title') || 'project' : t('projects.title') || 'projects'}
               </p>
             </div>
 
             <button
-              onClick={ handleCompanyCheck}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
+              onClick={handleCompanyCheck}
+              className="bg-blue-600 text-white px-2 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
             >
               <Plus size={25} />
-              New Project
+              {t('projects.createNew')}
             </button>
           </div>
         </div>
-
-        
 
         {/* Projects Grid */}
         {sortedProjects.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center">
             <Briefcase size={64} className="mx-auto text-gray-300 mb-4" />
             <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {projects.length === 0 ? 'No Projects Yet' : 'No Projects Found'}
+              {projects.length === 0 ? t('projects.noProjectsYet') || 'No Projects Yet' : t('projects.noProjectsFound') || 'No Projects Found'}
             </h3>
             <p className="text-gray-600 mb-6">
               {searchTerm
-                ? 'Try adjusting your search terms'
+                ? t('projects.adjustSearch') || 'Try adjusting your search terms'
                 : projects.length === 0
-                ? 'Get started by creating your first project'
+                ? t('projects.getStarted') || 'Get started by creating your first project'
                 : statusFilter === 'completed'
-                ? 'No completed projects yet. Active projects will appear here once marked as completed.'
+                ? t('projects.noCompleted') || 'No completed projects yet. Active projects will appear here once marked as completed.'
                 : statusFilter === 'active'
-                ? 'No active projects. Check the "All" or "Completed" filter to see other projects.'
-                : 'No projects match your current filters'}
+                ? t('projects.noActive') || 'No active projects. Check the "All" or "Completed" filter to see other projects.'
+                : t('projects.noMatch') || 'No projects match your current filters'}
             </p>
             {!searchTerm && projects.length === 0 && (
               <button
-                onClick={ handleCompanyCheck }
+                onClick={handleCompanyCheck}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2"
               >
                 <Plus size={20} />
-                Create Project
+                {t('projects.createNew')}
               </button>
             )}
             {projects.length > 0 && (
@@ -319,7 +316,7 @@ export default function ProjectsPage() {
                 className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition inline-flex items-center gap-2"
               >
                 <Filter size={20} />
-                Clear Filters
+                {t('common.clearFilters') || 'Clear Filters'}
               </button>
             )}
           </div>
@@ -327,55 +324,55 @@ export default function ProjectsPage() {
 
           <>
             {/* Search and Filters */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search projects, clients, addresses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
-              />
-            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Search */}
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    placeholder={t('projects.searchPlaceholder') || 'Search projects, clients, addresses...'}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
+                  />
+                </div>
 
-            {/* Status Filter */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setStatusFilter('active')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${
-                  statusFilter === 'active'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Active
-              </button>
-              <button
-                onClick={() => setStatusFilter('completed')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${
-                  statusFilter === 'completed'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Completed
-              </button>
-              <button
-                onClick={() => setStatusFilter('all')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${
-                  statusFilter === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                All
-              </button>
+                {/* Status Filter */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStatusFilter('active')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                      statusFilter === 'active'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {t('projects.active')}
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('completed')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                      statusFilter === 'completed'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {t('projects.completed')}
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                      statusFilter === 'all'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {t('common.all') || 'All'}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
           
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {sortedProjects.map((project) => {
@@ -404,7 +401,7 @@ export default function ProjectsPage() {
                             ? 'bg-green-400 text-green-900'
                             : 'bg-gray-400 text-gray-900'
                         }`}>
-                          {project.status || 'Active'}
+                          {project.status === 'active' ? t('projects.active') : t('projects.completed')}
                         </span>
                       </div>
                       
@@ -423,7 +420,7 @@ export default function ProjectsPage() {
                         <div className="text-center">
                           <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
                             <Clock size={14} />
-                            <span>{t('dashboard.hoursToday')}</span>
+                            <span>{t('projectCard.Total Hours')}</span>
                           </div>
                           <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
                         </div>
@@ -453,7 +450,7 @@ export default function ProjectsPage() {
                       {/* Last Activity */}
                       {stats.lastActivity && (
                         <div className="bg-gray-50 rounded-lg p-2 mb-3 text-center">
-                          <p className="text-gray-600 text-xs mb-1">Last Activity</p>
+                          <p className="text-gray-600 text-xs mb-1">{t('common.lastActivity') || 'Last Activity'}</p>
                           <p className="text-xs font-semibold text-gray-900">
                             {getRelativeTime(stats.lastActivity.clockIn)}
                           </p>
@@ -511,13 +508,13 @@ export default function ProjectsPage() {
                 <Trash2 className="text-red-600" size={32} />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Delete Project?
+                {t('projects.deleteProject')}?
               </h2>
               <p className="text-gray-600 mb-2">
-                Are you sure you want to delete <strong>{projectToDelete?.name}</strong>?
+                {t('projects.confirmDeleteMessage') || 'Are you sure you want to delete'} <strong>{projectToDelete?.name}</strong>?
               </p>
               <p className="text-red-600 text-sm">
-                This action cannot be undone. All time entries for this project will remain but won't be linked.
+                {t('projects.deleteWarning') || 'This action cannot be undone. All time entries for this project will remain but won\'t be linked.'}
               </p>
             </div>
 
@@ -529,13 +526,13 @@ export default function ProjectsPage() {
                 }}
                 className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition text-lg"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={confirmDelete}
                 className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition text-lg"
               >
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>
@@ -544,13 +541,8 @@ export default function ProjectsPage() {
 
       {/* Form Modal */}
       {showForm && (
-        // <ProjectForm
-        //   onClose={handleCloseForm}
-        //   existingProject={editingProject}
-        // />
         <ProjectFormSelector onClose={handleCloseForm} existingProject={editingProject} />
       )}
     </div>
   );
-  
 }

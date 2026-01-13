@@ -228,7 +228,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
             <CircleArrowLeft size={25} /> 
-            {t('Back to Projects', 'Volver a Proyectos')}
+            {t('projects.backToProjects')}
           </button>
 
           {/* Project Title Section */}
