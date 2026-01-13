@@ -330,7 +330,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Users className="text-blue-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">{t('project.project workers')}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('projects.project workers')}</h2>
               </div>
 
               {workerStats.length === 0 ? (

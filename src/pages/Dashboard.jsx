@@ -11,7 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AdminOnboardingWizard from '../features/onboarding/components/AdminOnboardingWizard';
 import LanguageSwitcher from '../components/dashboard/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
-import { Briefcase, Clock, Users, AlertCircle } from 'lucide-react'; // ADDED: Missing imports
+import { Briefcase, Clock, Users, AlertCircle } from 'lucide-react';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -23,10 +23,13 @@ export default function Dashboard() {
   const [employees, setEmployees] = useState([]);
   const [receipts, setReceipts] = useState([]);
   const [reports, setReports] = useState([]);
-  const [timeEntries, setTimeEntries] = useState([]); // ADDED: Local state for timeEntries
+  const [timeEntries, setTimeEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if user is admin
+  const isAdmin = currentEmployee?.role === 'admin';
 
   // Fetch all data from Firebase
   useEffect(() => {
@@ -106,7 +109,7 @@ export default function Dashboard() {
   );
   const todayExpenses = todayReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
 
-  // Calculate today's time entries - SAFE: timeEntries is now initialized as []
+  // Calculate today's time entries
   const todayEntries = timeEntries.filter(
     (e) => new Date(e.clockIn).toDateString() === today
   );
@@ -119,7 +122,7 @@ export default function Dashboard() {
     return reportDate >= weekAgo;
   });
 
-  // Calculate active projects (status === 'active')
+  // Calculate active projects
   const activeProjects = projects.filter(p => p.status === 'active');
   
   // Calculate on-schedule projects
@@ -131,101 +134,93 @@ export default function Dashboard() {
     <div className="pb-6">
       <WorkerLinkStatus /> 
       
-      {/* Summary Stats */}
-<div className="px-5 mt-4">
-  <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
-  
-  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    {/* Table Header */}
-    {/* <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-      <div className="grid grid-cols-4 gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-        <span>{t('common.Metric')}</span>
-        <span className="text-right">{t('common.Value')}</span>
-        <span>{t('common.Metric')}</span>
-        <span className="text-right">{t('common.Value')}</span>
-      </div>
-    </div> */}
+      {/* Project Stats - Admin Only */}
+      {isAdmin && (
+        <div className="px-5 mt-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
+          
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Table Rows - 2x2 Grid */}
+            <div className="divide-y divide-gray-100">
+              {/* Row 1: Active Projects & Total Hours */}
+              <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                <div className="grid grid-cols-4 gap-2 items-center">
+                  {/* Active Projects */}
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
+                      <Briefcase className="text-blue-600" size={16} />
+                    </div>
+                    <span className="text-xs font-medium text-gray-900">
+                      {t('projectStats.Active Projects')}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-gray-900">
+                      {projects.filter(p => p.status === 'active').length}
+                    </span>
+                  </div>
 
-    {/* Table Rows - 2x2 Grid */}
-    <div className="divide-y divide-gray-100">
-      {/* Row 1: Active Projects & Total Hours */}
-      <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
-        <div className="grid grid-cols-4 gap-2 items-center">
-          {/* Active Projects */}
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
-              <Briefcase className="text-blue-600" size={16} />
-            </div>
-            <span className="text-xs font-medium text-gray-900">
-              {t('projectStats.Active Projects')}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-xl font-bold text-gray-900">
-              {projects.filter(p => p.status === 'active').length}
-            </span>
-          </div>
+                  {/* Total Hours */}
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-green-100 rounded-lg flex-shrink-0">
+                      <Clock className="text-green-600" size={16} />
+                    </div>
+                    <span className="text-xs font-medium text-gray-900">
+                      {t('projectStats.Total Hours')}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-gray-900">
+                      {timeEntries.reduce((sum, entry) => {
+                        if (!entry.clockOut) return sum;
+                        const start = entry.clockIn?.toDate ? entry.clockIn.toDate() : new Date(entry.clockIn);
+                        const end = entry.clockOut?.toDate ? entry.clockOut.toDate() : new Date(entry.clockOut);
+                        const hours = (end - start) / (1000 * 60 * 60);
+                        return sum + hours;
+                      }, 0).toFixed(0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-          {/* Total Hours */}
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-green-100 rounded-lg flex-shrink-0">
-              <Clock className="text-green-600" size={16} />
+              {/* Row 2: Active Workers & Pending Approvals */}
+              <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                <div className="grid grid-cols-4 gap-2 items-center">
+                  {/* Active Workers */}
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-purple-100 rounded-lg flex-shrink-0">
+                      <Users className="text-purple-600" size={16} />
+                    </div>
+                    <span className="text-xs font-medium text-gray-900">
+                      {t('projectStats.Active Workers')}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-gray-900">
+                      {employees.length}
+                    </span>
+                  </div>
+
+                  {/* Pending Approvals */}
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-orange-100 rounded-lg flex-shrink-0">
+                      <AlertCircle className="text-orange-600" size={16} />
+                    </div>
+                    <span className="text-xs font-medium text-gray-900">
+                      {t('projectStats.Pending Approvals')}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-gray-900">
+                      {timeEntries.filter(e => e.status === 'pending').length}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <span className="text-xs font-medium text-gray-900">
-              {t('projectStats.Total Hours')}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-xl font-bold text-gray-900">
-              {timeEntries.reduce((sum, entry) => {
-                if (!entry.clockOut) return sum;
-                const start = entry.clockIn?.toDate ? entry.clockIn.toDate() : new Date(entry.clockIn);
-                const end = entry.clockOut?.toDate ? entry.clockOut.toDate() : new Date(entry.clockOut);
-                const hours = (end - start) / (1000 * 60 * 60);
-                return sum + hours;
-              }, 0).toFixed(0)}
-            </span>
           </div>
         </div>
-      </div>
-
-      {/* Row 2: Active Workers & Pending Approvals */}
-      <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
-        <div className="grid grid-cols-4 gap-2 items-center">
-          {/* Active Workers */}
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-purple-100 rounded-lg flex-shrink-0">
-              <Users className="text-purple-600" size={16} />
-            </div>
-            <span className="text-xs font-medium text-gray-900">
-              {t('projectStats.Active Workers')}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-xl font-bold text-gray-900">
-              {employees.length}
-            </span>
-          </div>
-
-          {/* Pending Approvals */}
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-orange-100 rounded-lg flex-shrink-0">
-              <AlertCircle className="text-orange-600" size={16} />
-            </div>
-            <span className="text-xs font-medium text-gray-900">
-              {t('projectStats.Pending Approvals')}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-xl font-bold text-gray-900">
-              {timeEntries.filter(e => e.status === 'pending').length}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+      )}
 
       {/* Clock In Banner */}
       {activeShift && (
@@ -252,7 +247,7 @@ export default function Dashboard() {
 
       <QuickActions />
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Show for All Users */}
       <div className="grid grid-cols-2 gap-3 px-5 mt-4">
         <StatCard
           icon="💰"
