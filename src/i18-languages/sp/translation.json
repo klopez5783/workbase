@@ -270,5 +270,13 @@
       "Total Hours": "Horas Totales",
       "Active Workers": "Trabajadores Activos",
       "Pending Approvals": "Aprobaciones Pendientes"
+    },
+    "Employee" : {
+        "Title": "Estadísticas de Empleados",
+        "Active Employees": "Empleados Activos",
+        "Total Hours": "Horas Totales",
+        "On Break": "En Pausa",
+        "Employees on Leave": "Empleados de Baja",
+        "Employee Work Summary": "Resumen de Trabajo del Empleado"
     }
 }

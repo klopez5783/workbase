@@ -84,7 +84,7 @@ export default function ProjectForm({ onClose, existingProject = null }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!name || !streetAddress || !city || !state || !zipCode || !clientName) {
+    if (!name || !streetAddress || !city || !state || !zipCode) {
       setError('Please fill in all required fields');
       return;
     }
@@ -329,7 +329,7 @@ export default function ProjectForm({ onClose, existingProject = null }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Client Name *
+                Client Name
               </label>
               <input
                 type="text"
@@ -337,7 +337,6 @@ export default function ProjectForm({ onClose, existingProject = null }) {
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="John Doe"
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
               />
             </div>
 

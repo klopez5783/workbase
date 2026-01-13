@@ -269,5 +269,13 @@
       "Total Hours": "Total Hours",
       "Active Workers": "Active Workers",
       "Pending Approvals": "Pending Approvals"
+    },
+    "Employee" : {
+        "Title": "Employee Statistics",
+        "Active Employees": "Active Employees",
+        "Total Hours": "Total Hours",
+        "On Break": "On Break",
+        "Employees on Leave": "Employees on Leave",
+        "Employee Work Summary": "Employee Work Summary"
     }
 }

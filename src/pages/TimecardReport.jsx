@@ -25,8 +25,10 @@ import {
   XCircle
 } from 'lucide-react';
 import TimeEntryTable from '../components/TimeEntryTable';
+import { useTranslation } from 'react-i18next';
 
 export default function TimecardReport() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const projectIdFromUrl = searchParams.get('projectId');
@@ -188,7 +190,7 @@ export default function TimecardReport() {
     }
   };
 
-  // NEW: Select by employee
+  // Select by employee
   const selectAllByEmployee = (employeeName, projects) => {
     const employeeEntries = Object.values(projects).flat().map(e => e.id);
     const allSelected = employeeEntries.every(id => selectedEntries.includes(id));
@@ -200,7 +202,7 @@ export default function TimecardReport() {
     }
   };
 
-  // NEW: Select by project
+  // Select by project
   const selectAllByProject = (entries) => {
     const projectEntryIds = entries.map(e => e.id);
     const allSelected = projectEntryIds.every(id => selectedEntries.includes(id));
@@ -212,7 +214,7 @@ export default function TimecardReport() {
     }
   };
 
-  // NEW: Select by status
+  // Select by status
   const selectAllByStatus = (status) => {
     const statusEntries = filteredEntries
       .filter(e => e.status === status)
@@ -334,7 +336,7 @@ export default function TimecardReport() {
     }
   };
 
-  // NEW: Bulk reject
+  // Bulk reject
   const handleBulkReject = async () => {
     try {
       setSaving(true);
@@ -388,13 +390,6 @@ export default function TimecardReport() {
     const project = projects.find(p => p.id === projectId);
     return project?.name || 'Unknown';
   };
-
-
-  //   const getEmployeeName = (workerId) => {
-  //   const employee = employees.find(e => e.id === workerId);
-  //   return employee?.name || 'Unknown';
-  // };
-
 
   const getEmployeeName = (workerId) => {
     // Try finding by workerId first
@@ -562,7 +557,7 @@ export default function TimecardReport() {
       <div className="p-5 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-          <p className="text-gray-600">Loading timecard data...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -578,13 +573,13 @@ export default function TimecardReport() {
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
             <CircleArrowLeft size={24} />
-            Back
+            {t('common.back')}
           </button>
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Timecard Report!</h1>
-              <p className="text-gray-600 text-sm mt-1">Employee work hours summary</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('Hours.title')}</h1>
+              <p className="text-gray-600 text-sm mt-1"></p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -593,7 +588,7 @@ export default function TimecardReport() {
                 className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2"
               >
                 <Download size={20} />
-                Download CSV
+                {t('common.download')}
               </button>
               <button
                 onClick={handlePrint}
@@ -613,7 +608,7 @@ export default function TimecardReport() {
               <div className="flex items-center gap-3">
                 <CheckSquare size={24} />
                 <span className="font-bold text-lg">
-                  {selectedEntries.length} {selectedEntries.length === 1 ? 'Entry' : 'Entries'} Selected
+                  {selectedEntries.length} Selected
                 </span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -623,7 +618,7 @@ export default function TimecardReport() {
                   className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg font-semibold transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Check size={20} />
-                  Approve
+                  {t('Hours.approve')}
                 </button>
                 <button
                   onClick={handleBulkReject}
@@ -631,7 +626,7 @@ export default function TimecardReport() {
                   className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg font-semibold transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <XCircle size={20} />
-                  Reject
+                  {t('Hours.reject')}
                 </button>
                 <button
                   onClick={handleBulkEdit}
@@ -639,7 +634,7 @@ export default function TimecardReport() {
                   className="px-4 py-2 bg-white text-purple-600 hover:bg-gray-100 rounded-lg font-semibold transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Edit size={20} />
-                  Edit
+                  {t('common.edit')}
                 </button>
                 <button
                   onClick={handleBulkDelete}
@@ -647,7 +642,7 @@ export default function TimecardReport() {
                   className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg font-semibold transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 size={20} />
-                  Delete
+                  {t('common.delete')}
                 </button>
               </div>
             </div>
@@ -656,137 +651,136 @@ export default function TimecardReport() {
 
         {/* Filters - No Print */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6 print:hidden">
-  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-    {/* Left: Filters Toggle */}
-    <button
-      onClick={() => setShowFilters(!showFilters)}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${
-        showFilters
-          ? 'bg-blue-600 text-white hover:bg-blue-700'
-          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-      }`}
-    >
-      <Filter size={18} />
-      <span>Filters</span>
-      {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-    </button>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            {/* Left: Filters Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${
+                showFilters
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              }`}
+            >
+              <Filter size={18} />
+              <span>{t('common.filter')}</span>
+              {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
 
-    {/* Center: Status Filters */}
-    <div className="flex flex-wrap items-center gap-2">
-      <h3 className="text-sm font-bold text-gray-700">Quick Select:</h3>
-      <button
-        onClick={selectAll}
-        className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium text-sm flex items-center gap-1 transition"
-      >
-        {selectedEntries.length === filteredEntries.length ? (
-          <XCircle size={16} />
-        ) : (
-          <CheckSquare size={16} />
-        )}
-        {selectedEntries.length === filteredEntries.length
-          ? 'Deselect All'
-          : `All (${filteredEntries.length})`}
-      </button>
+            {/* Center: Status Filters */}
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-bold text-gray-700">Quick Select:</h3>
+              <button
+                onClick={selectAll}
+                className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium text-sm flex items-center gap-1 transition"
+              >
+                {selectedEntries.length === filteredEntries.length ? (
+                  <XCircle size={16} />
+                ) : (
+                  <CheckSquare size={16} />
+                )}
+                {selectedEntries.length === filteredEntries.length
+                  ? 'Deselect All'
+                  : `${t('common.all')} (${filteredEntries.length})`}
+              </button>
 
-      <button
-        onClick={() => selectAllByStatus('pending')}
-        className="px-3 py-1.5 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 rounded-lg font-medium text-sm transition"
-      >
-        Pending ({filteredEntries.filter((e) => e.status === 'pending').length})
-      </button>
+              <button
+                onClick={() => selectAllByStatus('pending')}
+                className="px-3 py-1.5 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 rounded-lg font-medium text-sm transition"
+              >
+                {t('Hours.pending')} ({filteredEntries.filter((e) => e.status === 'pending').length})
+              </button>
 
-      <button
-        onClick={() => selectAllByStatus('approved')}
-        className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-medium text-sm transition"
-      >
-        Approved ({filteredEntries.filter((e) => e.status === 'approved').length})
-      </button>
+              <button
+                onClick={() => selectAllByStatus('approved')}
+                className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-medium text-sm transition"
+              >
+                {t('Hours.approved')} ({filteredEntries.filter((e) => e.status === 'approved').length})
+              </button>
 
-      <button
-        onClick={() => selectAllByStatus('rejected')}
-        className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-medium text-sm transition"
-      >
-        Rejected ({filteredEntries.filter((e) => e.status === 'rejected').length})
-      </button>
-    </div>
-  </div>
+              <button
+                onClick={() => selectAllByStatus('rejected')}
+                className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-medium text-sm transition"
+              >
+                {t('Hours.rejected')} ({filteredEntries.filter((e) => e.status === 'rejected').length})
+              </button>
+            </div>
+          </div>
 
-  {/* Filter Inputs */}
-  {showFilters && (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+          {/* Filter Inputs */}
+          {showFilters && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('projects.startDate')}</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('projects.endDate')}</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Project</label>
-        <select
-          value={selectedProject}
-          onChange={(e) => setSelectedProject(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">All Projects</option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
-      </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('Hours.project')}</label>
+                <select
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">{t('projects.title')}</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Employee</label>
-        <select
-          value={selectedEmployee}
-          onChange={(e) => setSelectedEmployee(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">All Employees</option>
-          {employees.map((employee) => (
-            <option key={employee.id} value={employee.id}>
-              {employee.name}
-            </option>
-          ))}
-        </select>
-      </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('Hours.worker')}</label>
+                <select
+                  value={selectedEmployee}
+                  onChange={(e) => setSelectedEmployee(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">{t('workers.title')}</option>
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-        <select
-          value={approvalStatus}
-          onChange={(e) => setApprovalStatus(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">All Status</option>
-          <option value="approved">Approved</option>
-          <option value="pending">Pending</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
-    </div>
-  )}
-</div>
-
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('Hours.status')}</label>
+                <select
+                  value={approvalStatus}
+                  onChange={(e) => setApprovalStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">{t('common.all')}</option>
+                  <option value="approved">{t('Hours.approved')}</option>
+                  <option value="pending">{t('Hours.pending')}</option>
+                  <option value="rejected">{t('Hours.rejected')}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Print Header */}
         <div className="hidden print:block mb-8 border-b-4 border-gray-800 pb-4">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">TIMECARD REPORT</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('Hours.title').toUpperCase()}</h1>
           <div className="text-lg text-gray-700">
             {startDate && <p><strong>From:</strong> {new Date(startDate).toLocaleDateString()}</p>}
             {endDate && <p><strong>To:</strong> {new Date(endDate).toLocaleDateString()}</p>}
@@ -799,7 +793,7 @@ export default function TimecardReport() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <p className="text-blue-100 text-sm font-semibold mb-1 print:text-gray-600">
-                Total Employees
+                {t('workers.title')}
               </p>
               <p className="text-4xl font-bold">
                 {Object.keys(groupedEntries).length}
@@ -807,7 +801,7 @@ export default function TimecardReport() {
             </div>
             <div>
               <p className="text-blue-100 text-sm font-semibold mb-1 print:text-gray-600">
-                Total Entries
+                {t('projectCard.Time Entries')}
               </p>
               <p className="text-4xl font-bold">
                 {filteredEntries.length}
@@ -815,7 +809,7 @@ export default function TimecardReport() {
             </div>
             <div>
               <p className="text-blue-100 text-sm font-semibold mb-1 print:text-gray-600">
-                Total Hours
+                {t('Hours.totalHours')}
               </p>
               <p className="text-4xl font-bold">
                 {totalHours.toFixed(2)}
@@ -828,9 +822,9 @@ export default function TimecardReport() {
         {Object.keys(groupedEntries).length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center">
             <Clock size={64} className="mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No Time Entries Found</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('Hours.noEntries')}</h3>
             <p className="text-gray-600">
-              Try adjusting your filters to see timecard data
+              Try adjusting your filters
             </p>
           </div>
         ) : (
@@ -860,8 +854,8 @@ export default function TimecardReport() {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">GRAND TOTAL</h2>
               <div className="text-right">
-                <p className="text-gray-300 text-sm">All Employees & Projects</p>
-                <p className="text-4xl font-bold">{totalHours.toFixed(2)} Hours</p>
+                <p className="text-gray-300 text-sm">{t('workers.title')} & {t('projects.title')}</p>
+                <p className="text-4xl font-bold">{totalHours.toFixed(2)} {t('timeTracking.hours')}</p>
               </div>
             </div>
           </div>
@@ -873,7 +867,7 @@ export default function TimecardReport() {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-              <h2 className="text-2xl font-bold text-gray-900">Edit Time Entry</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{t('common.edit')} {t('projectCard.Time Entries')}</h2>
               <button
                 onClick={() => {
                   setShowEditModal(false);
@@ -896,7 +890,7 @@ export default function TimecardReport() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Employee
+                    {t('Hours.worker')}
                   </label>
                   <select
                     value={editForm.workerId}
@@ -913,7 +907,7 @@ export default function TimecardReport() {
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Project
+                    {t('Hours.project')}
                   </label>
                   <select
                     value={editForm.projectId}
@@ -931,7 +925,7 @@ export default function TimecardReport() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Clock In Date
+                      {t('timeTracking.clockIn')} {t('Hours.date')}
                     </label>
                     <input
                       type="date"
@@ -942,7 +936,7 @@ export default function TimecardReport() {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Clock In Time
+                      {t('timeTracking.clockIn')} {t('Hours.startTime')}
                     </label>
                     <input
                       type="time"
@@ -956,7 +950,7 @@ export default function TimecardReport() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Clock Out Date
+                      {t('timeTracking.clockOut')} {t('Hours.date')}
                     </label>
                     <input
                       type="date"
@@ -967,7 +961,7 @@ export default function TimecardReport() {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Clock Out Time
+                      {t('timeTracking.clockOut')} {t('Hours.endTime')}
                     </label>
                     <input
                       type="time"
@@ -980,16 +974,16 @@ export default function TimecardReport() {
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Approval Status
+                    {t('Hours.status')}
                   </label>
                   <select
                     value={editForm.status}
                     onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg"
                   >
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="pending">{t('Hours.pending')}</option>
+                    <option value="approved">{t('Hours.approved')}</option>
+                    <option value="rejected">{t('Hours.rejected')}</option>
                   </select>
                 </div>
               </div>
@@ -1003,7 +997,7 @@ export default function TimecardReport() {
                 }}
                 className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition text-lg"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -1013,12 +1007,12 @@ export default function TimecardReport() {
                 {saving ? (
                   <>
                     <Loader className="animate-spin" size={20} />
-                    Saving...
+                    {t('common.loading')}
                   </>
                 ) : (
                   <>
                     <Save size={20} />
-                    Save Changes
+                    {t('common.save')}
                   </>
                 )}
               </button>
@@ -1033,7 +1027,7 @@ export default function TimecardReport() {
           <div className="bg-white rounded-2xl max-w-2xl w-full">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Edit {selectedEntries.length} {selectedEntries.length === 1 ? 'Entry' : 'Entries'}
+                {t('common.edit')} {selectedEntries.length}
               </h2>
               <button
                 onClick={() => {
@@ -1055,7 +1049,7 @@ export default function TimecardReport() {
               )}
 
               <p className="text-gray-600 mb-6">
-                Select which fields you want to update for all selected entries:
+                Select which fields to update:
               </p>
 
               <div className="space-y-6">
@@ -1068,7 +1062,7 @@ export default function TimecardReport() {
                       onChange={(e) => setBulkEditForm({ ...bulkEditForm, applyStatus: e.target.checked })}
                       className="w-5 h-5"
                     />
-                    <span className="text-lg font-bold text-gray-900">Update Status</span>
+                    <span className="text-lg font-bold text-gray-900">{t('Hours.status')}</span>
                   </label>
                   {bulkEditForm.applyStatus && (
                     <select
@@ -1076,10 +1070,10 @@ export default function TimecardReport() {
                       onChange={(e) => setBulkEditForm({ ...bulkEditForm, status: e.target.value })}
                       className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg"
                     >
-                      <option value="">-- Select Status --</option>
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
+                      <option value="">-- {t('common.select')} --</option>
+                      <option value="pending">{t('Hours.pending')}</option>
+                      <option value="approved">{t('Hours.approved')}</option>
+                      <option value="rejected">{t('Hours.rejected')}</option>
                     </select>
                   )}
                 </div>
@@ -1093,7 +1087,7 @@ export default function TimecardReport() {
                       onChange={(e) => setBulkEditForm({ ...bulkEditForm, applyProject: e.target.checked })}
                       className="w-5 h-5"
                     />
-                    <span className="text-lg font-bold text-gray-900">Move to Different Project</span>
+                    <span className="text-lg font-bold text-gray-900">{t('Hours.project')}</span>
                   </label>
                   {bulkEditForm.applyProject && (
                     <select
@@ -1101,7 +1095,7 @@ export default function TimecardReport() {
                       onChange={(e) => setBulkEditForm({ ...bulkEditForm, projectId: e.target.value })}
                       className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg"
                     >
-                      <option value="">-- Select Project --</option>
+                      <option value="">-- {t('common.select')} --</option>
                       {projects.map(proj => (
                         <option key={proj.id} value={proj.id}>
                           {proj.name}
@@ -1121,7 +1115,7 @@ export default function TimecardReport() {
                 }}
                 className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition text-lg"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleBulkSave}
@@ -1131,12 +1125,12 @@ export default function TimecardReport() {
                 {saving ? (
                   <>
                     <Loader className="animate-spin" size={20} />
-                    Updating...
+                    {t('common.loading')}
                   </>
                 ) : (
                   <>
                     <Save size={20} />
-                    Update All
+                    {t('common.save')}
                   </>
                 )}
               </button>
@@ -1154,10 +1148,10 @@ export default function TimecardReport() {
                 <Trash2 className="text-red-600" size={32} />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Delete {entryToDelete ? '1 Entry' : `${selectedEntries.length} Entries`}?
+                {t('common.delete')} {entryToDelete ? '1' : selectedEntries.length}?
               </h2>
               <p className="text-gray-600">
-                This action cannot be undone. {entryToDelete ? 'The time entry' : 'These time entries'} will be permanently deleted.
+                This action cannot be undone.
               </p>
             </div>
 
@@ -1169,14 +1163,14 @@ export default function TimecardReport() {
                 }}
                 className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition text-lg"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={saving}
                 className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition text-lg disabled:opacity-50"
               >
-                {saving ? 'Deleting...' : 'Delete'}
+                {saving ? t('common.loading') : t('common.delete')}
               </button>
             </div>
           </div>
