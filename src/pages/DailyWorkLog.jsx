@@ -5,15 +5,17 @@ import { useEmployeeStore } from '../features/employees/store/employeeStore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ProjectSelectionCard from '../features/projects/components/ProjectSelectionCard';
 import WorkLogSummaryCard from '../components/WorkLogSummaryCard';
-import { useDailyWorkLog } from '../hooks/useDailyWorkLog'; // ← ADD THIS IMPORT
+import { useDailyWorkLog } from '../hooks/useDailyWorkLog';
+import { useTranslation } from 'react-i18next';
 
 export default function DailyWorkLog() {
+  const { t } = useTranslation();
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   const isAdmin = currentEmployee?.role === 'admin';
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ REPLACE all the data loading logic with the hook
+  // Use the hook for data loading
   const { projects, todayLogs, loading, error, refetchData } = useDailyWorkLog(
     currentEmployee,
     isAdmin
@@ -32,7 +34,7 @@ export default function DailyWorkLog() {
       setSelectedProject(passedProject);
       setShowForm(true);
 
-      setAlertMessage(`Project selected: ${passedProject.name}`);
+      setAlertMessage(`${t('projects.selectProject')}: ${passedProject.name}`);
       setShowAlert(true);
 
       setTimeout(() => {
@@ -41,7 +43,7 @@ export default function DailyWorkLog() {
 
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+  }, [location, t]);
 
   const handleSelectProject = (project) => {
     setSelectedProject(project);
@@ -51,7 +53,7 @@ export default function DailyWorkLog() {
   const handleFormSuccess = () => {
     setShowForm(false);
     setSelectedProject(null);
-    refetchData(); // ← Use refetchData from hook instead of loadData
+    refetchData();
   };
 
   const handleFormCancel = () => {
@@ -68,7 +70,7 @@ export default function DailyWorkLog() {
       <div className="p-5 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -120,18 +122,18 @@ export default function DailyWorkLog() {
     <div className="p-5 pb-24">
       {isAdmin && (
         <button
-          onClick={()=>navigate(-1)}
+          onClick={() => navigate(-1)}
           className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
         >
-          <CircleArrowLeft size={20} /> Back to Admin Tools
+          <CircleArrowLeft size={20} /> {t('common.back')}
         </button>
       )}
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Daily Work Log</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('reports.dailyReport')}</h1>
         <p className="text-gray-600 text-sm mt-1">
-          Document your work with photos and description
+          {t('reports.workCompleted')}
         </p>
       </div>
 
@@ -150,7 +152,7 @@ export default function DailyWorkLog() {
               })}
             </p>
             <p className="text-sm text-blue-700">
-              {todayLogs.length} work log{todayLogs.length !== 1 ? 's' : ''} submitted today
+              {todayLogs.length} {t('reports.dailyReport')} {todayLogs.length !== 1 ? 's' : ''} {t('reports.reportSubmitted')}
             </p>
           </div>
         </div>
@@ -158,23 +160,23 @@ export default function DailyWorkLog() {
 
       {/* Instructions Card */}
       <div className="bg-white rounded-xl p-4 mb-6 border border-gray-200">
-        <h3 className="font-bold text-gray-900 mb-3">How to Submit a Work Log:</h3>
+        <h3 className="font-bold text-gray-900 mb-3">How to Submit:</h3>
         <ol className="space-y-2 text-sm text-gray-700">
           <li className="flex gap-2">
             <span className="font-bold text-blue-600">1.</span>
-            <span>Select your current project below</span>
+            <span>{t('projects.selectProject')}</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold text-blue-600">2.</span>
-            <span>Describe your completed work (any language)</span>
+            <span>{t('reports.workCompleted')}</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold text-blue-600">3.</span>
-            <span>Take photos of your work (at least 1 required)</span>
+            <span>{t('reports.addPhoto')}</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold text-blue-600">4.</span>
-            <span>Submit - your work will be auto-translated!</span>
+            <span>{t('common.submit')}</span>
           </li>
         </ol>
       </div>
@@ -185,18 +187,16 @@ export default function DailyWorkLog() {
           <FileText size={64} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {!isAdmin && !currentEmployee?.companyId
-              ? 'Not Assigned to Company'
-              : 'No Projects Assigned'}
+              ? 'Not Assigned'
+              : t('projects.noProjects')}
           </h3>
           <p className="text-gray-600">
-            {!isAdmin && !currentEmployee?.companyId
-              ? 'You need to be added to a company first'
-              : 'Contact your supervisor to be assigned to projects'}
+            Contact your supervisor
           </p>
         </div>
       ) : (
         <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Select Project</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('projects.selectProject')}</h2>
           <div className="space-y-3">
             {projects.map((project) => {
               const projectLogsToday = todayLogs.filter(log => log.projectId === project.id);
@@ -217,7 +217,7 @@ export default function DailyWorkLog() {
       {/* Today's Logs Summary */}
       {todayLogs.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Today's Work Logs</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('timeTracking.today')} {t('reports.title')}</h2>
           <div className="space-y-3">
             {todayLogs.map((log) => {
               const logProject = projects.find(p => p.id === log.projectId);

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { firestoreService } from '../../services/firestoreService';
 import { FileText, Loader, Search, CircleArrowLeft, Filter, Calendar, User, MapPin, Image as ImageIcon, X, ChevronDown, ChevronUp } from 'lucide-react';
-import WorkSummaryGenerator from '../../components/WorkSummaryGenerator'; // Add this import
-import { Sparkles } from 'lucide-react'; // Add Sparkles icon
+import WorkSummaryGenerator from '../../components/WorkSummaryGenerator';
+import { Sparkles } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminWorkLogs() {
+  const { t } = useTranslation();
   const [workLogs, setWorkLogs] = useState([]);
   const [filteredLogs, setFilteredLogs] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -40,10 +42,9 @@ export default function AdminWorkLogs() {
     applyFilters();
   }, [workLogs, searchTerm, selectedProject, selectedEmployee, dateFilter]);
 
-   const handleBack = () => {
+  const handleBack = () => {
     navigate('/admin/tools')
   };
-
 
   const loadData = async () => {
     try {
@@ -161,11 +162,10 @@ export default function AdminWorkLogs() {
     setExpandedLogId(expandedLogId === logId ? null : logId);
   };
 
-  // ADD THIS FUNCTION inside your component
-    const getSummaryContext = () => {
+  const getSummaryContext = () => {
     const projectName = selectedProject !== 'all' 
         ? getProjectName(selectedProject) 
-        : 'All Projects';
+        : t('projects.title');
     
     let dateRange = 'All Time';
     if (dateFilter === 'today') dateRange = new Date().toLocaleDateString();
@@ -173,14 +173,14 @@ export default function AdminWorkLogs() {
     else if (dateFilter === 'month') dateRange = 'Past Month';
 
     return { projectName, date: dateRange };
-    };
+  };
 
   if (loading) {
     return (
       <div className="p-5 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-          <p className="text-gray-600">Loading work logs...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -191,35 +191,33 @@ export default function AdminWorkLogs() {
       {/* Header */}
       <div className="mb-6">
         <button
-            onClick={()=>navigate(-1)}
-            className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
-          >
-            <CircleArrowLeft size={20} /> Back to Admin Tools
-          </button>
-        <h1 className="text-2xl font-bold text-gray-900">Work Logs</h1>
+          onClick={() => navigate(-1)}
+          className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
+        >
+          <CircleArrowLeft size={20} /> {t('common.back')}
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">{t('reports.dailyReport')}</h1>
         <p className="text-gray-600 text-sm mt-1">
-          View and manage daily work submissions
+          {t('reports.viewReports')}
         </p>
         <button
-        onClick={() => setShowSummaryGenerator(true)}
-        disabled={filteredLogs.length === 0}
-        className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition flex items-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          onClick={() => setShowSummaryGenerator(true)}
+          disabled={filteredLogs.length === 0}
+          className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition flex items-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
         >
-        <Sparkles size={20} />
-        Generate AI Summary
+          <Sparkles size={20} />
+          Generate AI Summary
         </button>
       </div>
-
-      
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Total Logs</p>
+          <p className="text-sm text-gray-600">Total</p>
           <p className="text-2xl font-bold text-gray-900">{workLogs.length}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Today</p>
+          <p className="text-sm text-gray-600">{t('timeTracking.today')}</p>
           <p className="text-2xl font-bold text-blue-600">
             {workLogs.filter(log => {
               const logDate = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
@@ -229,7 +227,7 @@ export default function AdminWorkLogs() {
           </p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">This Week</p>
+          <p className="text-sm text-gray-600">{t('timeTracking.thisWeek')}</p>
           <p className="text-2xl font-bold text-green-600">
             {workLogs.filter(log => {
               const logDate = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
@@ -240,7 +238,7 @@ export default function AdminWorkLogs() {
           </p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Filtered Results</p>
+          <p className="text-sm text-gray-600">Filtered</p>
           <p className="text-2xl font-bold text-purple-600">{filteredLogs.length}</p>
         </div>
       </div>
@@ -253,7 +251,7 @@ export default function AdminWorkLogs() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by description, employee, or project..."
+              placeholder={t('common.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -266,7 +264,7 @@ export default function AdminWorkLogs() {
             }`}
           >
             <Filter size={20} />
-            Filters
+            {t('common.filter')}
             {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
         </div>
@@ -277,14 +275,14 @@ export default function AdminWorkLogs() {
             {/* Project Filter */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Project
+                {t('Hours.project')}
               </label>
               <select
                 value={selectedProject}
                 onChange={(e) => setSelectedProject(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Projects</option>
+                <option value="all">{t('projects.title')}</option>
                 {projects.map(project => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -296,14 +294,14 @@ export default function AdminWorkLogs() {
             {/* Employee Filter */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Employee
+                {t('Hours.worker')}
               </label>
               <select
                 value={selectedEmployee}
                 onChange={(e) => setSelectedEmployee(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Employees</option>
+                <option value="all">{t('workers.title')}</option>
                 {employees.map(employee => (
                   <option key={employee.id} value={employee.id}>
                     {employee.name}
@@ -315,17 +313,17 @@ export default function AdminWorkLogs() {
             {/* Date Filter */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Date Range
+                {t('Hours.date')}
               </label>
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">Past Week</option>
-                <option value="month">Past Month</option>
+                <option value="all">{t('common.all')}</option>
+                <option value="today">{t('timeTracking.today')}</option>
+                <option value="week">{t('timeTracking.thisWeek')}</option>
+                <option value="month">{t('timeTracking.thisMonth')}</option>
               </select>
             </div>
           </div>
@@ -343,11 +341,11 @@ export default function AdminWorkLogs() {
       {filteredLogs.length === 0 ? (
         <div className="bg-white rounded-xl p-12 text-center">
           <FileText size={64} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Work Logs Found</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">{t('reports.noReports')}</h3>
           <p className="text-gray-600">
             {searchTerm || selectedProject !== 'all' || selectedEmployee !== 'all' || dateFilter !== 'all'
               ? 'Try adjusting your filters'
-              : 'Work logs will appear here once employees submit them'}
+              : 'Work logs will appear here'}
           </p>
         </div>
       ) : (
@@ -396,7 +394,7 @@ export default function AdminWorkLogs() {
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <ImageIcon size={14} />
-                          {log.images?.length || 0} photo{log.images?.length !== 1 ? 's' : ''}
+                          {log.images?.length || 0} {t('reports.photos')}
                         </div>
                         {log.wasTranslated && (
                           <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
@@ -422,7 +420,7 @@ export default function AdminWorkLogs() {
                   <div className="border-t border-gray-200 p-4 bg-gray-50">
                     {/* Full Description */}
                     <div className="mb-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">Description</h4>
+                      <h4 className="font-semibold text-gray-900 mb-2">{t('projects.description')}</h4>
                       <div className="bg-white rounded-lg p-3 border border-gray-200">
                         <p className="text-gray-700 whitespace-pre-wrap">
                           {log.translatedDescription || log.description}
@@ -440,7 +438,7 @@ export default function AdminWorkLogs() {
                     {log.images && log.images.length > 0 && (
                       <div>
                         <h4 className="font-semibold text-gray-900 mb-2">
-                          Photos ({log.images.length})
+                          {t('reports.photos')} ({log.images.length})
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                           {log.images.map((imageUrl, index) => (
@@ -451,7 +449,7 @@ export default function AdminWorkLogs() {
                             >
                               <img
                                 src={imageUrl}
-                                alt={`Work photo ${index + 1}`}
+                                alt={`${t('reports.photos')} ${index + 1}`}
                                 className="w-full h-full object-cover"
                               />
                             </div>
@@ -481,21 +479,22 @@ export default function AdminWorkLogs() {
           </button>
           <img
             src={selectedImage}
-            alt="Work log photo"
+            alt={t('reports.photos')}
             className="max-w-full max-h-full object-contain"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
+
       {/* Summary Generator Modal */}
-        {showSummaryGenerator && (
+      {showSummaryGenerator && (
         <WorkSummaryGenerator
-            workLogs={filteredLogs}
-            projectName={getSummaryContext().projectName}
-            date={getSummaryContext().date}
-            onClose={() => setShowSummaryGenerator(false)}
+          workLogs={filteredLogs}
+          projectName={getSummaryContext().projectName}
+          date={getSummaryContext().date}
+          onClose={() => setShowSummaryGenerator(false)}
         />
-        )}
+      )}
     </div>
   );
 }

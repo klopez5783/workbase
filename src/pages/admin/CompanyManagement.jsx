@@ -9,8 +9,10 @@ import CompanyCodeDisplay from '../../components/CompanyCodeDisplay';
 import { useCompanyWorkers } from '../../features/timeTracking/hooks/useCompanyWorkers';
 import AddWorkerForm from '../../features/timeTracking/components/AddWorkerForm';
 import WorkerCard from '../../features/timeTracking/components/WorkerCard';
+import { useTranslation } from 'react-i18next';
 
 export default function CompanyManagement() {
+  const { t } = useTranslation();
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showCompanyForm, setShowCompanyForm] = useState(false);
@@ -75,7 +77,7 @@ export default function CompanyManagement() {
   };
 
   const handleDeleteWorker = async (worker) => {
-    if (!window.confirm(`Remove ${worker.name}? They will no longer be able to clock in.`)) {
+    if (!window.confirm(`${t('workers.removeWorker')} ${worker.name}?`)) {
       return;
     }
 
@@ -111,11 +113,11 @@ export default function CompanyManagement() {
       await firestoreService.delete('workers', worker.id);
       
       await loadWorkers();
-      alert(`✅ ${worker.name} removed successfully`);
+      alert(`✅ ${worker.name} ${t('success.deleted')}`);
       
     } catch (error) {
       console.error('Error removing worker:', error);
-      alert('Error removing worker: ' + error.message);
+      alert(`${t('common.error')}: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -133,7 +135,7 @@ export default function CompanyManagement() {
       <div className="p-5 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-          <p className="text-gray-600">Loading company data...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -149,21 +151,21 @@ export default function CompanyManagement() {
           >
             <ArrowLeft size={24} className="text-gray-600" />
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">Company Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('settings.company')}</h1>
         </div>
 
         <div className="bg-white rounded-xl p-12 text-center">
           <Building2 size={64} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Company Yet</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No Company</h3>
           <p className="text-gray-600 mb-6">
-            Create your company to start managing projects and workers
+            {t('projects.createNew')} {t('settings.company')}
           </p>
           <button
             onClick={() => setShowCompanyForm(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2"
           >
             <Plus size={20} />
-            Create Company
+            {t('projects.createNew')}
           </button>
         </div>
 
@@ -186,9 +188,9 @@ export default function CompanyManagement() {
             <ArrowLeft size={24} className="text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Company Management</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('settings.company')}</h1>
             <p className="text-gray-600 text-sm mt-1">
-              Manage your company and workers
+              {t('workers.title')}
             </p>
           </div>
         </div>
@@ -204,14 +206,14 @@ export default function CompanyManagement() {
             <div>
               <h2 className="text-xl font-bold text-gray-900">{company?.name}</h2>
               <p className="text-sm text-gray-500">
-                {allWorkers.length} {allWorkers.length === 1 ? 'worker' : 'workers'}
+                 {t('workers.title').toLowerCase()} {allWorkers.length}
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowCompanyForm(true)}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
-            title="Edit company"
+            title={t('common.edit')}
           >
             <Edit size={20} className="text-gray-600" />
           </button>
@@ -225,7 +227,7 @@ export default function CompanyManagement() {
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Last Updated</p>
+            <p className="text-xs text-gray-500 mb-1">Updated</p>
             <p className="text-sm font-medium text-gray-900">
               {new Date(company?.updatedAt).toLocaleDateString()}
             </p>
@@ -246,24 +248,24 @@ export default function CompanyManagement() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Users size={20} className="text-gray-600" />
-            <h3 className="text-lg font-bold text-gray-900">Company Workers</h3>
+            <h3 className="text-lg font-bold text-gray-900">{t('workers.title')}</h3>
           </div>
           <button
             onClick={handleAddWorkerClick}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2 text-sm"
           >
             <UserPlus size={16} />
-            Add Worker
+            {t('workers.addWorker')}
           </button>
         </div>
 
         {/* Info Box */}
         <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
           <p className="text-blue-900 font-medium text-sm">
-            📱 Easy Worker Setup
+            📱 Easy Setup
           </p>
           <p className="text-blue-700 text-sm mt-1">
-            Add workers with just their name and phone number. They'll receive a text message with a link to clock in—no password needed!
+            {t('workers.addWorker')} - {t('workers.phoneNumber')}
           </p>
         </div>
 
@@ -271,13 +273,13 @@ export default function CompanyManagement() {
         {loadingWorkers ? (
           <div className="text-center py-8">
             <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-            <p className="text-gray-600">Loading workers...</p>
+            <p className="text-gray-600">{t('common.loading')}</p>
           </div>
         ) : allWorkers.length === 0 ? (
           <div className="text-center py-8">
             <Users size={48} className="mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-600">No workers in your company yet</p>
-            <p className="text-sm text-gray-500 mt-1">Add workers to assign them to projects</p>
+            <p className="text-gray-600">{t('workers.noWorkers')}</p>
+            <p className="text-sm text-gray-500 mt-1">{t('workers.assignToProject')}</p>
           </div>
         ) : (
           <div className="space-y-3">
