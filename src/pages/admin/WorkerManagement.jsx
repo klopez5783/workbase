@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Users, Loader, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { firestoreService } from '../../services/firestoreService';
@@ -8,6 +9,7 @@ import AddWorkerForm from '../../features/timeTracking/components/AddWorkerForm'
 import WorkerCard from '../../features/timeTracking/components/WorkerCard';
 
 export default function WorkerManagement() {
+  const { t } = useTranslation();
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -51,7 +53,7 @@ export default function WorkerManagement() {
   };
 
   const handleDeleteWorker = async (worker) => {
-    if (!window.confirm(`Remove ${worker.name}? They will no longer be able to clock in.`)) {
+    if (!window.confirm(t('workerManagement.deleteConfirm', { name: worker.name }))) {
       return;
     }
 
@@ -97,11 +99,11 @@ export default function WorkerManagement() {
       await firestoreService.delete('workers', worker.id);
       
       await loadWorkers();
-      alert(`✅ ${worker.name} removed successfully`);
+      alert(t('workerManagement.deleteSuccess', { name: worker.name }));
       
     } catch (error) {
       console.error('Error removing worker:', error);
-      alert('Error removing worker: ' + error.message);
+      alert(t('workerManagement.deleteError') + error.message);
     } finally {
       setLoading(false);
     }
@@ -112,7 +114,7 @@ export default function WorkerManagement() {
       <div className="p-5 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-          <p className="text-gray-600">Loading workers...</p>
+          <p className="text-gray-600">{t('workerManagement.loadingWorkers')}</p>
         </div>
       </div>
     );
@@ -126,14 +128,14 @@ export default function WorkerManagement() {
           <button
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
-            title="Go back"
+            title={t('common.back')}
           >
             <ArrowLeft size={24} className="text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Worker Management</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('workers.title')}</h1>
             <p className="text-gray-600 text-sm mt-1">
-              {workers.length} {workers.length === 1 ? 'worker' : 'workers'}
+              {t('workerManagement.workerCount', { count: workers.length })}
             </p>
           </div>
         </div>
@@ -143,7 +145,7 @@ export default function WorkerManagement() {
             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl font-semibold hover:shadow-lg transition flex items-center gap-2"
           >
             <Plus size={20} />
-            Add Worker
+            {t('workers.addWorker')}
           </button>
         </div>
       </div>
@@ -151,10 +153,10 @@ export default function WorkerManagement() {
       {/* Info Box */}
       <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
         <p className="text-blue-900 font-medium text-sm">
-          📱 Easy Worker Setup
+          {t('workerManagement.infoBox.title')}
         </p>
         <p className="text-blue-700 text-sm mt-1">
-          Add workers with just their name and phone number. They'll receive a text message with a link to clock in—no password needed!
+          {t('workerManagement.infoBox.description')}
         </p>
       </div>
 
@@ -162,16 +164,18 @@ export default function WorkerManagement() {
       {workers.length === 0 ? (
         <div className="bg-white rounded-xl p-12 text-center">
           <Users size={64} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Workers Yet</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {t('workerManagement.noWorkers.title')}
+          </h3>
           <p className="text-gray-600 mb-6">
-            Add your first worker to get started with time tracking
+            {t('workerManagement.noWorkers.description')}
           </p>
           <button
             onClick={() => setShowAddForm(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2"
           >
             <Plus size={20} />
-            Add First Worker
+            {t('workerManagement.noWorkers.addButton')}
           </button>
         </div>
       ) : (

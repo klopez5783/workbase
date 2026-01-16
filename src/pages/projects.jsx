@@ -224,7 +224,7 @@ export default function ProjectsPage() {
     if (diffDays === 0) return t('timeTracking.today');
     if (diffDays === 1) return t('common.yesterday') || 'Yesterday';
     if (diffDays < 7) return `${diffDays} ${t('common.daysAgo') || 'days ago'}`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} ${t('common.weeksAgo') || 'weeks ago'}`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} ${t('common.weeksAgo')}`;
     return formatDate(timestamp);
   };
 

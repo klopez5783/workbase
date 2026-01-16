@@ -25,7 +25,8 @@
     "RecentActivity": "Recent Activity",
     "all": "All",
     "lastActivity": "Last Activity",
-    "daysAgo": "days ago"
+    "daysAgo": "days ago",
+    "weeksAgo": "weeks ago"
   },
   "nav": {
     "Home": "Home",
@@ -92,7 +93,8 @@
     "workerDetails": "Worker Details",
     "hoursWorked": "Hours Worked",
     "totalHours": "Total Hours",
-    "No workers assigned yet": "No workers assigned yet"
+    "No workers assigned yet": "No workers assigned yet",
+    "WorkerCount": "Worker Count"
   },
   "Hours": {
     "title": "Hours",
@@ -182,7 +184,58 @@
     "plans": "Plans",
     "permits": "Permits",
     "contracts": "Contracts",
-    "photos": "Photos"
+    "photos": "Photos",
+    "contractsDesc": "Project contracts and agreements",
+    "permitsDesc": "Building permits and approvals",
+    "plansDesc": "Blueprints and architectural plans",
+    "photosDesc": "Project progress photos",
+    "loadingDocuments": "Loading documents...",
+    "loadError": "Failed to load documents",
+    "updateSuccess": "Document updated successfully!",
+    "view": "View",
+    "uploadNew": "Upload New Document",
+    "fileCount": "{{count}} file",
+    "fileCount_plural": "{{count}} files",
+    "totalCount": "Total: {{count}} document",
+    "totalCount_plural": "Total: {{count}} documents",
+    "uploadModal": {
+      "title": "Upload Document",
+      "documentType": "Document Type",
+      "selectFile": "Select File",
+      "documentTitle": "Document Title",
+      "description": "Description (Optional)",
+      "selectFileError": "Please select a file",
+      "enterTitleError": "Please enter a document title",
+      "uploadFailed": "Failed to upload file",
+      "saveFailed": "Failed to save document",
+      "uploadError": "Failed to upload document",
+      "selectedFile": "Selected: {{name}} ({{size}} MB)",
+      "titlePlaceholder": "e.g., Building Permit - Main Structure",
+      "descriptionPlaceholder": "Additional notes or details about this document...",
+      "uploading": "Uploading...",
+      "uploadButton": "Upload Document"
+    },
+    "listModal": {
+      "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
+      "noDocuments": "No Documents Yet",
+      "noDocumentsReadOnly": "No documents have been uploaded to this category yet.",
+      "noDocumentsUpload": "Upload your first document to get started."
+    },
+    "viewModal": {
+      "previewNotAvailable": "Preview Not Available",
+      "downloadToView": "This file type cannot be previewed. Please download to view.",
+      "downloadFile": "Download File"
+    },
+    "editModal": {
+      "title": "Edit Document",
+      "uploadFailed": "Failed to upload new file",
+      "updateFailed": "Update failed",
+      "updateError": "Failed to update document",
+      "replaceFile": "Replace File (Optional)",
+      "newFile": "New file: {{name}} ({{size}} MB)",
+      "saving": "Saving...",
+      "saveButton": "Save Changes"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -277,5 +330,88 @@
         "On Break": "On Break",
         "Employees on Leave": "Employees on Leave",
         "Employee Work Summary": "Employee Work Summary"
+    },
+  "adminTools": {
+    "howToShare": {
+      "title": "How to Share the Company Join Code",
+      "step1": "Click \"Copy Code\" to copy the join code to your clipboard",
+      "step2": "Share the code with workers via text message, email, or messaging app",
+      "step3": "Or use \"Send Invite\" to send an SMS with a direct link to join",
+      "step4": "Workers can enter the code when prompted to join your company"
+    },
+    "joinCode": {
+      "title": "Company Join Code",
+      "description": "Share this code with workers to join your company",
+      "label": "Join Code"
+    },
+    "buttons": {
+      "copyCode": "Copy Code",
+      "copied": "Coped!",
+      "sendInvite": "Send Invite",
+      "regenerate": "Regenerate",
+      "regenerating": "Regenerating..."
+    },
+    "copyCode": {
+      "failedToCopy": "Failed to copy code. Please try again."
+    },
+    "regenerateCode": {
+      "confirmMessage": "Are you sure you want to regenerate the join code? The old code will no longer work.",
+      "success": "Join code regenerated successfully.",
+      "error": "Error regenerating join code. Please try again."
+    },
+    "noJoinCode": {
+      "message": "No join code available. This company was created before the join code feature was implemented.",
+      "generateButton": "Generate Join Code",
+      "generating": "Generating..."
+    },
+    "inviteModal": {
+      "title": "Send SMS Invitation",
+      "companyLabel": "Company",
+      "joinCodeLabel": "Join Code",
+      "phoneLabel": "Worker's Phone Number *",
+      "phoneHint": "The worker will receive an SMS with the join code and a direct link to join your company.",
+      "invalidPhone": "Please enter a valid 10-digit phone number",
+      "sendError": "Error sending invitation. Please try again.",
+      "successTitle": "Invitation Sent!",
+      "successMessage": "The worker will receive an SMS with instructions to join your company.",
+      "sendButton": "Send Invitation",
+      "sending": "Sending..."
     }
+  },
+  "workerManagement": {
+    "loadingWorkers": "Loading workers...",
+    "workerCount": "{{count}} worker",
+    "workerCount_plural": "{{count}} workers",
+    "deleteConfirm": "Delete {{name}}? They will no longer be able to log in.",
+    "deleteSuccess": "✅ {{name}} deleted successfully",
+    "deleteError": "Error deleting worker: ",
+    "infoBox": {
+      "title": "📱 Easy Worker Setup",
+      "description": "Add workers with just their name and phone number. They'll receive a text message with a link to log in—no password required!"
+    },
+    "noWorkers": {
+      "title": "No Workers Yet",
+      "description": "Add your first worker to start tracking time",
+      "addButton": "Add First Worker"
+    }
+  },
+  "workerClockIn": {
+    "welcome": "Welcome, {{name}}!",
+    "subtitle": "Clock in/out for your shift",
+    "invalidLink": "Invalid Link",
+    "requestNewLink": "Request New Link",
+    "requestSent": "Request Sent!",
+    "requestLinkSent": "Request sent to your supervisor! You should receive a link shortly.",
+    "requestLinkError": "Failed to request link: ",
+    "currentlyClockedIn": "Currently Clocked In",
+    "since": "Since {{time}}",
+    "clockingOut": "Clocking Out...",
+    "clockingIn": "Clocking In...",
+    "selectJobSite": "Select Job Site",
+    "noProjectsAssigned": "You're not assigned to any projects yet.",
+    "contactSupervisor": "Contact your supervisor to get assigned.",
+    "chooseProject": "Choose a project...",
+    "locationVerified": "Your location will be verified when you clock in",
+    "needHelp": "Need help? Contact your supervisor"
+  }
 }

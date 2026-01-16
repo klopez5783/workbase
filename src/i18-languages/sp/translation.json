@@ -25,7 +25,8 @@
     "RecentActivity": "Actividad Reciente",
     "all": "Todos",
     "lastActivity": "Última Actividad",
-    "daysAgo": "días atrás"
+    "daysAgo": "días atrás",
+    "weeksAgo": "semanas atrás"
   },
   "nav": {
     "Home": "Inicio",
@@ -93,7 +94,8 @@
     "workerDetails": "Detalles del Trabajador",
     "hoursWorked": "Horas Trabajadas",
     "totalHours": "Total de Horas",
-    "No workers assigned yet": "Aún no se han asignado trabajadores"
+    "No workers assigned yet": "Aún no se han asignado trabajadores",
+    "WorkerCount": "Cantidad de Trabajadores"
   },
   "Hours": {
     "title": "Horas",
@@ -183,7 +185,58 @@
     "plans": "Planos",
     "permits": "Permisos",
     "contracts": "Contratos",
-    "photos": "Fotos"
+    "photos": "Fotos",
+    "contractsDesc": "Contratos y acuerdos del proyecto",
+    "permitsDesc": "Permisos de construcción y aprobaciones",
+    "plansDesc": "Planos y planes arquitectónicos",
+    "photosDesc": "Fotos de progreso del proyecto",
+    "loadingDocuments": "Cargando documentos...",
+    "loadError": "Error al cargar documentos",
+    "updateSuccess": "¡Documento actualizado exitosamente!",
+    "view": "Ver",
+    "uploadNew": "Subir Nuevo Documento",
+    "fileCount": "{{count}} archivo",
+    "fileCount_plural": "{{count}} archivos",
+    "totalCount": "Total: {{count}} documento",
+    "totalCount_plural": "Total: {{count}} documentos",
+    "uploadModal": {
+      "title": "Subir Documento",
+      "documentType": "Tipo de Documento",
+      "selectFile": "Seleccionar Archivo",
+      "documentTitle": "Título del Documento",
+      "description": "Descripción (Opcional)",
+      "selectFileError": "Por favor, selecciona un archivo",
+      "enterTitleError": "Por favor, ingresa un título del documento",
+      "uploadFailed": "Error al subir el archivo",
+      "saveFailed": "Error al guardar el documento",
+      "uploadError": "Error al subir el documento",
+      "selectedFile": "Seleccionado: {{name}} ({{size}} MB)",
+      "titlePlaceholder": "ej., Permiso de Construcción - Estructura Principal",
+      "descriptionPlaceholder": "Notas adicionales o detalles sobre este documento...",
+      "uploading": "Subiendo...",
+      "uploadButton": "Subir Documento"
+    },
+    "listModal": {
+      "deleteConfirm": "¿Eliminar \"{{title}}\"? Esto no se puede deshacer.",
+      "noDocuments": "Aún No Hay Documentos",
+      "noDocumentsReadOnly": "Aún no se han subido documentos a esta categoría.",
+      "noDocumentsUpload": "Sube tu primer documento para comenzar."
+    },
+    "viewModal": {
+      "previewNotAvailable": "Vista Previa No Disponible",
+      "downloadToView": "Este tipo de archivo no se puede previsualizar. Por favor, descárgalo para verlo.",
+      "downloadFile": "Descargar Archivo"
+    },
+    "editModal": {
+      "title": "Editar Documento",
+      "uploadFailed": "Error al subir el nuevo archivo",
+      "updateFailed": "Actualización fallida",
+      "updateError": "Error al actualizar el documento",
+      "replaceFile": "Reemplazar Archivo (Opcional)",
+      "newFile": "Nuevo archivo: {{name}} ({{size}} MB)",
+      "saving": "Guardando...",
+      "saveButton": "Guardar Cambios"
+    }
   },
   "settings": {
     "title": "Configuración",
@@ -278,5 +331,88 @@
         "On Break": "En Pausa",
         "Employees on Leave": "Empleados de Baja",
         "Employee Work Summary": "Resumen de Trabajo del Empleado"
+    },  
+    "adminTools": {
+    "howToShare": {
+      "title": "Cómo compartir:",
+      "step1": "Haz clic en \"Copiar código\" para copiar el código de unión a tu portapapeles",
+      "step2": "Comparte el código con los trabajadores por mensaje de texto, correo electrónico o aplicación de mensajería",
+      "step3": "O usa \"Enviar invitación\" para enviar un SMS con un enlace directo para unirse",
+      "step4": "Los trabajadores pueden ingresar el código cuando se les solicite para unirse a tu empresa"
+    },
+    "joinCode": {
+      "title": "Código de Unión de la Empresa",
+      "description": "Comparte este código con los trabajadores para que se unan a tu empresa",
+      "label": "Código de Unión"
+    },
+    "buttons": {
+      "copyCode": "Copiar Código",
+      "copied": "¡Copiado!",
+      "sendInvite": "Enviar Invitación",
+      "regenerate": "Regenerar",
+      "regenerating": "Regenerando..."
+    },
+    "copyCode": {
+      "failedToCopy": "Error al copiar el código. Por favor, copia manualmente."
+    },
+    "regenerateCode": {
+      "confirmMessage": "¿Estás seguro de que quieres regenerar el código de unión? El código anterior ya no funcionará.",
+      "success": "¡Código de unión regenerado exitosamente!",
+      "error": "Error al regenerar el código: "
+    },
+    "noJoinCode": {
+      "message": "No hay código de unión disponible. Esta empresa se creó antes de que se implementara la función de código de unión.",
+      "generateButton": "Generar Código de Unión",
+      "generating": "Generando..."
+    },
+    "inviteModal": {
+      "title": "Enviar Invitación por SMS",
+      "companyLabel": "Empresa",
+      "joinCodeLabel": "Código de Unión",
+      "phoneLabel": "Número de Teléfono del Trabajador *",
+      "phoneHint": "El trabajador recibirá un SMS con el código de unión y un enlace directo para unirse a tu empresa.",
+      "invalidPhone": "Por favor, ingresa un número de teléfono válido de 10 dígitos",
+      "sendError": "Error al enviar la invitación. Por favor, inténtalo de nuevo.",
+      "successTitle": "¡Invitación Enviada!",
+      "successMessage": "El trabajador recibirá un SMS con instrucciones para unirse a tu empresa.",
+      "sendButton": "Enviar Invitación",
+      "sending": "Enviando..."
     }
+    },
+    "workerManagement": {
+        "loadingWorkers": "Cargando trabajadores...",
+        "workerCount": "{{count}} trabajador",
+        "workerCount_plural": "{{count}} trabajadores",
+        "deleteConfirm": "¿Eliminar a {{name}}? Ya no podrán registrar entrada.",
+        "deleteSuccess": "✅ {{name}} eliminado exitosamente",
+        "deleteError": "Error al eliminar trabajador: ",
+        "infoBox": {
+        "title": "📱 Configuración Fácil de Trabajadores",
+        "description": "Agrega trabajadores con solo su nombre y número de teléfono. Recibirán un mensaje de texto con un enlace para registrar entrada—¡sin contraseña necesaria!"
+        },
+        "noWorkers": {
+        "title": "Aún No Hay Trabajadores",
+        "description": "Agrega tu primer trabajador para comenzar con el seguimiento de tiempo",
+        "addButton": "Agregar Primer Trabajador"
+        }
+    },
+    "workerClockIn": {
+    "welcome": "¡Bienvenido, {{name}}!",
+    "subtitle": "Registra entrada/salida para tu turno",
+    "invalidLink": "Enlace Inválido",
+    "requestNewLink": "Solicitar Nuevo Enlace",
+    "requestSent": "¡Solicitud Enviada!",
+    "requestLinkSent": "¡Solicitud enviada a tu supervisor! Deberías recibir un enlace pronto.",
+    "requestLinkError": "Error al solicitar enlace: ",
+    "currentlyClockedIn": "Entrada Registrada Actualmente",
+    "since": "Desde {{time}}",
+    "clockingOut": "Registrando Salida...",
+    "clockingIn": "Registrando Entrada...",
+    "selectJobSite": "Seleccionar Sitio de Trabajo",
+    "noProjectsAssigned": "Aún no estás asignado a ningún proyecto.",
+    "contactSupervisor": "Contacta a tu supervisor para ser asignado.",
+    "chooseProject": "Elige un proyecto...",
+    "locationVerified": "Tu ubicación será verificada cuando registres entrada",
+    "needHelp": "¿Necesitas ayuda? Contacta a tu supervisor"
+  }
 }

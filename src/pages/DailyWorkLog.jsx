@@ -125,7 +125,7 @@ export default function DailyWorkLog() {
           onClick={() => navigate(-1)}
           className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
         >
-          <CircleArrowLeft size={20} /> {t('common.back')}
+          <CircleArrowLeft size={25} /> {t('common.back')}
         </button>
       )}
 

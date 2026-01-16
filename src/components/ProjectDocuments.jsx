@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FileText,
   CheckCircle,
@@ -17,17 +18,10 @@ import {
   Save
 } from 'lucide-react';
 import { storageService } from '../services/storageServices';
-import { firestoreService } from '../services/firestoreService'; // Assuming updated methods for top-level collections
+import { firestoreService } from '../services/firestoreService';
 
-/**
- * ProjectDocuments Component
- * Manages document uploads, viewing, and organization for a specific project
- *
- * @param {string} projectId - The ID of the project
- * @param {string} projectName - The name of the project
- * @param {boolean} readOnly - If true, disable uploads and deletes (for workers)
- */
 export default function ProjectDocuments({ projectId, projectName, readOnly = false }) {
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -37,43 +31,33 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
   const [editingDocument, setEditingDocument] = useState(null);
   const [showToast, setShowToast] = useState(false);
 
-
   useEffect(() => {
     loadDocuments();
   }, [projectId]);
 
   const loadDocuments = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // ✅ FIXED: Use query instead of getCollection
-    const result = await firestoreService.query('projectFiles', [
-      { field: 'projectId', operator: '==', value: projectId }
-    ]);
+      const result = await firestoreService.query('projectFiles', [
+        { field: 'projectId', operator: '==', value: projectId }
+      ]);
 
-    if (result.success) {
-      setDocuments(result.data);
-      console.log('📄 Loaded documents:', result.data); // Debug log
-    } else {
-      console.error('Failed to load documents:', result.error);
+      if (result.success) {
+        setDocuments(result.data);
+        console.log('📄 Loaded documents:', result.data);
+      } else {
+        console.error('Failed to load documents:', result.error);
+      }
+    } catch (err) {
+      console.error('Error loading documents:', err);
+      setError(t('documents.loadError'));
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Error loading documents:', err);
-    setError('Failed to load documents');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleCategoryClick = (category) => {
-    // if (readOnly) {
-    //   // Show documents in this category
-    //   setSelectedCategory(category);
-    // } else {
-    //   // Open upload modal
-    //   setSelectedCategory(category);
-    //   setShowUploadModal(true);
-    // }
     setSelectedCategory(category);
   };
 
@@ -102,39 +86,38 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
   };
 
   const categories = [
-    { id: 'contracts', name: 'Contracts', description: 'Project contracts and agreements' },
-    { id: 'permits', name: 'Permits', description: 'Building permits and approvals' },
-    { id: 'plans', name: 'Plans', description: 'Blueprints and architectural plans' },
-    { id: 'photos', name: 'Photos', description: 'Project progress photos' },
+    { id: 'contracts', name: t('documents.contracts'), description: t('documents.contractsDesc') },
+    { id: 'permits', name: t('documents.permits'), description: t('documents.permitsDesc') },
+    { id: 'plans', name: t('documents.plans'), description: t('documents.plansDesc') },
+    { id: 'photos', name: t('documents.photos'), description: t('documents.photosDesc') },
   ];
 
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
         <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
-        <p className="text-gray-600">Loading documents...</p>
+        <p className="text-gray-600">{t('documents.loadingDocuments')}</p>
       </div>
     );
   }
 
   return (
     <>
-
-        {showToast && (
-            <div
-            className={`fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-[9999]
-                transition-all duration-500
-                ${showToast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[-10px]"}`}
-            >
-            Document updated successfully!
-            </div>
-        )}
+      {showToast && (
+        <div
+          className={`fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-[9999]
+            transition-all duration-500
+            ${showToast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[-10px]"}`}
+        >
+          {t('documents.updateSuccess')}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Folder className="text-purple-600" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Documents</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('documents.title')}</h2>
           </div>
           {!readOnly && (
             <button
@@ -142,7 +125,7 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2 text-sm"
             >
               <Upload size={16} />
-              Upload
+              {t('common.upload')}
             </button>
           )}
         </div>
@@ -164,27 +147,28 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
             const count = categoryDocs.length;
 
             return (
-                <button
+              <button
                 key={category.id}
                 onClick={() => {
-                    setSelectedCategory(category.id);
-                    // Don't set showUploadModal here - let the modal handle it
+                  setSelectedCategory(category.id);
                 }}
                 className={`w-full flex items-center justify-between p-3 bg-${color}-50 hover:bg-${color}-100 rounded-lg transition`}
-                >
+              >
                 <div className="flex items-center gap-3">
-                    <Icon className={`text-${color}-600`} size={20} />
-                    <div className="text-left">
+                  <Icon className={`text-${color}-600`} size={20} />
+                  <div className="text-left">
                     <p className="font-semibold text-gray-900">{category.name}</p>
-                    <p className="text-xs text-gray-600">{count} {count === 1 ? 'file' : 'files'}</p>
-                    </div>
+                    <p className="text-xs text-gray-600">
+                      {t('documents.fileCount', { count })}
+                    </p>
+                  </div>
                 </div>
                 <span className={`text-sm text-${color}-600 font-medium`}>
-                    View
+                  {t('documents.view')}
                 </span>
-                </button>
+              </button>
             );
-            })}
+          })}
 
           {/* Upload Button for General Documents */}
           {!readOnly && (
@@ -196,7 +180,7 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
               className="w-full flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition border-2 border-dashed border-gray-300"
             >
               <Upload className="text-gray-600" size={20} />
-              <span className="font-semibold text-gray-700">Upload New Document</span>
+              <span className="font-semibold text-gray-700">{t('documents.uploadNew')}</span>
             </button>
           )}
         </div>
@@ -204,7 +188,7 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
         {/* Document Count Summary */}
         <div className="mt-4 pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-600 text-center">
-            Total: {documents.length} document{documents.length !== 1 ? 's' : ''}
+            {t('documents.totalCount', { count: documents.length })}
           </p>
         </div>
       </div>
@@ -215,6 +199,7 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
           projectId={projectId}
           projectName={projectName}
           preselectedCategory={selectedCategory}
+          categories={categories}
           onClose={() => {
             setShowUploadModal(false);
             setSelectedCategory(null);
@@ -235,12 +220,10 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
           documents={getDocumentsByCategory(selectedCategory)}
           readOnly={readOnly}
           onClose={() => setSelectedCategory(null)}
-          // --- CHANGE 2: Update onDelete to call deleteDocument directly on 'projectFiles' ---
           onDelete={async (docId) => {
             await firestoreService.delete('projectFiles', docId);
             loadDocuments();
           }}
-          // --- END CHANGE 2 ---
           onView={(doc) => setViewingDocument(doc)}
           onEdit={(doc) => setEditingDocument(doc)}
         />
@@ -248,17 +231,17 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
 
       {editingDocument && (
         <DocumentEditModal
-            documentData={editingDocument}
-            categories={categories}
-            onClose={() => setEditingDocument(null)}
-            onSuccess={() => {
+          documentData={editingDocument}
+          categories={categories}
+          onClose={() => setEditingDocument(null)}
+          onSuccess={() => {
             setEditingDocument(null);
             loadDocuments();
             setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
-            }}
+          }}
         />
-        )}
+      )}
 
       {/* Document Viewer Modal */}
       {viewingDocument && (
@@ -271,10 +254,8 @@ export default function ProjectDocuments({ projectId, projectName, readOnly = fa
   );
 }
 
-/**
- * Document Upload Modal
- */
-function DocumentUploadModal({ projectId, projectName, preselectedCategory, onClose, onSuccess }) {
+function DocumentUploadModal({ projectId, projectName, preselectedCategory, categories, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [category, setCategory] = useState(preselectedCategory || 'contracts');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -282,18 +263,10 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
-  const categories = [
-    { id: 'contracts', name: 'Contract' },
-    { id: 'permits', name: 'Permit' },
-    { id: 'plans', name: 'Plan/Blueprint' },
-    { id: 'photos', name: 'Photo' },
-  ];
-
   const handleFileSelect = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
-      // Auto-populate title with filename if empty
       if (!title) {
         setTitle(selectedFile.name.replace(/\.[^/.]+$/, ''));
       }
@@ -304,12 +277,12 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
     e.preventDefault();
 
     if (!file) {
-      setError('Please select a file');
+      setError(t('documents.uploadModal.selectFileError'));
       return;
     }
 
     if (!title.trim()) {
-      setError('Please enter a document title');
+      setError(t('documents.uploadModal.enterTitleError'));
       return;
     }
 
@@ -317,19 +290,16 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
     setError('');
 
     try {
-      // Upload file to storage
-      // It's a good practice to include projectId in the storage path for organization
       const fileName = `projects/${projectId}/documents/${category}/${Date.now()}_${file.name}`;
       const uploadResult = await storageService.upload(fileName, file);
 
       if (!uploadResult.success) {
-        throw new Error(uploadResult.error || 'Failed to upload file');
+        throw new Error(uploadResult.error || t('documents.uploadModal.uploadFailed'));
       }
 
-      // Save document metadata to Firestore
       const documentData = {
-        projectId, // CRITICAL: This links the top-level document to its project
-        projectName, // Keep for display/redundancy/querying without joining
+        projectId,
+        projectName,
         category,
         title: title.trim(),
         description: description.trim(),
@@ -340,21 +310,16 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
         uploadedAt: new Date().toISOString(),
       };
 
-      // --- CHANGE 3: Create document directly in top-level 'projectFiles' collection ---
-      const result = await firestoreService.createDocument(
-        'projectFiles',
-        documentData
-      );
-      // --- END CHANGE 3 ---
+      const result = await firestoreService.createDocument('projectFiles', documentData);
 
       if (result.success) {
         onSuccess();
       } else {
-        throw new Error(result.error || 'Failed to save document');
+        throw new Error(result.error || t('documents.uploadModal.saveFailed'));
       }
     } catch (err) {
       console.error('Error uploading document:', err);
-      setError(err.message || 'Failed to upload document');
+      setError(err.message || t('documents.uploadModal.uploadError'));
     } finally {
       setUploading(false);
     }
@@ -365,11 +330,8 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 className="text-2xl font-bold text-gray-900">Upload Document</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
+          <h2 className="text-2xl font-bold text-gray-900">{t('documents.uploadModal.title')}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
             <X size={24} className="text-gray-600" />
           </button>
         </div>
@@ -388,7 +350,7 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
           {/* Category Selection */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Document Type *
+              {t('documents.uploadModal.documentType')} *
             </label>
             <select
               value={category}
@@ -405,7 +367,7 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
           {/* File Upload */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Select File *
+              {t('documents.uploadModal.selectFile')} *
             </label>
             <input
               type="file"
@@ -416,7 +378,10 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
             />
             {file && (
               <p className="text-sm text-gray-600 mt-2">
-                Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                {t('documents.uploadModal.selectedFile', {
+                  name: file.name,
+                  size: (file.size / 1024 / 1024).toFixed(2)
+                })}
               </p>
             )}
           </div>
@@ -424,13 +389,13 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
           {/* Title */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Document Title *
+              {t('documents.uploadModal.documentTitle')} *
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Building Permit - Main Structure"
+              placeholder={t('documents.uploadModal.titlePlaceholder')}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
@@ -439,12 +404,12 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
           {/* Description */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Description (Optional)
+              {t('documents.uploadModal.description')}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Additional notes or details about this document..."
+              placeholder={t('documents.uploadModal.descriptionPlaceholder')}
               rows={3}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
@@ -458,7 +423,7 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
               disabled={uploading}
               className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition disabled:opacity-50"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -468,12 +433,12 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
               {uploading ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader className="animate-spin" size={20} />
-                  Uploading...
+                  {t('documents.uploadModal.uploading')}
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <Upload size={20} />
-                  Upload Document
+                  {t('documents.uploadModal.uploadButton')}
                 </span>
               )}
             </button>
@@ -484,19 +449,16 @@ function DocumentUploadModal({ projectId, projectName, preselectedCategory, onCl
   );
 }
 
-/**
- * Document List Modal (No changes needed in this component itself, as it receives already filtered data)
- */
 function DocumentListModal({ category, categoryName, documents, readOnly, onClose, onDelete, onView, onEdit }) {
+  const { t } = useTranslation();
   const [deleting, setDeleting] = useState(null);
 
   const handleDelete = async (doc) => {
-    if (!window.confirm(`Delete "${doc.title}"? This cannot be undone.`)) {
+    if (!window.confirm(t('documents.listModal.deleteConfirm', { title: doc.title }))) {
       return;
     }
 
     setDeleting(doc.id);
-    // onDelete will now trigger the top-level delete logic in ProjectDocuments
     await onDelete(doc.id);
     setDeleting(null);
   };
@@ -523,13 +485,10 @@ function DocumentListModal({ category, categoryName, documents, readOnly, onClos
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{categoryName}</h2>
             <p className="text-sm text-gray-600 mt-1">
-              {documents.length} document{documents.length !== 1 ? 's' : ''}
+              {t('documents.fileCount', { count: documents.length })}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
             <X size={24} className="text-gray-600" />
           </button>
         </div>
@@ -539,11 +498,13 @@ function DocumentListModal({ category, categoryName, documents, readOnly, onClos
           {documents.length === 0 ? (
             <div className="text-center py-12">
               <FileText size={64} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No Documents Yet</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {t('documents.listModal.noDocuments')}
+              </h3>
               <p className="text-gray-600">
                 {readOnly
-                  ? 'No documents have been uploaded to this category yet.'
-                  : 'Upload your first document to get started.'}
+                  ? t('documents.listModal.noDocumentsReadOnly')
+                  : t('documents.listModal.noDocumentsUpload')}
               </p>
             </div>
           ) : (
@@ -574,23 +535,23 @@ function DocumentListModal({ category, categoryName, documents, readOnly, onClos
                       <button
                         onClick={() => onEdit(doc)}
                         className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
-                        title="Edit"
+                        title={t('common.edit')}
                       >
-                        <FilePenLine  size={18} />
+                        <FilePenLine size={18} />
                       </button>
                       <button
                         onClick={() => onView(doc)}
                         className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
-                        title="View"
+                        title={t('documents.view')}
                       >
                         <Eye size={18} />
                       </button>
-                      <a
-                        href={doc.fileUrl}
+                      
+                        <a href={doc.fileUrl}
                         download
                         className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
-                        title="Download"
-                      >
+                        title={t('common.download')}
+                        >
                         <Download size={18} />
                       </a>
                       {!readOnly && (
@@ -598,7 +559,7 @@ function DocumentListModal({ category, categoryName, documents, readOnly, onClos
                           onClick={() => handleDelete(doc)}
                           disabled={deleting === doc.id}
                           className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition disabled:opacity-50"
-                          title="Delete"
+                          title={t('common.delete')}
                         >
                           {deleting === doc.id ? (
                             <Loader className="animate-spin" size={18} />
@@ -619,10 +580,8 @@ function DocumentListModal({ category, categoryName, documents, readOnly, onClos
   );
 }
 
-/**
- * Document Viewer Modal (No changes needed)
- */
 function DocumentViewerModal({ document, onClose }) {
+  const { t } = useTranslation();
   const isImage = document.fileType?.startsWith('image/');
   const isPDF = document.fileType === 'application/pdf';
 
@@ -636,18 +595,15 @@ function DocumentViewerModal({ document, onClose }) {
             <p className="text-sm text-gray-600 truncate">{document.fileName}</p>
           </div>
           <div className="flex items-center gap-2 ml-4">
-            <a
-              href={document.fileUrl}
+            
+              <a href={document.fileUrl}
               download
               className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
-              title="Download"
+              title={t('common.download')}
             >
               <Download size={20} />
             </a>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
               <X size={24} className="text-gray-600" />
             </button>
           </div>
@@ -670,17 +626,19 @@ function DocumentViewerModal({ document, onClose }) {
           ) : (
             <div className="text-center py-12">
               <FileText size={64} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Preview Not Available</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {t('documents.viewModal.previewNotAvailable')}
+              </h3>
               <p className="text-gray-600 mb-6">
-                This file type cannot be previewed. Please download to view.
+                {t('documents.viewModal.downloadToView')}
               </p>
-              <a
-                href={document.fileUrl}
+              
+                <a href={document.fileUrl}
                 download
                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
               >
                 <Download size={20} />
-                Download File
+                {t('documents.viewModal.downloadFile')}
               </a>
             </div>
           )}
@@ -690,8 +648,8 @@ function DocumentViewerModal({ document, onClose }) {
   );
 }
 
-
 function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [category, setCategory] = useState(documentData.category);
   const [title, setTitle] = useState(documentData.title);
   const [description, setDescription] = useState(documentData.description || "");
@@ -703,15 +661,13 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
     const selected = e.target.files[0];
     if (selected) {
       setNewFile(selected);
-
-      // Auto-fill title if blank
       if (!title) {
         setTitle(selected.name.replace(/\.[^/.]+$/, ""));
       }
     }
   };
 
-    const handleUpdate = async (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError("");
@@ -724,13 +680,12 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
         updatedAt: new Date().toISOString(),
       };
 
-      // Upload new file if provided
       if (newFile) {
         const filePath = `projects/${documentData.projectId}/documents/${category}/${Date.now()}_${newFile.name}`;
         const uploadResult = await storageService.upload(filePath, newFile);
 
         if (!uploadResult.success) {
-          throw new Error("Failed to upload new file");
+          throw new Error(t('documents.editModal.uploadFailed'));
         }
 
         updatedData.fileUrl = uploadResult.url;
@@ -739,7 +694,6 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
         updatedData.fileType = newFile.type;
       }
 
-      // Update Firestore document
       const result = await firestoreService.update(
         "projectFiles",
         documentData.id,
@@ -749,29 +703,23 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
       if (result.success) {
         onSuccess();
       } else {
-        throw new Error(result.error || "Update failed");
+        throw new Error(result.error || t('documents.editModal.updateFailed'));
       }
-
     } catch (err) {
       console.error("Update Error:", err);
-      setError(err.message || "Failed to update document");
+      setError(err.message || t('documents.editModal.updateError'));
     } finally {
       setSaving(false);
     }
   };
 
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 className="text-2xl font-bold text-gray-900">Edit Document</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
+          <h2 className="text-2xl font-bold text-gray-900">{t('documents.editModal.title')}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
             <X size={24} className="text-gray-600" />
           </button>
         </div>
@@ -790,7 +738,7 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
           {/* Category Selection */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Document Type *
+              {t('documents.uploadModal.documentType')} *
             </label>
             <select
               value={category}
@@ -809,7 +757,7 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
           {/* Title */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Document Title *
+              {t('documents.uploadModal.documentTitle')} *
             </label>
             <input
               type="text"
@@ -823,7 +771,7 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
           {/* Description */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Description (Optional)
+              {t('documents.uploadModal.description')}
             </label>
             <textarea
               value={description}
@@ -834,7 +782,9 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Replace File (Optional)</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              {t('documents.editModal.replaceFile')}
+            </label>
             <input
               type="file"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
@@ -843,7 +793,10 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
             />
             {newFile && (
               <p className="text-sm text-gray-600 mt-2">
-                New file: {newFile.name} ({(newFile.size / 1024 / 1024).toFixed(2)} MB)
+                {t('documents.editModal.newFile', {
+                  name: newFile.name,
+                  size: (newFile.size / 1024 / 1024).toFixed(2)
+                })}
               </p>
             )}
           </div>
@@ -856,7 +809,7 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
               disabled={saving}
               className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition disabled:opacity-50"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
 
             <button
@@ -867,12 +820,12 @@ function DocumentEditModal({ documentData, categories, onClose, onSuccess }) {
               {saving ? (
                 <span className="flex items-center justify-center gap-2">
                   <Save className="animate-pulse" size={20} />
-                  Saving...
+                  {t('documents.editModal.saving')}
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <Save size={20} />
-                  Save Changes
+                  {t('documents.editModal.saveButton')}
                 </span>
               )}
             </button>

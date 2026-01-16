@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Clock, MapPin, Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Clock, MapPin, Loader, CheckCircle, AlertCircle, Globe } from 'lucide-react';
 import { useWorkerClockIn } from '../features/employees/hooks/userWorkerClockIn';
 import JoinCompanyModal from '../components/JoinCompanyModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useRef } from 'react';
 
 export default function WorkerClockIn() {
+  const { t, i18n } = useTranslation();
   const { accessKey } = useParams();
   const [searchParams] = useSearchParams();
   const { ensureSMSWorkerAuth } = useAuth();
-  const authAttempted = useRef(false); // ✅ Track if auth was attempted
+  const authAttempted = useRef(false);
 
+  // Language toggle
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'es' : 'en';
+    i18n.changeLanguage(newLang);
+  };
 
-    // ✅ Authenticate SMS workers before loading data
+  // ✅ Authenticate SMS workers before loading data
   useEffect(() => {
     const setupAuth = async () => {
-
       if (authAttempted.current) {
         console.log("⏭️ Auth already attempted, skipping");
         return;
@@ -25,7 +31,7 @@ export default function WorkerClockIn() {
       console.log("=== Setting up authentication ===");
       console.log("Access Key:", accessKey);
       
-      authAttempted.current = true; // ✅ Mark as attempted
+      authAttempted.current = true;
       const result = await ensureSMSWorkerAuth(accessKey);
       
       if (result.success) {
@@ -33,13 +39,11 @@ export default function WorkerClockIn() {
       } else {
         console.error("❌ Authentication failed:", result.error);
       }
-      
     };
 
     setupAuth();
   }, [accessKey]);
   
-  // ✅ Use the hook instead of duplicating logic
   const {
     worker,
     projects: assignedProjects,
@@ -59,7 +63,6 @@ export default function WorkerClockIn() {
   const [showJoinCompanyModal, setShowJoinCompanyModal] = useState(false);
   const [companyToJoin, setCompanyToJoin] = useState(null);
 
-  // Check for auto-clock-in parameters
   const autoAction = searchParams.get('action');
   const autoProjectId = searchParams.get('project');
 
@@ -85,9 +88,9 @@ export default function WorkerClockIn() {
       await requestLink({ accessKey });
 
       setRequestingSent(true);
-      alert('Request sent to your supervisor! You should receive a link shortly.');
+      alert(t('workerClockIn.requestLinkSent'));
     } catch (err) {
-      alert('Failed to request link: ' + err.message);
+      alert(t('workerClockIn.requestLinkError') + err.message);
     } finally {
       setLoading(false);
     }
@@ -98,7 +101,7 @@ export default function WorkerClockIn() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-5">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={48} />
-          <p className="text-gray-600 font-medium">Loading...</p>
+          <p className="text-gray-600 font-medium">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -107,9 +110,18 @@ export default function WorkerClockIn() {
   if (error && !worker) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-5">
+        {/* Language Toggle - Fixed Position */}
+        <button
+          onClick={toggleLanguage}
+          className="fixed top-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition flex items-center gap-2 shadow-lg"
+        >
+          <Globe size={18} />
+          {i18n.language === 'en' ? 'Español' : 'English'}
+        </button>
+
         <div className="bg-white rounded-2xl p-8 text-center max-w-md shadow-xl">
           <AlertCircle className="mx-auto mb-4 text-red-600" size={64} />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Link</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('workerClockIn.invalidLink')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           
           <button
@@ -117,7 +129,7 @@ export default function WorkerClockIn() {
             disabled={requestingSent}
             className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {requestingSent ? 'Request Sent!' : 'Request New Link'}
+            {requestingSent ? t('workerClockIn.requestSent') : t('workerClockIn.requestNewLink')}
           </button>
         </div>
       </div>
@@ -136,14 +148,25 @@ export default function WorkerClockIn() {
       )}
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+        {/* Language Toggle - Fixed Position */}
+        <button
+          onClick={toggleLanguage}
+          className="fixed top-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition flex items-center gap-2 shadow-lg z-50"
+        >
+          <Globe size={18} />
+          {i18n.language === 'en' ? 'Español' : 'English'}
+        </button>
+
         <div className="max-w-md mx-auto p-5 pt-8">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
               <span className="text-white font-bold text-3xl">W</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome, {worker?.name}!</h1>
-            <p className="text-gray-600">Clock in/out for your shift</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {t('workerClockIn.welcome', { name: worker?.name })}
+            </h1>
+            <p className="text-gray-600">{t('workerClockIn.subtitle')}</p>
           </div>
 
           {/* Success Message */}
@@ -175,14 +198,21 @@ export default function WorkerClockIn() {
                   <div className="flex items-center gap-3 mb-3">
                     <CheckCircle className="text-green-500" size={24} />
                     <div>
-                      <p className="font-semibold text-green-900">Currently Clocked In</p>
+                      <p className="font-semibold text-green-900">
+                        {t('workerClockIn.currentlyClockedIn')}
+                      </p>
                       <p className="text-sm text-green-700">{activeShift.projectName}</p>
                     </div>
                   </div>
                   <p className="text-xs text-green-600">
-                    Since {new Date(activeShift.clockIn).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
+                    {t('workerClockIn.since', {
+                      time: new Date(activeShift.clockIn).toLocaleTimeString(
+                        i18n.language === 'es' ? 'es-ES' : 'en-US',
+                        {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        }
+                      )
                     })}
                   </p>
                 </div>
@@ -194,7 +224,7 @@ export default function WorkerClockIn() {
                 >
                   <div className="flex items-center justify-center gap-3">
                     <Clock size={24} />
-                    {actionLoading ? 'Clocking Out...' : 'Clock Out'}
+                    {actionLoading ? t('workerClockIn.clockingOut') : t('timeTracking.clockOut')}
                   </div>
                 </button>
               </>
@@ -203,15 +233,15 @@ export default function WorkerClockIn() {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Job Site
+                    {t('workerClockIn.selectJobSite')}
                   </label>
                   {assignedProjects.length === 0 ? (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
                       <p className="text-yellow-800 text-sm font-medium">
-                        You're not assigned to any projects yet.
+                        {t('workerClockIn.noProjectsAssigned')}
                       </p>
                       <p className="text-yellow-700 text-xs mt-1">
-                        Contact your supervisor to get assigned.
+                        {t('workerClockIn.contactSupervisor')}
                       </p>
                     </div>
                   ) : (
@@ -220,7 +250,7 @@ export default function WorkerClockIn() {
                       onChange={(e) => setSelectedProject(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-base"
                     >
-                      <option value="">Choose a project...</option>
+                      <option value="">{t('workerClockIn.chooseProject')}</option>
                       {assignedProjects.map((project) => (
                         <option key={project.id} value={project.id}>
                           {project.name} - {project.address}
@@ -237,13 +267,13 @@ export default function WorkerClockIn() {
                 >
                   <div className="flex items-center justify-center gap-3">
                     <MapPin size={24} />
-                    {actionLoading ? 'Clocking In...' : 'Clock In'}
+                    {actionLoading ? t('workerClockIn.clockingIn') : t('timeTracking.clockIn')}
                   </div>
                 </button>
 
                 <p className="text-center text-sm text-gray-500">
                   <MapPin size={14} className="inline mr-1" />
-                  Your location will be verified when you clock in
+                  {t('workerClockIn.locationVerified')}
                 </p>
               </>
             )}
@@ -251,7 +281,7 @@ export default function WorkerClockIn() {
 
           {/* Help Text */}
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Need help? Contact your supervisor</p>
+            <p>{t('workerClockIn.needHelp')}</p>
           </div>
         </div>
       </div>

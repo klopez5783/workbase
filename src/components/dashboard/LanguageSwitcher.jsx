@@ -1,17 +1,22 @@
 import { useTranslation } from 'react-i18next';
+import { Globe } from 'lucide-react';
 
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'es' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
-    <select 
-      value={i18n.language} 
-      onChange={(e) => i18n.changeLanguage(e.target.value)}
-      className="px-3 py-2 border rounded"
+    <button
+      onClick={toggleLanguage}  // ✅ Fixed: call the toggle function
+      className="fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition flex items-center gap-2 shadow-lg z-50"
     >
-      <option value="en">English</option>
-      <option value="es">Español</option>
-    </select>
+      <Globe size={18} />
+      {i18n.language === 'en' ? 'Español' : 'English'}
+    </button>
   );
 }
 

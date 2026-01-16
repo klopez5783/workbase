@@ -210,7 +210,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
             onClick={() => navigate('/admin/projects')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
-            <CircleArrowLeft size={20} /> 
+            <CircleArrowLeft size={25} /> 
             Back to Projects
           </button>
         </div>
@@ -374,7 +374,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Activity className="text-green-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">{t("Recent Activity", "Actividad Reciente")}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t("common.RecentActivity")}</h2>
               </div>
 
               {recentEntries.length === 0 ? (

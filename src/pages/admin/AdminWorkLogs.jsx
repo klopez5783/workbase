@@ -194,7 +194,7 @@ export default function AdminWorkLogs() {
           onClick={() => navigate(-1)}
           className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
         >
-          <CircleArrowLeft size={20} /> {t('common.back')}
+          <CircleArrowLeft size={25} /> {t('common.back')}
         </button>
         <h1 className="text-2xl font-bold text-gray-900">{t('reports.dailyReport')}</h1>
         <p className="text-gray-600 text-sm mt-1">
