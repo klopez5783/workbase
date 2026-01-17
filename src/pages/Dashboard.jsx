@@ -137,7 +137,10 @@ export default function Dashboard() {
       {/* Project Stats - Admin Only */}
       {isAdmin && (
         <div className="px-5 mt-4">
-          <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
+            <LanguageSwitcher />
+          </div>
           
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {/* Table Rows - 2x2 Grid */}
@@ -242,9 +245,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      <LanguageSwitcher />
-
       <QuickActions />
 
       {/* Stats Grid - Show for All Users */}
