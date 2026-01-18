@@ -52,7 +52,7 @@
   },
   "projects": {
     "title": "Proyectos",
-    "createNew": "Crear Nuevo Proyecto",
+    "createNew": "Crear Proyecto",
     "projectName": "Nombre del Proyecto",
     "projectAddress": "Dirección del Proyecto",
     "startDate": "Fecha de Inicio",
@@ -318,7 +318,7 @@
         "Delete" : "Eliminar Proyecto"
     },
     "projectStats": {
-        "Title": "Estadísticas de Proyectos",
+        "Title": "Estadísticas Semanales de la Compañía",
       "Active Projects": "Proyectos Activos",
       "Total Hours": "Horas Totales",
       "Active Workers": "Trabajadores Activos",

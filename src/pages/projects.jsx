@@ -261,7 +261,7 @@ export default function ProjectsPage() {
       )}
 
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-3">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{t('projects.title')}</h1>
@@ -274,7 +274,7 @@ export default function ProjectsPage() {
               onClick={handleCompanyCheck}
               className="bg-blue-600 text-white px-2 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
             >
-              <Plus size={25} />
+              <Plus size={24} />
               {t('projects.createNew')}
             </button>
           </div>
@@ -324,8 +324,8 @@ export default function ProjectsPage() {
 
           <>
             {/* Search and Filters */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
-              <div className="flex flex-col md:flex-row gap-4">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 {/* Search */}
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -334,38 +334,38 @@ export default function ProjectsPage() {
                     placeholder={t('projects.searchPlaceholder') || 'Search projects, clients, addresses...'}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
+                    className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg text-md"
                   />
                 </div>
 
                 {/* Status Filter */}
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <button
                     onClick={() => setStatusFilter('active')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    className={`px-3 py-2 rounded-lg font-semibold transition text-sm ${
                       statusFilter === 'active'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {t('projects.active')}
                   </button>
                   <button
                     onClick={() => setStatusFilter('completed')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    className={`px-3 py-2 rounded-lg font-semibold transition text-sm ${
                       statusFilter === 'completed'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {t('projects.completed')}
                   </button>
                   <button
                     onClick={() => setStatusFilter('all')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    className={`px-3 py-2 rounded-lg font-semibold transition text-sm ${
                       statusFilter === 'all'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {t('common.all') || 'All'}

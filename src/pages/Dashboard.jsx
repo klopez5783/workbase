@@ -139,7 +139,7 @@ export default function Dashboard() {
         <div className="px-5 mt-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
-            <LanguageSwitcher />
+            <LanguageSwitcher compact />
           </div>
           
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

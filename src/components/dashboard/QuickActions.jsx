@@ -79,17 +79,17 @@ const adminActions = [
   const actions = isAdmin ? adminActions : baseActions;
 
    return (
-    <div className="px-5 mt-6">
+    <div className="px-5 mt-3">
       <h2 className="text-lg font-bold text-gray-900 mb-4">{t('quickActions.title')}</h2>
       <div className="grid grid-cols-2 gap-3">
         {actions.map(({ icon: Icon, label, onClick, gradient }) => (
           <button
             key={label}
             onClick={onClick}
-            className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-3"
+            className="bg-white rounded-xl p-2 shadow-sm hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-2"
           >
             <div
-              className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-lg`}
+              className={`w-14 h-14 mt-3 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-lg`}
             >
               <Icon size={28} />
             </div>

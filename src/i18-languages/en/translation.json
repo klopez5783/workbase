@@ -317,7 +317,7 @@
         "Delete" : "Delete Project"
     },
     "projectStats": {
-      "Title": "Project Statistics",
+      "Title": "Weekly Company Statistics",
       "Active Projects": "Active Projects",
       "Total Hours": "Total Hours",
       "Active Workers": "Active Workers",
