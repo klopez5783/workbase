@@ -31,6 +31,7 @@ export default function ProjectsPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { currentEmployee } = useEmployeeStore();
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   // Data states
   const [projects, setProjects] = useState([]);
@@ -53,6 +54,13 @@ export default function ProjectsPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+  const close = () => setOpenMenuId(null);
+  window.addEventListener('click', close);
+  return () => window.removeEventListener('click', close);
+}, []);
+
 
   const loadData = async () => {
     try {
@@ -261,7 +269,7 @@ export default function ProjectsPage() {
       )}
 
         {/* Header */}
-        <div className="mb-3">
+        <div className="mb-1">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{t('projects.title')}</h1>
@@ -381,15 +389,15 @@ export default function ProjectsPage() {
                 return (
                   <div
                     key={project.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                   >
                     {/* Project Header */}
-                    <div className={`p-4 ${
+                    <div className={`p-4 overflow-hidden rounded-t-xl ${
                       project.status === 'active' 
                         ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
                         : 'bg-gradient-to-r from-gray-500 to-gray-600'
                     } text-white`}>
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="text-lg font-bold mb-1 line-clamp-2">{project.name}</h3>
                           {project.clientName && (
@@ -416,7 +424,7 @@ export default function ProjectsPage() {
                     {/* Project Stats */}
                     <div className="p-4">
                       {/* Main Stats Row */}
-                      <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="grid grid-cols-2 gap-3 mb-2">
                         <div className="text-center">
                           <div className="flex items-center justify-center gap-1 text-gray-600 text-xs mb-1">
                             <Clock size={14} />
@@ -435,7 +443,7 @@ export default function ProjectsPage() {
                       </div>
 
                       {/* Secondary Stats Row */}
-                      <div className="grid grid-cols-2 gap-3 mb-3 text-center">
+                      {/* <div className="grid grid-cols-2 gap-3 mb-3 text-center">
                         <div>
                           <p className="text-gray-600 text-xs mb-1">{t('projectCard.Time Entries')}</p>
                           <p className="text-lg font-bold text-gray-900">{stats.totalEntries}</p>
@@ -445,11 +453,11 @@ export default function ProjectsPage() {
                           <p className="text-gray-600 text-xs mb-1">{t('projectCard.Pending')}</p>
                           <p className="text-lg font-bold text-orange-600">{stats.pendingApprovals}</p>
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* Last Activity */}
                       {stats.lastActivity && (
-                        <div className="bg-gray-50 rounded-lg p-2 mb-3 text-center">
+                        <div className="bg-gray-100 rounded-lg p-2 mb-2 text-center">
                           <p className="text-gray-600 text-xs mb-1">{t('common.lastActivity') || 'Last Activity'}</p>
                           <p className="text-xs font-semibold text-gray-900">
                             {getRelativeTime(stats.lastActivity.clockIn)}
@@ -458,36 +466,60 @@ export default function ProjectsPage() {
                       )}
 
                       {/* Action Buttons */}
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
                         <button
                           onClick={() => handleViewProject(project.id)}
-                          className="bg-blue-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1"
+                          className="bg-blue-600 text-white px-2 py-1.5 rounded-md font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1"
                         >
                           <Eye size={16} />
                           {t('projectCard.View')}
                         </button>
+
                         <button
                           onClick={() => handleViewTimecard(project.id)}
-                          className="bg-green-600 text-white px-2 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-1"
+                          className="bg-green-600 text-white px-2 py-1.5 rounded-md font-semibold hover:bg-green-700 transition flex items-center justify-center gap-1"
                         >
                           <Clock size={16} />
                           {t('projectCard.Hours')}
                         </button>
-                        <button
-                          onClick={() => handleEdit(project)}
-                          className="bg-gray-200 text-gray-700 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition flex items-center justify-center gap-1"
+
+                        <div className="relative"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Edit size={16} />
-                          {t('projectCard.Edit')}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProject(project)}
-                          className="bg-red-100 text-red-600 px-2 py-2 rounded-lg text-sm font-semibold hover:bg-red-200 transition flex items-center justify-center gap-1"
-                        >
-                          <Trash2 size={16} />
-                          {t('projectCard.Delete')}
-                        </button>
+                          <button
+                            onClick={() =>
+                              setOpenMenuId(openMenuId === project.id ? null : project.id)
+                            }
+                            className="h-full px-2 py-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
+                            aria-label="More actions"
+                          >
+                            ⋯
+                          </button>
+
+                          <div
+                            className={`absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10
+                              transform transition-all duration-150 ease-out
+                              ${
+                                openMenuId === project.id
+                                  ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+                                  : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+                              }
+                            `}
+                          >
+                            <button
+                              onClick={() => {
+                                handleDeleteProject(project);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              <Trash2 size={14} />
+                              {t('projectCard.Delete')}
+                            </button>
+                          </div>
+                        </div>
                       </div>
+
                     </div>
                   </div>
                 );
