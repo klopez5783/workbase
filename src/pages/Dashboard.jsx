@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useTimeTrackingStore } from '../features/timeTracking/store/timeTrackingStore';
-import { useProjectStore } from '../features/projects/store/projectstore';
 import { useEmployeeStore } from '../features/employees/store/employeeStore';
 import { firestoreService } from '../services/firestoreService';
 import StatCard from '../components/dashboard/StatCard';
@@ -17,7 +16,7 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const { activeShift } = useTimeTrackingStore();
   const { currentEmployee } = useEmployeeStore();
-  const { projects } = useProjectStore();
+  const [projects, setProjects] = useState([]);
   
   // State for Firebase data
   const [employees, setEmployees] = useState([]);
@@ -42,6 +41,16 @@ export default function Dashboard() {
         const employeesResult = await firestoreService.getAll('users');
         if (employeesResult.success) {
           setEmployees(employeesResult.data.filter(u => u.role === 'worker'));
+        }
+
+        // Load projects and filter by current company
+        const projectsResult = await firestoreService.getAll('projects');
+        if (projectsResult.success) {
+          // Filter projects to show only those belonging to the current company
+          const companyProjects = projectsResult.data.filter(
+            project => project.createdBy === currentEmployee?.companyId
+          );
+          setProjects(companyProjects);
         }
 
         // Load time entries for statistics
@@ -132,7 +141,6 @@ export default function Dashboard() {
 
   return (
     <div className="pb-6">
-      <WorkerLinkStatus /> 
       
       {/* Project Stats - Admin Only */}
       {isAdmin && (
@@ -159,7 +167,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <span className="text-xl font-bold text-gray-900">
-                      {projects.filter(p => p.status === 'active').length}
+                      {activeProjects.length}
                     </span>
                   </div>
 
