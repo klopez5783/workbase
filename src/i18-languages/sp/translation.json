@@ -468,5 +468,19 @@
       "client": "Cliente",
       "notSet": "No establecido"
     }
+  },
+  "projectFormSelector": {
+    "title": "Crear Nuevo Proyecto",
+    "subtitle": "Elige cómo te gustaría configurar tu proyecto",
+    "guided": {
+      "title": "Configuración Guiada",
+      "description": "Proceso paso a paso con consejos útiles. Te guiaremos a través de cada detalle uno a la vez.",
+      "recommended": "Recomendado para usuarios nuevos"
+    },
+    "quick": {
+      "title": "Formulario Rápido",
+      "description": "Todos los campos en una pantalla. Perfecto si sabes exactamente lo que necesitas y quieres avanzar rápido.",
+      "bestFor": "Mejor para usuarios experimentados"
+    }
   }
 }

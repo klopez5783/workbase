@@ -467,5 +467,19 @@
       "client": "Client",
       "notSet": "Not set"
     }
+  },
+   "projectFormSelector": {
+    "title": "Create New Project",
+    "subtitle": "Choose how you'd like to set up your project",
+    "guided": {
+      "title": "Guided Setup",
+      "description": "Step-by-step process with helpful tips. We'll walk you through each detail one at a time.",
+      "recommended": "Recommended for first-time users"
+    },
+    "quick": {
+      "title": "Quick Form",
+      "description": "All fields on one screen. Perfect if you know exactly what you need and want to move fast.",
+      "bestFor": "Best for experienced users"
+    }
   }
 }
