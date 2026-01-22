@@ -15,3 +15,16 @@
     @apply bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition;
   }
 }
+
+@keyframes gentle-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-25px); /* Small bounce */
+  }
+}
+
+.bounce-limited {
+  animation: gentle-bounce 0.5s ease-in-out 6; /* Bounces 6 times = 3 seconds */
+}

@@ -413,5 +413,59 @@
     "chooseProject": "Choose a project...",
     "locationVerified": "Your location will be verified when you clock in",
     "needHelp": "Need help? Contact your supervisor"
+  },
+  "projectWizard": {
+    "title": "Create New Project",
+    "fillRequiredFields": "Please fill in all required fields before continuing",
+    "completeAllFields": "Please complete all required fields",
+    "continue": "Continue",
+    "creating": "Creating Project...",
+    "updateProject": "Update Project",
+    "progressBar": {
+      "basics": "Basics",
+      "address": "Address",
+      "location": "Location",
+      "client": "Client"
+    },
+    "step1": {
+      "title": "Let's start with the basics",
+      "subtitle": "What would you like to name this project?",
+      "placeholder": "e.g., Kitchen Renovation, Main Street Office Build",
+      "hint": "💡 Choose a name that helps you identify this project easily"
+    },
+    "step2": {
+      "title": "Where is the job site?",
+      "subtitle": "Tell us the address where the work will be done",
+      "streetAddress": "Street Address",
+      "aptSuite": "Apartment, Suite, etc. (optional)",
+      "city": "City",
+      "zipCode": "ZIP Code",
+      "state": "State",
+      "selectState": "Select State"
+    },
+    "step3": {
+      "title": "Let's pin the exact location",
+      "subtitle": "This helps workers clock in from the right spot",
+      "setLocation": "Set Location on Map",
+      "changeLocation": "Change Location on Map",
+      "locationConfirmed": "Location Confirmed",
+      "whyNeeded": "What is this?",
+      "explanation": "Workers must be within {{meters}}m ({{feet}}ft) of this location to clock in. This prevents time theft and ensures accuracy.",
+      "radiusLabel": "Clock-In Radius",
+      "radiusHint": "Most projects use 50-150 meters depending on site size",
+      "selectLocation": "Select Location"
+    },
+    "step4": {
+      "title": "Who's the client?",
+      "subtitle": "Help us keep track of who this project is for",
+      "clientName": "Client Name",
+      "clientPhone": "Client Phone (optional)",
+      "phoneHint": "💡 Having contact info handy helps when you need to reach them",
+      "summary": "Project Summary",
+      "address": "Address",
+      "locationSet": "Location Set",
+      "client": "Client",
+      "notSet": "Not set"
+    }
   }
 }

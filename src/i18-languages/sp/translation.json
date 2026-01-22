@@ -414,5 +414,59 @@
     "chooseProject": "Elige un proyecto...",
     "locationVerified": "Tu ubicación será verificada cuando registres entrada",
     "needHelp": "¿Necesitas ayuda? Contacta a tu supervisor"
+  },
+  "projectWizard": {
+    "title": "Crear Nuevo Proyecto",
+    "fillRequiredFields": "Por favor, completa todos los campos requeridos antes de continuar",
+    "completeAllFields": "Por favor, completa todos los campos requeridos",
+    "continue": "Continuar",
+    "creating": "Creando Proyecto...",
+    "updateProject": "Actualizar Proyecto",
+    "progressBar": {
+      "basics": "Básico",
+      "address": "Dirección",
+      "location": "Ubicación",
+      "client": "Cliente"
+    },
+    "step1": {
+      "title": "Comencemos con lo básico",
+      "subtitle": "¿Cómo te gustaría nombrar este proyecto?",
+      "placeholder": "ej., Renovación de Cocina, Construcción Oficina Calle Principal",
+      "hint": "💡 Elige un nombre que te ayude a identificar este proyecto fácilmente"
+    },
+    "step2": {
+      "title": "¿Dirección del trabajo?",
+      "subtitle": "Dinos la dirección donde se realizará el trabajo",
+      "streetAddress": "Dirección",
+      "aptSuite": "Apartamento, Suite, etc. (opcional)",
+      "city": "Ciudad",
+      "zipCode": "Código Postal",
+      "state": "Estado",
+      "selectState": "Seleccionar Estado"
+    },
+    "step3": {
+      "title": "Marquemos la ubicación exacta",
+      "subtitle": "Esto ayuda a los trabajadores a registrar entrada desde el lugar correcto",
+      "setLocation": "Establecer Ubicación en el Mapa",
+      "changeLocation": "Cambiar Ubicación en el Mapa",
+      "locationConfirmed": "Ubicación Confirmada",
+      "whyNeeded": "¿Qye es desto?",
+      "explanation": "Los trabajadores deben estar dentro de {{meters}}m ({{feet}}ft) de esta ubicación para registrar entrada. Esto previene el robo de tiempo y garantiza precisión.",
+      "radiusLabel": "Radio de Registro",
+      "radiusHint": "La mayoría de los proyectos usan 50-150 metros dependiendo del tamaño del sitio",
+      "selectLocation": "Seleccionar Ubicación"
+    },
+    "step4": {
+      "title": "¿Quién es el cliente?",
+      "subtitle": "Ayúdanos a rastrear para quién es este proyecto",
+      "clientName": "Nombre del Cliente",
+      "clientPhone": "Teléfono del Cliente (opcional)",
+      "phoneHint": "💡 Tener información de contacto a mano ayuda cuando necesitas comunicarte con ellos",
+      "summary": "Resumen del Proyecto",
+      "address": "Dirección",
+      "locationSet": "Ubicación Establecida",
+      "client": "Cliente",
+      "notSet": "No establecido"
+    }
   }
 }

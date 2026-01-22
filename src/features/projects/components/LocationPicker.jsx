@@ -1,141 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
-import { MapPin, Search, Loader, Navigation } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { MapPin, Search, Loader, Navigation, X, Check } from 'lucide-react';
 
 /**
- * LocationPicker Component
- * Allows users to set location by:
- * 1. Using current GPS location
- * 2. Searching for an address
- * 3. Dragging a pin on the map
+ * LocationPicker Component - DoorDash Style
+ * 1. Search/enter address or use GPS
+ * 2. Click to open full-screen map for precise pin placement
+ * 3. Confirm location
  */
 export default function LocationPicker({ initialLocation, onLocationSet, address = '' }) {
   const [searchQuery, setSearchQuery] = useState(address);
   const [searching, setSearching] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
-  const [mapCenter, setMapCenter] = useState(
-    initialLocation || { latitude: 39.9612, longitude: -82.9988 } // Columbus, OH default
-  );
+  const [showFullScreenMap, setShowFullScreenMap] = useState(false);
   const [error, setError] = useState('');
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
 
-  // Initialize map on component mount
-  useEffect(() => {
-    // Load Leaflet CSS and JS
-    if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-
-    if (!window.L) {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => initializeMap();
-      document.head.appendChild(script);
-    } else {
-      initializeMap();
-    }
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
-
-  // Update map when center changes
-  useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.setView([mapCenter.latitude, mapCenter.longitude], 15);
-      updateMarker(mapCenter.latitude, mapCenter.longitude);
-    }
-  }, [mapCenter]);
-
-  const initializeMap = () => {
-    if (!window.L || mapRef.current) return;
-
-    const map = window.L.map(mapContainerRef.current).setView(
-      [mapCenter.latitude, mapCenter.longitude],
-      15
-    );
-
-    // Add OpenStreetMap tiles
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map);
-
-    // Add draggable marker
-    const customIcon = window.L.icon({
-      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    const marker = window.L.marker([mapCenter.latitude, mapCenter.longitude], {
-      draggable: true,
-      icon: customIcon
-    }).addTo(map);
-
-    // Update location when marker is dragged
-    marker.on('dragend', function(e) {
-      const position = e.target.getLatLng();
-      const newLocation = {
-        latitude: position.lat,
-        longitude: position.lng,
-        address: searchQuery || 'Selected Location'
-      };
-      setSelectedLocation(newLocation);
-    });
-
-    // Update location when map is clicked
-    map.on('click', function(e) {
-      marker.setLatLng(e.latlng);
-      const newLocation = {
-        latitude: e.latlng.lat,
-        longitude: e.latlng.lng,
-        address: searchQuery || 'Selected Location'
-      };
-      setSelectedLocation(newLocation);
-    });
-
-    mapRef.current = map;
-    markerRef.current = marker;
-
-    if (selectedLocation) {
-      const location = {
-        latitude: selectedLocation.latitude,
-        longitude: selectedLocation.longitude,
-        address: selectedLocation.address || searchQuery
-      };
-      setSelectedLocation(location);
-    }
-  };
-
-  const updateMarker = (lat, lng) => {
-    if (markerRef.current) {
-      markerRef.current.setLatLng([lat, lng]);
-    }
-  };
-
-  // Clean address for geocoding by removing suite/apartment numbers
   const cleanAddressForSearch = (address) => {
-    // Remove common suite/apartment patterns
     const patterns = [
-      /\s*,?\s*(suite|ste|unit|apt|apartment|#)\s*\.?\s*[a-z0-9\-]+/gi,  // Suite 200, Apt 3B, #405
-      /\s*,?\s*(building|bldg)\s*\.?\s*[a-z0-9\-]+/gi,                     // Building A
-      /\s*,?\s*(floor|fl)\s*\.?\s*[0-9]+/gi,                               // Floor 3
-      /\s*,?\s*(room|rm)\s*\.?\s*[0-9]+/gi,                                // Room 301
+      /\s*,?\s*(suite|ste|unit|apt|apartment|#)\s*\.?\s*[a-z0-9\-]+/gi,
+      /\s*,?\s*(building|bldg)\s*\.?\s*[a-z0-9\-]+/gi,
+      /\s*,?\s*(floor|fl)\s*\.?\s*[0-9]+/gi,
+      /\s*,?\s*(room|rm)\s*\.?\s*[0-9]+/gi,
     ];
     
     let cleaned = address;
@@ -143,13 +28,7 @@ export default function LocationPicker({ initialLocation, onLocationSet, address
       cleaned = cleaned.replace(pattern, '');
     });
     
-    // Clean up extra spaces and commas
-    cleaned = cleaned.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
-    
-    console.log('🧹 Original address:', address);
-    console.log('🧹 Cleaned for search:', cleaned);
-    
-    return cleaned;
+    return cleaned.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
   };
 
   const handleUseCurrentLocation = async () => {
@@ -166,21 +45,16 @@ export default function LocationPicker({ initialLocation, onLocationSet, address
           const location = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            address: searchQuery || 'Current Location'
+            address: 'Current Location'
           };
           setSelectedLocation(location);
-          setMapCenter(location);
           setGettingLocation(false);
         },
         (err) => {
           setError('Failed to get location. Please enable location permissions.');
           setGettingLocation(false);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } catch (err) {
       setError(err.message);
@@ -189,181 +63,390 @@ export default function LocationPicker({ initialLocation, onLocationSet, address
   };
 
   const handleSearchAddress = async () => {
-  if (!searchQuery.trim()) {
-    setError('Please enter an address to search');
-    return;
-  }
-
-  setSearching(true);
-  setError('');
-
-  try {
-    // Clean the address (remove suite/apt numbers)
-    const cleanedQuery = cleanAddressForSearch(searchQuery);
-    const originalQuery = searchQuery;
-    
-    // Use improved API parameters
-    const params = new URLSearchParams({
-      format: 'json',
-      q: cleanedQuery,
-      limit: '5',
-      addressdetails: '1',
-      countrycodes: 'us',
-      layer: 'address',  // ← NEW: Only search addresses
-      email: 'workbase-app@example.com' // ← NEW: Required for usage policy
-    });
-
-    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
-    
-    console.log('🔍 Searching:', cleanedQuery);
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'WorkBase-App/1.0'
-      }
-    });
-    
-    const data = await response.json();
-    
-    console.log('📍 Results:', data.length);
-    
-    if (data.length > 0) {
-      const result = data[0];
-      const location = {
-        latitude: parseFloat(result.lat),
-        longitude: parseFloat(result.lon),
-        address: originalQuery // Keep suite info
-      };
-      
-      setSelectedLocation(location);
-      setMapCenter(location);
-      setSearchQuery(originalQuery);
-    } else {
-      setError('Address not found. Try adjusting your address or use the map.');
+    if (!searchQuery.trim()) {
+      setError('Please enter an address to search');
+      return;
     }
-  } catch (err) {
-    console.error('Error:', err);
-    setError(`Error: ${err.message}`);
-  } finally {
-    setSearching(false);
-  }
-};
+
+    setSearching(true);
+    setError('');
+
+    try {
+      const cleanedQuery = cleanAddressForSearch(searchQuery);
+      const originalQuery = searchQuery;
+      
+      const params = new URLSearchParams({
+        format: 'json',
+        q: cleanedQuery,
+        limit: '5',
+        addressdetails: '1',
+        countrycodes: 'us',
+        layer: 'address',
+        email: 'workbase-app@example.com'
+      });
+
+      const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'WorkBase-App/1.0' }
+      });
+      
+      const data = await response.json();
+      
+      if (data.length > 0) {
+        const result = data[0];
+        const location = {
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+          address: originalQuery
+        };
+        
+        setSelectedLocation(location);
+        setSearchQuery(originalQuery);
+      } else {
+        setError('Address not found. Try adjusting your address.');
+      }
+    } catch (err) {
+      setError(`Error: ${err.message}`);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const handleConfirm = () => {
     if (!selectedLocation) {
-      setError('Please select a location on the map');
+      setError('Please select a location');
       return;
     }
     onLocationSet(selectedLocation);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Search Bar */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Search Address
-        </label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+    <>
+      <div className="space-y-4">
+        {/* Search Bar */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Search Address
+          </label>
+          <div className="flex gap-2">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearchAddress()}
               placeholder="123 Main St, Columbus, OH"
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              type="button"
+              onClick={handleSearchAddress}
+              disabled={searching}
+              className="bg-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2"
+            >
+              {searching ? <Loader className="animate-spin" size={18} /> : <Search size={18} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Current Location Button */}
+        <button
+          type="button"
+          onClick={handleUseCurrentLocation}
+          disabled={gettingLocation}
+          className="w-full bg-green-50 border-2 border-green-200 text-green-700 py-2.5 px-4 rounded-xl font-semibold hover:bg-green-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {gettingLocation ? (
+            <>
+              <Loader className="animate-spin" size={18} />
+              Getting Location...
+            </>
+          ) : (
+            <>
+              <Navigation size={18} />
+              Use My Current Location
+            </>
+          )}
+        </button>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-3">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Selected Location Preview - Mini Map */}
+        {selectedLocation && (
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl overflow-hidden">
+            <MiniMapPreview 
+              location={selectedLocation}
+              onAdjustClick={() => setShowFullScreenMap(true)}
             />
           </div>
-          <button
-            type="button"
-            onClick={handleSearchAddress}
-            disabled={searching}
-            className="bg-blue-50 border-2 border-blue-200 text-blue-700 px-4 py-3 rounded-xl font-semibold hover:bg-blue-100 transition disabled:opacity-50"
-          >
-            {searching ? <Loader className="animate-spin" size={20} /> : 'Search'}
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          💡 Include suite/apt numbers - they'll be saved but won't affect the search
+        )}
+
+        {/* Confirm Button */}
+        <button
+          type="button"
+          onClick={handleConfirm}
+          disabled={!selectedLocation}
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <Check size={20} />
+          Confirm Location
+        </button>
+      </div>
+
+      {/* Full-Screen Map Modal */}
+      {showFullScreenMap && (
+        <FullScreenMapPicker
+          initialLocation={selectedLocation}
+          onConfirm={(location) => {
+            setSelectedLocation(location);
+            setShowFullScreenMap(false);
+          }}
+          onClose={() => setShowFullScreenMap(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * Mini Map Preview Component
+ */
+function MiniMapPreview({ location, onAdjustClick }) {
+  const miniMapRef = useRef(null);
+  const miniMapInstanceRef = useRef(null);
+
+  useEffect(() => {
+    const initializeMiniMap = () => {
+      if (!window.L || miniMapInstanceRef.current || !miniMapRef.current) return;
+
+      // Create map
+      const map = window.L.map(miniMapRef.current, {
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        tap: false,
+        attributionControl: false
+      }).setView([location.latitude, location.longitude], 15);
+
+      // Add tile layer
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Add marker
+      const customIcon = window.L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        shadowSize: [41, 41]
+      });
+
+      window.L.marker([location.latitude, location.longitude], {
+        icon: customIcon
+      }).addTo(map);
+
+      miniMapInstanceRef.current = map;
+
+      // Force map to update size
+      setTimeout(() => {
+        if (miniMapInstanceRef.current) {
+          miniMapInstanceRef.current.invalidateSize();
+        }
+      }, 100);
+    };
+
+    // Load Leaflet if not already loaded
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    if (!window.L) {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => initializeMiniMap();
+      document.head.appendChild(script);
+    } else {
+      setTimeout(initializeMiniMap, 100);
+    }
+
+    return () => {
+      if (miniMapInstanceRef.current) {
+        miniMapInstanceRef.current.remove();
+        miniMapInstanceRef.current = null;
+      }
+    };
+  }, [location]);
+
+  return (
+    <div className="relative">
+      {/* Mini Map */}
+      <div 
+        ref={miniMapRef}
+        className="w-full h-48 bg-gray-100"
+        style={{ position: 'relative', zIndex: 1 }}
+      />
+
+      {/* Coordinates Badge - Top Left */}
+      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md" style={{ zIndex: 10 }}>
+        <p className="text-gray-700 text-xs font-mono">
+          {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
         </p>
       </div>
 
-      {/* Current Location Button */}
+      {/* Adjust Pin Button - Bottom Right */}
       <button
         type="button"
-        onClick={handleUseCurrentLocation}
-        disabled={gettingLocation}
-        className="w-full bg-green-50 border-2 border-green-200 text-green-700 py-3 px-4 rounded-xl font-semibold hover:bg-green-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
+        onClick={onAdjustClick}
+        className="absolute bottom-3 right-3 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2 hover:shadow-xl"
+        style={{ zIndex: 10 }}
       >
-        {gettingLocation ? (
-          <>
-            <Loader className="animate-spin" size={20} />
-            Getting Location...
-          </>
-        ) : (
-          <>
-            <Navigation size={20} />
-            Use My Current Location
-          </>
-        )}
+        <MapPin size={16} />
+        Adjust Pin
       </button>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-3">
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
+    </div>
+  );
+}
 
+/**
+ * Full-Screen Map for Precise Pin Placement
+ */
+function FullScreenMapPicker({ initialLocation, onConfirm, onClose }) {
+  const [tempLocation, setTempLocation] = useState(initialLocation);
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
 
-      {/* Map Container */}
-      <div className="bg-white rounded-xl overflow-hidden border-2 border-gray-200">
-        <div 
-          ref={mapContainerRef} 
-          style={{ height: '400px', width: '100%' }}
-          className="relative"
-        />
-        
-        {/* Map Instructions Overlay */}
-        <div className="bg-gray-50 border-t border-gray-200 p-3">
-          <div className="flex items-start gap-2 text-xs text-gray-600">
-            <MapPin size={16} className="flex-shrink-0 mt-0.5 text-blue-600" />
-            <p>
-              <strong>Drag the pin</strong> or <strong>click on the map</strong> to set the exact job site location. 
-              You can also search for an address above.
-            </p>
+  useEffect(() => {
+    const initializeMap = () => {
+      if (!window.L || mapRef.current || !mapContainerRef.current) return;
+
+      const map = window.L.map(mapContainerRef.current).setView(
+        [initialLocation.latitude, initialLocation.longitude],
+        17
+      );
+
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(map);
+
+      const customIcon = window.L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        shadowSize: [41, 41]
+      });
+
+      const marker = window.L.marker([initialLocation.latitude, initialLocation.longitude], {
+        draggable: true,
+        icon: customIcon
+      }).addTo(map);
+
+      marker.on('dragend', (e) => {
+        const position = e.target.getLatLng();
+        setTempLocation({
+          latitude: position.lat,
+          longitude: position.lng,
+          address: initialLocation.address
+        });
+      });
+
+      map.on('click', (e) => {
+        marker.setLatLng(e.latlng);
+        setTempLocation({
+          latitude: e.latlng.lat,
+          longitude: e.latlng.lng,
+          address: initialLocation.address
+        });
+      });
+
+      mapRef.current = map;
+      markerRef.current = marker;
+    };
+
+    // Load Leaflet
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    if (!window.L) {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => initializeMap();
+      document.head.appendChild(script);
+    } else {
+      setTimeout(initializeMap, 100);
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [initialLocation]);
+
+  return (
+    <div className="fixed inset-0 bg-white z-[100] flex flex-col">
+      {/* Header */}
+      <div className="bg-white shadow-md z-20 p-4 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Adjust Pin Location</h3>
+            <p className="text-sm text-gray-600">Drag the pin to the exact spot</p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <X size={24} className="text-gray-600" />
+          </button>
         </div>
       </div>
 
-      {/* Selected Location Display */}
-      {selectedLocation && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-          <p className="text-blue-900 font-semibold text-sm mb-2">
-            ✓ Location Selected
-          </p>
-          <p className="text-blue-700 text-xs mb-1">
-            <strong>Coordinates:</strong> {selectedLocation.latitude.toFixed(6)}, {selectedLocation.longitude.toFixed(6)}
-          </p>
-          {selectedLocation.address && (
-            <p className="text-blue-700 text-xs">
-              <strong>Address:</strong> {selectedLocation.address}
-            </p>
-          )}
-        </div>
-      )}
+      {/* Map */}
+      <div 
+        ref={mapContainerRef}
+        className="flex-1 w-full"
+      />
 
-      {/* Confirm Button */}
-      <button
-        type="button"
-        onClick={handleConfirm}
-        disabled={!selectedLocation}
-        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Confirm Location
-      </button>
+      {/* Footer with Confirm Button */}
+      <div className="bg-white shadow-lg p-4 z-20 flex-shrink-0">
+        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3 mb-3">
+          <p className="text-blue-700 text-xs font-mono">
+            {tempLocation.latitude.toFixed(6)}, {tempLocation.longitude.toFixed(6)}
+          </p>
+        </div>
+        <button
+          onClick={() => onConfirm(tempLocation)}
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+        >
+          <Check size={20} />
+          Confirm Pin Location
+        </button>
+      </div>
     </div>
   );
 }
