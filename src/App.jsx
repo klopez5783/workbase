@@ -29,6 +29,7 @@ import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectHoursPage from './pages/ProjectHoursPage';
 import SMSTerms from './pages/SMSTerms';
 import JoinCompany from './pages/JoinCompany';
+import TestOCR from './pages/TestOCR';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -139,6 +140,7 @@ return (
           <Route path="daily-reports" element={<DailyReportsViewer />} />
           <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
           <Route path="/project-hours" element={<ProjectHoursPage />} />
+          <Route path="/test-ocr" element={<TestOCR />} />
           
           {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */}
           <Route 

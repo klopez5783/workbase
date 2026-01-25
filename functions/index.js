@@ -5,6 +5,8 @@ const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const twilio = require("twilio");
 const crypto = require("crypto");
+const vision = require('@google-cloud/vision');
+const {HttpsError} = require("firebase-functions/v2/https");
 
 admin.initializeApp();
 
@@ -354,3 +356,273 @@ exports.sendCompanyInvite = onCall(
     }
   }
 );
+// ============================================================================
+// Check if running in emulator
+const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
+
+// Only initialize Vision client in production
+let visionClient;
+if (!isEmulator) {
+  visionClient = new vision.ImageAnnotatorClient();
+}
+
+// ============================================================================
+// CALLABLE FUNCTION: Process Receipt with OCR
+// ============================================================================
+exports.processReceipt = onCall(
+  {
+    region: "us-east1",
+    memory: "256MiB",
+    cors: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173",
+      "https://workbase-8dfe2.firebaseapp.com",
+    ],
+  },
+  async (request) => {
+    // Authentication check
+    // if (!request.auth) {
+    //   throw new HttpsError(
+    //     'unauthenticated',
+    //     'User must be authenticated to process receipts'
+    //   );
+    // }
+
+    const { imageUrl, projectId } = request.data;
+
+    if (!imageUrl) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Image URL is required'
+      );
+    }
+
+    // EMULATOR MODE: Return mock data for testing
+    if (isEmulator) {
+      console.log('🧪 EMULATOR MODE: Returning mock OCR data');
+      return getMockOCRResult(imageUrl);
+    }
+
+    // PRODUCTION MODE: Real Cloud Vision API
+    try {
+      // Verify user has access to this project
+      const projectDoc = await admin
+        .firestore()
+        .collection('projects')
+        .doc(projectId)
+        .get();
+
+      if (!projectDoc.exists) {
+        throw new HttpsError(
+          'not-found',
+          'Project not found'
+        );
+      }
+
+      const projectData = projectDoc.data();
+      const userId = request.auth.uid;
+      const isMember = 
+        projectData.adminId === userId ||
+        (projectData.workers || []).some(w => w.uid === userId);
+
+      if (!isMember) {
+        throw new HttpsError(
+          'permission-denied',
+          'User does not have access to this project'
+        );
+      }
+
+      // Perform OCR on the image
+      console.log('Processing receipt image:', imageUrl);
+      
+      const [result] = await visionClient.textDetection(imageUrl);
+      const detections = result.textAnnotations;
+
+      if (!detections || detections.length === 0) {
+        return {
+          success: false,
+          rawText: '',
+          merchant: null,
+          date: null,
+          total: null,
+          items: [],
+          confidence: 0,
+          message: 'No text detected in image'
+        };
+      }
+
+      const fullText = detections[0].description;
+      console.log('Extracted text:', fullText);
+
+      const parsed = parseReceiptText(fullText);
+
+      return {
+        success: true,
+        rawText: fullText,
+        merchant: parsed.merchant,
+        date: parsed.date,
+        total: parsed.total,
+        items: parsed.items,
+        confidence: parsed.confidence
+      };
+
+    } catch (error) {
+      console.error('Error processing receipt:', error);
+      
+      throw new HttpsError(
+        'internal',
+        `Failed to process receipt: ${error.message}`
+      );
+    }
+  }
+);
+
+// Helper functions (keep these at the bottom)
+function getMockOCRResult(imageUrl) {
+  console.log('Generating mock result for:', imageUrl);
+  
+  return {
+    success: true,
+    rawText: `HOME DEPOT #1234
+123 Main Street
+Anytown, CA 12345
+(555) 123-4567
+
+Date: 01/15/2025
+Time: 14:32
+
+ITEMS:
+2x4x8 Lumber         $8.47
+Paint Primer 1gal    $24.99
+Nails 3lb Box        $12.99
+Drywall Screws       $7.99
+
+SUBTOTAL            $54.44
+TAX                 $4.36
+TOTAL              $58.80
+
+THANK YOU!`,
+    merchant: 'HOME DEPOT',
+    date: '01/15/2025',
+    total: 58.80,
+    items: [
+      { description: '2x4x8 Lumber', amount: 8.47 },
+      { description: 'Paint Primer 1gal', amount: 24.99 },
+      { description: 'Nails 3lb Box', amount: 12.99 },
+      { description: 'Drywall Screws', amount: 7.99 }
+    ],
+    confidence: 0.85,
+    _isMockData: true
+  };
+}
+
+function parseReceiptText(text) {
+  const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+  
+  const merchant = extractMerchant(lines);
+  const date = extractDate(text);
+  const total = extractTotal(text);
+  const items = extractLineItems(lines);
+  
+  return {
+    merchant,
+    date,
+    total,
+    items,
+    confidence: calculateConfidence({ merchant, date, total, items })
+  };
+}
+
+function extractMerchant(lines) {
+  const commonMerchants = [
+    'HOME DEPOT', 'LOWES', 'MENARDS', 'ACE HARDWARE',
+    'WALMART', 'TARGET', 'COSTCO'
+  ];
+  
+  for (const line of lines.slice(0, 5)) {
+    const upperLine = line.toUpperCase();
+    for (const merchant of commonMerchants) {
+      if (upperLine.includes(merchant)) {
+        return merchant;
+      }
+    }
+  }
+  
+  return lines[0] || 'Unknown Merchant';
+}
+
+function extractDate(text) {
+  const patterns = [
+    /(\d{1,2}\/\d{1,2}\/\d{2,4})/,
+    /(\d{1,2}-\d{1,2}-\d{2,4})/,
+    /(\d{4}-\d{2}-\d{2})/,
+    /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return match[0];
+    }
+  }
+  
+  return null;
+}
+
+function extractTotal(text) {
+  const patterns = [
+    /total[\s:$]*(\d+\.\d{2})/i,
+    /amount[\s:$]*(\d+\.\d{2})/i,
+    /balance[\s:$]*(\d+\.\d{2})/i,
+    /grand\s+total[\s:$]*(\d+\.\d{2})/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseFloat(match[1]);
+    }
+  }
+  
+  const allAmounts = text.match(/\$?\d+\.\d{2}/g);
+  if (allAmounts && allAmounts.length > 0) {
+    const amounts = allAmounts.map(a => parseFloat(a.replace('$', '')));
+    return Math.max(...amounts);
+  }
+  
+  return null;
+}
+
+function extractLineItems(lines) {
+  const items = [];
+  const itemPattern = /^(.+?)\s+\$?(\d+\.\d{2})$/;
+  
+  for (const line of lines) {
+    const match = line.match(itemPattern);
+    if (match) {
+      const description = match[1].trim();
+      const amount = parseFloat(match[2]);
+      
+      const lowerDesc = description.toLowerCase();
+      if (!lowerDesc.includes('total') && 
+          !lowerDesc.includes('tax') &&
+          !lowerDesc.includes('subtotal')) {
+        items.push({ description, amount });
+      }
+    }
+  }
+  
+  return items;
+}
+
+function calculateConfidence(parsed) {
+  let score = 0;
+  
+  if (parsed.merchant && parsed.merchant !== 'Unknown Merchant') score += 0.3;
+  if (parsed.date) score += 0.2;
+  if (parsed.total) score += 0.3;
+  if (parsed.items && parsed.items.length > 0) score += 0.2;
+  
+  return score;
+}
