@@ -381,13 +381,13 @@ exports.processReceipt = onCall(
     ],
   },
   async (request) => {
-    // Authentication check
-    // if (!request.auth) {
-    //   throw new HttpsError(
-    //     'unauthenticated',
-    //     'User must be authenticated to process receipts'
-    //   );
-    // }
+    //Authentication check
+    if (!request.auth) {
+      throw new HttpsError(
+        'unauthenticated',
+        'User must be authenticated to process receipts'
+      );
+    }
 
     const { imageUrl, projectId } = request.data;
 

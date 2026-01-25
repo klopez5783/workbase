@@ -30,6 +30,9 @@ import ProjectHoursPage from './pages/ProjectHoursPage';
 import SMSTerms from './pages/SMSTerms';
 import JoinCompany from './pages/JoinCompany';
 import TestOCR from './pages/TestOCR';
+// import ExpenseList from './components/expenses/';
+// import ReciptScanner from './components/expenses/ReceiptScanner';
+import TestCamera from './pages/TestCamera';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -116,6 +119,7 @@ return (
         <Route path="/signup" element={currentUser ? <Navigate to="/" /> : <Signup />} />
         <Route path="/sms-terms" element={<SMSTerms />} />
         <Route path="/join-company" element={<JoinCompany />} />
+        <Route path="/test-camera" element={<TestCamera />} />
 
         {/* Worker Clock-In (Public) */}
         <Route path="/worker/:accessKey" element={<WorkerClockIn />} />
@@ -141,8 +145,10 @@ return (
           <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
           <Route path="/project-hours" element={<ProjectHoursPage />} />
           <Route path="/test-ocr" element={<TestOCR />} />
+          {/* <Route path="/projects/:projectId/expenses" element={<ExpenseList />} />
+          <Route path="/projects/:projectId/expenses/scan" element={<ReciptScanner />} /> */}
           
-          {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */}
+          {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */} 
           <Route 
             path="admin/tools" 
             element={
