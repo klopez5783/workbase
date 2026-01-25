@@ -1,5 +1,5 @@
 // hooks/useWorkerClockIn.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../contexts/AuthContext'
 import { useEmployeeStore } from '../../employees/store/employeeStore';
 import { firestoreService } from '../../../services/firestoreService';
@@ -395,27 +395,37 @@ const loadWorkerData = async () => {
     }
   };
 
-  // Load data on mount
-  useEffect(() => {
-    console.log("useEffect triggered - accessKey:", accessKey, "currentUser:", !!currentUser);
-    
-    if (accessKey) {
-      // ✅ SMS worker - only load if authenticated
-      if (currentUser) {
-        console.log("Loading via access key (authenticated)");
-        loadWorkerByAccessKey(accessKey);
-      } else {
-        console.log("⏳ Waiting for anonymous authentication...");
-        setLoading(true); // Show loading state
-      }
-    } else if (currentUser && currentEmployee) {
-      // Authenticated user - load normally
-      console.log("Loading via auth");
-      loadWorkerData();
+  const renderCount = useRef(0);
+
+const hasFetchedRef = useRef(false);
+
+useEffect(() => {
+  renderCount.current += 1;
+  console.log(`🔍 useWorkerClockIn effect #${renderCount.current}`);
+  
+  // Guard against multiple fetches
+  if (hasFetchedRef.current) {
+    console.log('⏭️ Already fetched, skipping');
+    return;
+  }
+  
+  if (accessKey) {
+    if (currentUser) {
+      console.log("Loading via access key (authenticated)");
+      hasFetchedRef.current = true; // Set guard before fetch
+      loadWorkerByAccessKey(accessKey);
     } else {
-      console.log("Waiting for auth or access key...");
+      console.log("⏳ Waiting for anonymous authentication...");
+      setLoading(true);
     }
-  }, [accessKey, currentUser, currentEmployee]);
+  } else if (currentUser && currentEmployee) {
+    console.log("Loading via auth");
+    hasFetchedRef.current = true; // Set guard before fetch
+    loadWorkerData();
+  } else {
+    console.log("Waiting for auth or access key...");
+  }
+}, [accessKey, currentUser?.uid, currentEmployee?.id]);
 
   // Auto-dismiss success after 5 seconds
   useEffect(() => {
