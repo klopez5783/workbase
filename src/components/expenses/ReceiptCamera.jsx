@@ -212,19 +212,12 @@ export default function ReceiptCamera({ onCapture, onCancel }) {
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
             {/* Visual guide for receipt placement */}
-            <div className="w-72 h-48 border-4 border-white/60 border-dashed rounded-xl mb-6 flex items-center justify-center">
+            <div className="w-[40vh] h-[60vh] border-4 border-white/60 border-dashed rounded-xl mb-2 flex items-center justify-center">
               <div className="text-white/60 text-sm">
                 Position receipt here
               </div>
             </div>
-            <p className="text-white text-lg font-semibold drop-shadow-lg">
-              Tap anywhere to capture
-            </p>
-          </div>
-        </div>
-
-        {/* BOTTOM: Capture Button */}
-        <div className="p-6 bg-gradient-to-t from-black/60 to-transparent">
+            <div className="p-6 bg-gradient-to-t from-black/10 to-transparent">
           <button
             onClick={capturePhoto}
             className="w-full bg-white text-black py-4 rounded-full font-bold text-lg shadow-lg active:scale-95 transition-transform"
@@ -232,6 +225,11 @@ export default function ReceiptCamera({ onCapture, onCancel }) {
             📷 Capture Receipt
           </button>
         </div>
+          </div>
+        </div>
+
+        {/* BOTTOM: Capture Button */}
+        
       </div>
 
       {/* Optional: Tap anywhere to capture */}
