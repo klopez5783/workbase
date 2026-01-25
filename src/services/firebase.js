@@ -52,16 +52,19 @@ const functions = getFunctions(app, 'us-east1');
 //   console.log('🌐 Using Production Firebase');
 // }
 
-console.log('🔧 Connecting to Firebase Emulators...');
-    
-    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-    connectFirestoreEmulator(db, "127.0.0.1", 8080);
-    connectStorageEmulator(storage, "127.0.0.1", 9199);
-    
-    // 🎯 THIS LINE CONNECTS TO FUNCTIONS EMULATOR
-    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-    
-    console.log('✅ Functions emulator connected');
+// ONLY use emulators when accessing from localhost (your PC)
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  console.log('🔧 Connecting to Firebase Emulators...');
+  
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  
+  console.log('✅ Emulators connected');
+} else {
+  console.log('✅ Using production Firebase');
+}
 
 // Export AFTER connecting
 export { auth, db, storage, functions };

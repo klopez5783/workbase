@@ -1,5 +1,6 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from './firebase';
+import { v4 as uuidv4 } from 'uuid';
 
 export const storageService = {
   // Upload file (renamed from 'upload' to match usage in WorkLogForm)
@@ -10,6 +11,51 @@ export const storageService = {
       const url = await getDownloadURL(snapshot.ref);
       return { success: true, url };
     } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+   // NEW METHOD: Upload receipt with UUID naming
+ async uploadReceipt(projectId, imageBlob) {
+    try {
+      const receiptId = uuidv4();
+      const fileName = `${receiptId}.jpg`;
+      const path = `receipts/${projectId}/${fileName}`;
+      
+      const storageRef = ref(storage, path);
+      const snapshot = await uploadBytes(storageRef, imageBlob, {
+        contentType: 'image/jpeg',
+        customMetadata: {
+          uploadedAt: new Date().toISOString(),
+          projectId: projectId
+        }
+      });
+
+      const url = await getDownloadURL(snapshot.ref);
+      
+      return { success: true, url };
+    } catch (error) {
+      console.error('Upload failed:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // NEW METHOD: Delete receipt by URL
+  async deleteReceipt(imageUrl) {
+    try {
+      // Extract path from Firebase Storage URL
+      const url = new URL(imageUrl);
+      const pathStart = url.pathname.indexOf('/o/') + 3;
+      const pathEnd = url.pathname.indexOf('?');
+      const path = decodeURIComponent(url.pathname.substring(pathStart, pathEnd));
+      
+      const storageRef = ref(storage, path);
+      await deleteObject(storageRef);
+      
+      console.log('✅ Receipt image deleted');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Failed to delete receipt:', error);
       return { success: false, error: error.message };
     }
   },
