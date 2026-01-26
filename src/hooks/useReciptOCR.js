@@ -1,5 +1,6 @@
 // src/hooks/useReceiptOCR.js
 import { useState } from 'react';
+import { auth } from '../config/firebase';
 
 export function useReceiptOCR() {
   const [processing, setProcessing] = useState(false);
@@ -12,13 +13,26 @@ export function useReceiptOCR() {
     setResult(null);
 
     try {
-      console.log('📞 Calling LOCAL emulator function...');
+      const user = auth.currentUser;
       
-      // Call the emulator directly via HTTP
-      const response = await fetch('http://127.0.0.1:5001/workbase-8dfe2/us-east1/processReceipt', {
+      if (!user) {
+        throw new Error('You must be logged in to scan receipts');
+      }
+
+      const idToken = await user.getIdToken();
+      
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      
+      const functionUrl = isLocalhost
+        ? 'http://127.0.0.1:5001/workbase-8dfe2/us-east1/processReceipt'
+        : 'https://us-east1-workbase-8dfe2.cloudfunctions.net/processReceipt';
+      
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
           data: {
@@ -33,9 +47,6 @@ export function useReceiptOCR() {
       }
 
       const data = await response.json();
-      console.log('✅ Response:', data);
-      
-      // Firebase callable functions wrap the result in a 'result' property
       const resultData = data.result;
       
       if (!resultData.success) {
@@ -46,7 +57,6 @@ export function useReceiptOCR() {
       return resultData;
       
     } catch (err) {
-      console.error('❌ Error:', err);
       setError(err.message);
       throw err;
     } finally {
