@@ -3,61 +3,152 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Camera, Calendar, DollarSign, Tag } from 'lucide-react';
-import { LoadingPage, LoadingCard } from '../LoadingSpinner';
-import { Toast } from '../components/common/Toast';
+import { Camera, Calendar, DollarSign, Tag, RefreshCw } from 'lucide-react';
+import { LoadingPage } from '../LoadingSpinner';
+import { Toast } from '../Toast';
+import { OfflineBanner } from '../OfflineBanner';
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import { getCachedReceipts, cacheReceipt, getUploadQueue } from '../../services/offlineStorage';
+import { syncPendingReceipts } from '../../services/syncService';
 
 export default function ReceiptList() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isOnline, wasOffline } = useNetworkStatus();
   
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
   const [toast, setToast] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
 
+  // Load receipts (online or offline)
   useEffect(() => {
-    const receiptsRef = collection(db, `projects/${projectId}/receipts`);
-    const q = query(receiptsRef, orderBy('createdAt', 'desc'));
+    if (isOnline) {
+      // Online: Subscribe to Firestore
+      const receiptsRef = collection(db, `projects/${projectId}/receipts`);
+      const q = query(receiptsRef, orderBy('createdAt', 'desc'));
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        try {
-          const receiptData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          
-          setReceipts(receiptData);
-          
-          const sum = receiptData.reduce((acc, receipt) => acc + (receipt.total || 0), 0);
-          setTotal(sum);
-          
-          setLoading(false);
-          setError(null);
-        } catch (err) {
-          console.error('Error processing receipts:', err);
-          setError('Failed to process receipt data');
+      const unsubscribe = onSnapshot(
+        q,
+        async (snapshot) => {
+          try {
+            const receiptData = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            
+            setReceipts(receiptData);
+            
+            // Cache receipts for offline use
+            for (const receipt of receiptData) {
+              await cacheReceipt(receipt);
+            }
+            
+            const sum = receiptData.reduce((acc, receipt) => acc + (receipt.total || 0), 0);
+            setTotal(sum);
+            
+            setLoading(false);
+            setError(null);
+          } catch (err) {
+            console.error('Error processing receipts:', err);
+            setError('Failed to process receipt data');
+            setLoading(false);
+          }
+        },
+        (err) => {
+          console.error('Error fetching receipts:', err);
+          setError('Failed to load receipts. Please check your connection and try again.');
           setLoading(false);
         }
-      },
-      (err) => {
-        console.error('Error fetching receipts:', err);
-        setError('Failed to load receipts. Please check your connection and try again.');
-        setLoading(false);
-      }
-    );
+      );
 
-    return () => unsubscribe();
-  }, [projectId]);
+      return () => unsubscribe();
+    } else {
+      // Offline: Load from cache
+      loadCachedReceipts();
+    }
+  }, [projectId, isOnline]);
+
+  // Load cached receipts when offline
+  const loadCachedReceipts = async () => {
+    try {
+      const cached = await getCachedReceipts(projectId);
+      setReceipts(cached);
+      
+      const sum = cached.reduce((acc, receipt) => acc + (receipt.total || 0), 0);
+      setTotal(sum);
+      
+      setLoading(false);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading cached receipts:', err);
+      setError('Failed to load cached receipts');
+      setLoading(false);
+    }
+  };
+
+  // Check pending uploads
+  useEffect(() => {
+    const checkPending = async () => {
+      const queue = await getUploadQueue();
+      setPendingCount(queue.length);
+    };
+    
+    checkPending();
+    
+    // Check every 5 seconds
+    const interval = setInterval(checkPending, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-sync when coming back online
+  useEffect(() => {
+    if (wasOffline && isOnline && pendingCount > 0) {
+      handleSync();
+    }
+  }, [wasOffline, isOnline, pendingCount]);
+
+  // Manual sync
+  const handleSync = async () => {
+    if (syncing) return;
+    
+    setSyncing(true);
+    
+    try {
+      const result = await syncPendingReceipts((current, total) => {
+        console.log(`Syncing ${current}/${total}...`);
+      });
+
+      if (result.success) {
+        if (result.synced > 0) {
+          setToast({ 
+            message: `Synced ${result.synced} receipt${result.synced !== 1 ? 's' : ''}!`, 
+            type: 'success' 
+          });
+        }
+        setPendingCount(0);
+      } else {
+        setToast({ message: 'Sync failed', type: 'error' });
+      }
+    } catch (err) {
+      console.error('Sync error:', err);
+      setToast({ message: 'Sync failed', type: 'error' });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // Show success message
   useEffect(() => {
     if (location.state?.message) {
-      setToast({ message: location.state.message, type: 'success' });
+      setToast({ 
+        message: location.state.message, 
+        type: location.state.type || 'success' 
+      });
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -88,6 +179,10 @@ export default function ReceiptList() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Offline Banner */}
+      <OfflineBanner syncCount={pendingCount} />
+
+      {/* Toast Notifications */}
       {toast && (
         <Toast
           message={toast.message}
@@ -103,6 +198,7 @@ export default function ReceiptList() {
             <h1 className="text-3xl font-bold">Receipts</h1>
             <p className="text-gray-600 mt-1">
               {receipts.length} receipt{receipts.length !== 1 ? 's' : ''}
+              {!isOnline && ' (cached)'}
             </p>
           </div>
           <button
@@ -113,6 +209,33 @@ export default function ReceiptList() {
             Scan Receipt
           </button>
         </div>
+
+        {/* Pending Uploads Banner */}
+        {pendingCount > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <RefreshCw className={`w-5 h-5 text-blue-600 ${syncing ? 'animate-spin' : ''}`} />
+                <div>
+                  <p className="font-semibold text-blue-900">
+                    {pendingCount} receipt{pendingCount !== 1 ? 's' : ''} pending upload
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    {isOnline ? 'Ready to sync' : 'Will sync when online'}
+                  </p>
+                </div>
+              </div>
+              {isOnline && !syncing && (
+                <button
+                  onClick={handleSync}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Sync Now
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Total Summary */}
         {receipts.length > 0 && (
@@ -145,7 +268,7 @@ export default function ReceiptList() {
               <div
                 key={receipt.id}
                 onClick={() => navigate(`/projects/${projectId}/receipts/${receipt.id}`)}
-                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-all cursor-pointer active:scale-98"
+                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-all cursor-pointer"
               >
                 <div className="flex gap-4">
                   {receipt.receiptImageUrl && (
@@ -213,15 +336,6 @@ export default function ReceiptList() {
           </div>
         )}
       </div>
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 transition-all hover:scale-110 active:scale-95"
-        aria-label="Scan receipt"
-      >
-        <Camera className="w-8 h-8" />
-      </button>
     </div>
   );
 }

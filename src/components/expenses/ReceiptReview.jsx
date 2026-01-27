@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { Pencil, ChevronDown, ChevronUp, X, Plus } from 'lucide-react';
 
-export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,saving  }) {
+export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake, saving }) {
   const [formData, setFormData] = useState({
     merchant: ocrData.merchant || '',
     date: ocrData.date || '',
     total: ocrData.total || 0,
     items: ocrData.items || [],
-    tags: [], // Changed from category to tags
+    tags: [],
     notes: ''
   });
 
@@ -16,22 +16,10 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
   const [isEditing, setIsEditing] = useState(false);
   const [tagInput, setTagInput] = useState('');
 
-  // Predefined common tags (can be customized)
   const commonTags = [
-    'materials',
-    'tools',
-    'equipment',
-    'labor',
-    'permits',
-    'urgent',
-    'reimbursable',
-    'tax-deductible',
-    'lumber',
-    'paint',
-    'hardware',
-    'electrical',
-    'plumbing',
-    'drywall'
+    'materials', 'tools', 'equipment', 'labor', 'permits',
+    'urgent', 'reimbursable', 'tax-deductible', 'lumber',
+    'paint', 'hardware', 'electrical', 'plumbing', 'drywall'
   ];
 
   const handleSubmit = () => {
@@ -43,10 +31,8 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
     });
   };
 
-  // Add tag from input
   const handleAddTag = (tag) => {
     const normalizedTag = tag.toLowerCase().trim();
-    
     if (normalizedTag && !formData.tags.includes(normalizedTag)) {
       setFormData({
         ...formData,
@@ -56,7 +42,6 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
     }
   };
 
-  // Remove tag
   const handleRemoveTag = (tagToRemove) => {
     setFormData({
       ...formData,
@@ -64,7 +49,6 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
     });
   };
 
-  // Handle Enter key in tag input
   const handleTagInputKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -78,10 +62,7 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="p-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">Review Receipt</h1>
-          <button
-            onClick={onRetake}
-            className="text-blue-600 font-semibold"
-          >
+          <button onClick={onRetake} className="text-blue-600 font-semibold">
             Retake
           </button>
         </div>
@@ -100,7 +81,19 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
           </div>
         )}
 
-        {/* Receipt Image Thumbnail */}
+        {/* Offline Warning */}
+        {ocrData._isOffline && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+            <p className="text-sm text-blue-700 font-semibold">
+              📶 You're offline
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              OCR is not available offline. Please enter receipt details manually.
+            </p>
+          </div>
+        )}
+
+        {/* Receipt Image */}
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-700 mb-2">Receipt Image</h3>
           <img 
@@ -110,7 +103,7 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
           />
         </div>
 
-        {/* Editable Fields */}
+        {/* Receipt Details */}
         <div className="bg-white rounded-lg p-4 shadow-sm space-y-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-700">Receipt Details</h3>
@@ -164,36 +157,41 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Total *
-              </label>
-              {isEditing ? (
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-gray-500">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.total}
-                    onChange={(e) => setFormData({ ...formData, total: parseFloat(e.target.value) || 0 })}
-                    className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
-                  />
-                </div>
-              ) : (
-                <p className="text-lg font-bold text-green-600">
-                  ${formData.total.toFixed(2)}
-                </p>
-              )}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Total *
+                </label>
+                {isEditing ? (
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.total || ''}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        total: parseFloat(e.target.value) || 0 
+                      })}
+                      className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-lg font-bold text-green-600">
+                    ${formData.total.toFixed(2)}
+                  </p>
+                )}
+              </div>            
             </div>
           </div>
 
-          {/* Tags Section */}
+          {/* Tags */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Tags
             </label>
             
-            {/* Selected Tags */}
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {formData.tags.map((tag) => (
@@ -213,7 +211,6 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
               </div>
             )}
 
-            {/* Tag Input */}
             <div className="flex gap-2 mb-3">
               <input
                 type="text"
@@ -233,7 +230,6 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
               </button>
             </div>
 
-            {/* Common Tags (Quick Add) */}
             <div>
               <p className="text-xs text-gray-500 mb-2">Quick add:</p>
               <div className="flex flex-wrap gap-2">
@@ -266,7 +262,11 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
             />
           </div>
 
-          {/* Line Items (Expandable) */}
+          {/* ← THE "0" IS RENDERING HERE - Let's check what */}
+          {console.log('formData.items:', formData.items)}
+          {console.log('ocrData:', ocrData)}
+
+          {/* Line Items */}
           {formData.items.length > 0 && (
             <div className="border-t pt-4">
               <button
@@ -299,7 +299,7 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
           )}
 
           {/* OCR Confidence */}
-          {ocrData.confidence && (
+          {(ocrData.confidence > 0) && (
             <div className="border-t pt-4">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 OCR Confidence
@@ -315,11 +315,6 @@ export default function ReceiptReview({ imageUrl, ocrData, onSave, onRetake,savi
                   {(ocrData.confidence * 100).toFixed(0)}%
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {ocrData.confidence > 0.7 
-                  ? 'High confidence - data likely accurate' 
-                  : 'Low confidence - please verify data'}
-              </p>
             </div>
           )}
         </div>

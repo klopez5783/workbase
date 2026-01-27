@@ -1,66 +1,45 @@
 // src/components/expenses/ReceiptScanner.jsx
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useReceiptOCR } from '../../hooks/useReceiptOCR';
-import { storageService } from '../../services/storageServices';
-import ReceiptCamera from './ReceiptCamera';
-import ReceiptReview from './ReceiptReview';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../services/firebase';
+import { useReceiptOCR } from '../../hooks/useReceiptOCR';
+import { storageService } from '../../services/storageServices';
+import { addToUploadQueue } from '../../services/offlineStorage';
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import ReceiptCamera from './ReceiptCamera';
+import ReceiptReview from './ReceiptReview';
 
 export default function ReceiptScanner() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { processReceipt } = useReceiptOCR();
-  const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState('camera'); // camera, processing, review
+  const { isOnline } = useNetworkStatus();
+
+  const [step, setStep] = useState('camera');
   const [imageBlob, setImageBlob] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [ocrData, setOcrData] = useState(null);
-
-const handleSave = async (expenseData) => {
-  setSaving(true);
-  
-  try {
-    const currentUser = auth.currentUser;
-    
-    if (!currentUser) {
-      throw new Error('You must be logged in to save expenses');
-    }
-
-    // Save to Firestore
-    await addDoc(collection(db, `projects/${projectId}/receipts`), {
-      merchant: expenseData.merchant,
-      date: expenseData.date,
-      total: expenseData.total,
-      tags: expenseData.tags || [],
-      notes: expenseData.notes || '',
-      items: expenseData.items || [],
-      receiptImageUrl: expenseData.receiptImageUrl,
-      ocrRawText: expenseData.ocrRawText || '',
-      ocrConfidence: expenseData.ocrConfidence || 0,
-      projectId: projectId,
-      submittedBy: currentUser.uid,
-      submittedByName: currentUser.displayName || currentUser.email || 'Unknown',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-
-    // Success!
-    navigate(`/projects/${projectId}/receipts`, {
-      state: { message: 'Receipt saved successfully!' }
-    });
-
-  } catch (err) {
-    alert('Failed to save expense: ' + err.message);
-  } finally {
-    setSaving(false);
-  }
-}
+  const [saving, setSaving] = useState(false);
 
   const handleCapture = async (blob, previewUrl) => {
     setImageBlob(blob);
     setImagePreview(previewUrl);
+    
+    // If offline, skip OCR and go straight to review
+    if (!isOnline) {
+      setOcrData({
+        merchant: '',
+        date: '',
+        total: 0,
+        items: [],
+        confidence: 0,
+        _isOffline: true
+      });
+      setStep('review');
+      return;
+    }
+
     setStep('processing');
 
     try {
@@ -78,11 +57,21 @@ const handleSave = async (expenseData) => {
         receiptImageUrl: imageUrl
       });
 
-      setStep('review'); // Changed from 'complete' to 'review'
+      setStep('review');
 
     } catch (err) {
-      alert('Failed to process receipt: ' + err.message);
-      setStep('camera');
+      console.error('Error processing receipt:', err);
+      
+      // If error, allow manual entry
+      setOcrData({
+        merchant: '',
+        date: '',
+        total: 0,
+        items: [],
+        confidence: 0,
+        _hasError: true
+      });
+      setStep('review');
     }
   };
 
@@ -95,6 +84,65 @@ const handleSave = async (expenseData) => {
     setImageBlob(null);
     setImagePreview(null);
     setOcrData(null);
+  };
+
+  const handleSave = async (expenseData) => {
+    setSaving(true);
+
+    try {
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error('You must be logged in to save receipts');
+      }
+
+      // If offline, save to queue
+      if (!isOnline) {
+        await addToUploadQueue({
+          ...expenseData,
+          imageBlob: imageBlob, // Store blob for later upload
+          projectId: projectId,
+          submittedBy: currentUser.uid,
+          submittedByName: currentUser.displayName || currentUser.email || 'Unknown'
+        });
+
+        navigate(`/projects/${projectId}/receipts`, {
+          state: { 
+            message: 'Receipt saved offline - will sync when online',
+            type: 'warning'
+          }
+        });
+        return;
+      }
+
+      // Online - save directly to Firestore
+      await addDoc(collection(db, `projects/${projectId}/receipts`), {
+        merchant: expenseData.merchant,
+        date: expenseData.date,
+        total: expenseData.total,
+        tags: expenseData.tags || [],
+        notes: expenseData.notes || '',
+        items: expenseData.items || [],
+        receiptImageUrl: expenseData.receiptImageUrl,
+        ocrRawText: expenseData.ocrRawText || '',
+        ocrConfidence: expenseData.ocrConfidence || 0,
+        projectId: projectId,
+        submittedBy: currentUser.uid,
+        submittedByName: currentUser.displayName || currentUser.email || 'Unknown',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      navigate(`/projects/${projectId}/receipts`, {
+        state: { message: 'Receipt saved successfully!' }
+      });
+
+    } catch (err) {
+      console.error('Error saving receipt:', err);
+      alert('Failed to save receipt: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
