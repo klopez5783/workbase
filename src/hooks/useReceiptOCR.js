@@ -1,6 +1,6 @@
 // src/hooks/useReceiptOCR.js
 import { useState } from 'react';
-import { auth } from '../config/firebase';
+import { auth } from '../services/firebase';
 
 export function useReceiptOCR() {
   const [processing, setProcessing] = useState(false);

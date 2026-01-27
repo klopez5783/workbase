@@ -1,6 +1,6 @@
 // src/pages/TestOCR.jsx
 import { useState } from 'react';
-import { useReceiptOCR } from '../hooks/useReciptOCR';
+import { useReceiptOCR } from '../hooks/useReceiptOCR';
 
 export default function TestOCR() {
   const { processReceipt, processing, error, result, reset } = useReceiptOCR();

@@ -324,7 +324,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
         </div>
 
         <button
-          onClick={() => navigate(`/projects/${projectId}/expenses/scan`)}
+          onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold"
         >
           📷 Scan Receipt

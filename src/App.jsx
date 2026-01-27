@@ -30,9 +30,10 @@ import ProjectHoursPage from './pages/ProjectHoursPage';
 import SMSTerms from './pages/SMSTerms';
 import JoinCompany from './pages/JoinCompany';
 import TestOCR from './pages/TestOCR';
-// import ExpenseList from './components/expenses/';
-import ReciptScanner from './components/expenses/ReceiptScanner';
+import ReceiptList from './components/expenses/ReceiptList';
+import ReceiptScanner from './components/expenses/ReceiptScanner';
 import TestCamera from './pages/TestCamera';
+import ReceiptDetail from './components/expenses/ReceiptDetail';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -145,8 +146,9 @@ return (
           <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
           <Route path="/project-hours" element={<ProjectHoursPage />} />
           <Route path="/test-ocr" element={<TestOCR />} />
-          {/* <Route path="/projects/:projectId/expenses" element={<ExpenseList />} /> */}
-          <Route path="/projects/:projectId/expenses/scan" element={<ReciptScanner />} />
+          <Route path="/projects/:projectId/receipts" element={<ReceiptList />} />
+          <Route path="/projects/:projectId/receipts/scan" element={<ReceiptScanner />} />
+          <Route path="/projects/:projectId/receipts/:receiptId" element={<ReceiptDetail />} />
           
           {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */} 
           <Route 

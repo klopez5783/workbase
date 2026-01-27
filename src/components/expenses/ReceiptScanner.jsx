@@ -2,18 +2,61 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useReceiptOCR } from '../../hooks/useReceiptOCR';
-import { storageService } from '../../services/storageService';
+import { storageService } from '../../services/storageServices';
 import ReceiptCamera from './ReceiptCamera';
+import ReceiptReview from './ReceiptReview';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../../services/firebase';
 
 export default function ReceiptScanner() {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { processReceipt, processing } = useReceiptOCR();
-
-  const [step, setStep] = useState('camera');
+  const { processReceipt } = useReceiptOCR();
+  const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState('camera'); // camera, processing, review
   const [imageBlob, setImageBlob] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [ocrData, setOcrData] = useState(null);
+
+const handleSave = async (expenseData) => {
+  setSaving(true);
+  
+  try {
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      throw new Error('You must be logged in to save expenses');
+    }
+
+    // Save to Firestore
+    await addDoc(collection(db, `projects/${projectId}/receipts`), {
+      merchant: expenseData.merchant,
+      date: expenseData.date,
+      total: expenseData.total,
+      tags: expenseData.tags || [],
+      notes: expenseData.notes || '',
+      items: expenseData.items || [],
+      receiptImageUrl: expenseData.receiptImageUrl,
+      ocrRawText: expenseData.ocrRawText || '',
+      ocrConfidence: expenseData.ocrConfidence || 0,
+      projectId: projectId,
+      submittedBy: currentUser.uid,
+      submittedByName: currentUser.displayName || currentUser.email || 'Unknown',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    // Success!
+    navigate(`/projects/${projectId}/receipts`, {
+      state: { message: 'Receipt saved successfully!' }
+    });
+
+  } catch (err) {
+    alert('Failed to save expense: ' + err.message);
+  } finally {
+    setSaving(false);
+  }
+}
 
   const handleCapture = async (blob, previewUrl) => {
     setImageBlob(blob);
@@ -35,7 +78,7 @@ export default function ReceiptScanner() {
         receiptImageUrl: imageUrl
       });
 
-      setStep('complete');
+      setStep('review'); // Changed from 'complete' to 'review'
 
     } catch (err) {
       alert('Failed to process receipt: ' + err.message);
@@ -44,7 +87,7 @@ export default function ReceiptScanner() {
   };
 
   const handleCancel = () => {
-    navigate(`/projects/${projectId}/expenses`);
+    navigate(-1);
   };
 
   const handleRetake = () => {
@@ -83,121 +126,14 @@ export default function ReceiptScanner() {
         </div>
       )}
 
-      {step === 'complete' && ocrData && (
-        <div className="min-h-screen bg-gray-50 p-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-t-lg p-4 flex items-center justify-between">
-              <h1 className="text-xl font-bold">Receipt Processed</h1>
-              <button
-                onClick={handleRetake}
-                className="text-blue-600 font-semibold"
-              >
-                Retake
-              </button>
-            </div>
-
-            <div className="bg-white border-t p-4">
-              <img 
-                src={imagePreview} 
-                alt="Receipt" 
-                className="w-full max-h-64 object-contain rounded-lg"
-              />
-            </div>
-
-            <div className="bg-white border-t rounded-b-lg p-6 space-y-4">
-              {ocrData._isMockData && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-orange-700">
-                    ⚠️ Using mock data (emulator mode)
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Merchant
-                  </label>
-                  <p className="text-lg font-bold text-gray-900">
-                    {ocrData.merchant || 'Not detected'}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Date
-                  </label>
-                  <p className="text-lg font-bold text-gray-900">
-                    {ocrData.date || 'Not detected'}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Total
-                </label>
-                <p className="text-3xl font-bold text-green-600">
-                  ${ocrData.total?.toFixed(2) || '0.00'}
-                </p>
-              </div>
-
-              {ocrData.items && ocrData.items.length > 0 && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Items ({ocrData.items.length})
-                  </label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {ocrData.items.map((item, idx) => (
-                      <div 
-                        key={idx} 
-                        className="flex justify-between p-2 bg-gray-50 rounded"
-                      >
-                        <span className="text-gray-700">{item.description}</span>
-                        <span className="font-semibold text-gray-900">
-                          ${item.amount.toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Confidence Score
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full transition-all"
-                      style={{ width: `${(ocrData.confidence * 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">
-                    {(ocrData.confidence * 100).toFixed(0)}%
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => navigate(`/projects/${projectId}/expenses`)}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Continue
-                </button>
-                
-                <button
-                  onClick={handleRetake}
-                  className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Retake
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {step === 'review' && ocrData && (
+        <ReceiptReview
+          imageUrl={imagePreview}
+          ocrData={ocrData}
+          onSave={handleSave}
+          onRetake={handleRetake}
+          saving={saving}
+        />
       )}
     </>
   );
