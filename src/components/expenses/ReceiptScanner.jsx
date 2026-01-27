@@ -7,10 +7,12 @@ import { useReceiptOCR } from '../../hooks/useReceiptOCR';
 import { storageService } from '../../services/storageServices';
 import { addToUploadQueue } from '../../services/offlineStorage';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import { useTranslation } from 'react-i18next';
 import ReceiptCamera from './ReceiptCamera';
 import ReceiptReview from './ReceiptReview';
 
 export default function ReceiptScanner() {
+  const { t } = useTranslation();
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { processReceipt } = useReceiptOCR();
@@ -46,7 +48,7 @@ export default function ReceiptScanner() {
       const uploadResult = await storageService.uploadReceipt(projectId, blob);
       
       if (!uploadResult.success) {
-        throw new Error('Failed to upload image: ' + uploadResult.error);
+        throw new Error(t('receipts.scan.uploadFailed') + uploadResult.error);
       }
 
       const imageUrl = uploadResult.url;
@@ -93,22 +95,22 @@ export default function ReceiptScanner() {
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
-        throw new Error('You must be logged in to save receipts');
+        throw new Error(t('receipts.scan.loginRequired'));
       }
 
       // If offline, save to queue
       if (!isOnline) {
         await addToUploadQueue({
           ...expenseData,
-          imageBlob: imageBlob, // Store blob for later upload
+          imageBlob: imageBlob,
           projectId: projectId,
           submittedBy: currentUser.uid,
-          submittedByName: currentUser.displayName || currentUser.email || 'Unknown'
+          submittedByName: currentUser.displayName || currentUser.email || t('receipts.detail.unknown')
         });
 
         navigate(`/projects/${projectId}/receipts`, {
           state: { 
-            message: 'Receipt saved offline - will sync when online',
+            message: t('receipts.offline.savedOffline'),
             type: 'warning'
           }
         });
@@ -128,18 +130,18 @@ export default function ReceiptScanner() {
         ocrConfidence: expenseData.ocrConfidence || 0,
         projectId: projectId,
         submittedBy: currentUser.uid,
-        submittedByName: currentUser.displayName || currentUser.email || 'Unknown',
+        submittedByName: currentUser.displayName || currentUser.email || t('receipts.detail.unknown'),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
 
       navigate(`/projects/${projectId}/receipts`, {
-        state: { message: 'Receipt saved successfully!' }
+        state: { message: t('receipts.scan.saveSuccess') }
       });
 
     } catch (err) {
       console.error('Error saving receipt:', err);
-      alert('Failed to save receipt: ' + err.message);
+      alert(t('receipts.scan.saveFailed') + err.message);
     } finally {
       setSaving(false);
     }
@@ -158,17 +160,17 @@ export default function ReceiptScanner() {
         <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-6">
           <img 
             src={imagePreview} 
-            alt="Receipt" 
+            alt={t('receipts.title')}
             className="max-w-sm max-h-96 rounded-lg shadow-2xl mb-8"
           />
           
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-white mx-auto mb-4"></div>
             <p className="text-white text-xl font-semibold">
-              Processing receipt...
+              {t('receipts.scan.processing')}
             </p>
             <p className="text-white/70 text-sm mt-2">
-              Extracting merchant, date, and items
+              {t('receipts.scan.extracting')}
             </p>
           </div>
         </div>

@@ -10,8 +10,10 @@ import { OfflineBanner } from '../OfflineBanner';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { getCachedReceipts, cacheReceipt, getUploadQueue } from '../../services/offlineStorage';
 import { syncPendingReceipts } from '../../services/syncService';
+import { useTranslation } from 'react-i18next';
 
 export default function ReceiptList() {
+  const { t } = useTranslation();
   const { projectId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,13 +57,13 @@ export default function ReceiptList() {
             setError(null);
           } catch (err) {
             console.error('Error processing receipts:', err);
-            setError('Failed to process receipt data');
+            setError(t('errors.generic'));
             setLoading(false);
           }
         },
         (err) => {
           console.error('Error fetching receipts:', err);
-          setError('Failed to load receipts. Please check your connection and try again.');
+          setError(t('errors.networkError'));
           setLoading(false);
         }
       );
@@ -71,7 +73,7 @@ export default function ReceiptList() {
       // Offline: Load from cache
       loadCachedReceipts();
     }
-  }, [projectId, isOnline]);
+  }, [projectId, isOnline, t]);
 
   // Load cached receipts when offline
   const loadCachedReceipts = async () => {
@@ -86,7 +88,7 @@ export default function ReceiptList() {
       setError(null);
     } catch (err) {
       console.error('Error loading cached receipts:', err);
-      setError('Failed to load cached receipts');
+      setError(t('errors.generic'));
       setLoading(false);
     }
   };
@@ -126,17 +128,17 @@ export default function ReceiptList() {
       if (result.success) {
         if (result.synced > 0) {
           setToast({ 
-            message: `Synced ${result.synced} receipt${result.synced !== 1 ? 's' : ''}!`, 
+            message: t('receipts.synced', { count: result.synced }), 
             type: 'success' 
           });
         }
         setPendingCount(0);
       } else {
-        setToast({ message: 'Sync failed', type: 'error' });
+        setToast({ message: t('receipts.syncFailed'), type: 'error' });
       }
     } catch (err) {
       console.error('Sync error:', err);
-      setToast({ message: 'Sync failed', type: 'error' });
+      setToast({ message: t('receipts.syncFailed'), type: 'error' });
     } finally {
       setSyncing(false);
     }
@@ -154,7 +156,7 @@ export default function ReceiptList() {
   }, [location]);
 
   if (loading) {
-    return <LoadingPage message="Loading receipts..." />;
+    return <LoadingPage message={t('common.loading')} />;
   }
 
   if (error) {
@@ -163,14 +165,14 @@ export default function ReceiptList() {
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
           <div className="text-6xl mb-4">❌</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Error Loading Receipts
+            {t('common.error')}
           </h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
           >
-            Try Again
+            {t('common.retry')}
           </button>
         </div>
       </div>
@@ -195,10 +197,10 @@ export default function ReceiptList() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Receipts</h1>
+            <h1 className="text-3xl font-bold">{t('receipts.title')}</h1>
             <p className="text-gray-600 mt-1">
-              {receipts.length} receipt{receipts.length !== 1 ? 's' : ''}
-              {!isOnline && ' (cached)'}
+              {t('receipts.receiptCount', { count: receipts.length })}
+              {!isOnline && ` (${t('receipts.cached')})`}
             </p>
           </div>
           <button
@@ -206,7 +208,7 @@ export default function ReceiptList() {
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 shadow-lg transition-colors"
           >
             <Camera className="w-5 h-5" />
-            Scan Receipt
+            {t('receipts.scanReceipt')}
           </button>
         </div>
 
@@ -218,10 +220,10 @@ export default function ReceiptList() {
                 <RefreshCw className={`w-5 h-5 text-blue-600 ${syncing ? 'animate-spin' : ''}`} />
                 <div>
                   <p className="font-semibold text-blue-900">
-                    {pendingCount} receipt{pendingCount !== 1 ? 's' : ''} pending upload
+                    {t('receipts.pendingUpload', { count: pendingCount })}
                   </p>
                   <p className="text-sm text-blue-700">
-                    {isOnline ? 'Ready to sync' : 'Will sync when online'}
+                    {isOnline ? t('receipts.readyToSync') : t('receipts.willSyncWhenOnline')}
                   </p>
                 </div>
               </div>
@@ -230,7 +232,7 @@ export default function ReceiptList() {
                   onClick={handleSync}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
-                  Sync Now
+                  {t('receipts.syncNow')}
                 </button>
               )}
             </div>
@@ -240,7 +242,7 @@ export default function ReceiptList() {
         {/* Total Summary */}
         {receipts.length > 0 && (
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 mb-6 shadow-lg">
-            <p className="text-blue-100 text-sm font-semibold mb-1">Total Expenses</p>
+            <p className="text-blue-100 text-sm font-semibold mb-1">{t('receipts.totalExpenses')}</p>
             <p className="text-4xl font-bold">${total.toFixed(2)}</p>
           </div>
         )}
@@ -250,16 +252,16 @@ export default function ReceiptList() {
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <div className="text-6xl mb-4">📄</div>
             <h2 className="text-xl font-bold text-gray-700 mb-2">
-              No receipts yet
+              {t('receipts.noReceipts')}
             </h2>
             <p className="text-gray-500 mb-6">
-              Scan your first receipt to get started tracking expenses!
+              {t('receipts.noReceiptsDescription')}
             </p>
             <button
               onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
-              Scan Receipt
+              {t('receipts.scanReceipt')}
             </button>
           </div>
         ) : (
@@ -274,7 +276,7 @@ export default function ReceiptList() {
                   {receipt.receiptImageUrl && (
                     <img
                       src={receipt.receiptImageUrl}
-                      alt="Receipt"
+                      alt={t('receipts.title')}
                       className="w-20 h-20 object-cover rounded border border-gray-200"
                       loading="lazy"
                     />
@@ -284,12 +286,12 @@ export default function ReceiptList() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="text-lg font-bold text-gray-900">
-                          {receipt.merchant || 'Unknown Merchant'}
+                          {receipt.merchant || t('receipts.unknownMerchant')}
                         </h3>
                         <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {receipt.date || 'No date'}
+                            {receipt.date || t('receipts.noDate')}
                           </span>
                           <span className="flex items-center gap-1">
                             <DollarSign className="w-4 h-4" />
@@ -313,12 +315,12 @@ export default function ReceiptList() {
                             className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium"
                           >
                             <Tag className="w-3 h-3" />
-                            {tag}
+                            {t(`receipts.tags.${tag}`, tag)}
                           </span>
                         ))}
                         {receipt.tags.length > 3 && (
                           <span className="text-xs text-gray-500 py-1">
-                            +{receipt.tags.length - 3} more
+                            +{receipt.tags.length - 3} {t('receipts.more')}
                           </span>
                         )}
                       </div>
@@ -336,6 +338,15 @@ export default function ReceiptList() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
+        className="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 transition-all hover:scale-110 active:scale-95"
+        aria-label={t('receipts.scanReceipt')}
+      >
+        <Camera className="w-8 h-8" />
+      </button>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 // src/components/expenses/ReceiptCamera.jsx
 import { Camera, Upload, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function ReceiptCamera({ onCapture, onCancel }) {
+  const { t } = useTranslation();
   
   const handleTakePhoto = () => {
     const input = document.createElement('input');
@@ -47,7 +49,7 @@ export default function ReceiptCamera({ onCapture, onCancel }) {
             className="text-white flex items-center gap-2 font-semibold"
           >
             <X className="w-6 h-6" />
-            Cancel
+            {t('common.cancel')}
           </button>
         </div>
 
@@ -61,10 +63,10 @@ export default function ReceiptCamera({ onCapture, onCancel }) {
           {/* Title */}
           <div>
             <h1 className="text-white text-3xl font-bold mb-2">
-              Capture Receipt
+              {t('receipts.scan.captureReceipt')}
             </h1>
             <p className="text-blue-100">
-              Take a photo or choose an existing image
+              {t('receipts.scan.takeOrChoose')}
             </p>
           </div>
 
@@ -76,7 +78,7 @@ export default function ReceiptCamera({ onCapture, onCancel }) {
               className="w-full bg-white text-blue-900 py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-3"
             >
               <Camera className="w-6 h-6" />
-              Take Photo
+              {t('receipts.scan.takePhoto')}
             </button>
 
             {/* Choose from Gallery */}
@@ -85,13 +87,13 @@ export default function ReceiptCamera({ onCapture, onCancel }) {
               className="w-full bg-white/10 backdrop-blur text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-3 border-2 border-white/20 active:scale-95 transition-transform"
             >
               <Upload className="w-5 h-5" />
-              Choose from Photos
+              {t('receipts.scan.chooseFromPhotos')}
             </button>
           </div>
 
           {/* Info Text */}
           <p className="text-blue-200 text-sm">
-            📱 Works best with clear, well-lit receipts
+            📱 {t('receipts.scan.worksBest')}
           </p>
         </div>
       </div>

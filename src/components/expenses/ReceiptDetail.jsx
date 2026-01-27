@@ -4,9 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { storageService } from '../../services/storageServices';
-import { ArrowLeft, Calendar, CircleArrowLeft , Tag, Trash2, Image as ImageIcon } from 'lucide-react';
+import { CircleArrowLeft, Calendar, Tag, Trash2, Image as ImageIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function ReceiptDetail() {
+  const { t } = useTranslation();
   const { projectId, receiptId } = useParams();
   const navigate = useNavigate();
   
@@ -26,19 +28,19 @@ export default function ReceiptDetail() {
       if (receiptDoc.exists()) {
         setReceipt({ id: receiptDoc.id, ...receiptDoc.data() });
       } else {
-        alert('Receipt not found');
+        alert(t('receipts.detail.notFound'));
         navigate(`/projects/${projectId}/receipts`);
       }
     } catch (error) {
       console.error('Error fetching receipt:', error);
-      alert('Failed to load receipt');
+      alert(t('receipts.detail.loadFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this receipt? This cannot be undone.')) {
+    if (!confirm(t('receipts.detail.deleteConfirm'))) {
       return;
     }
 
@@ -53,11 +55,11 @@ export default function ReceiptDetail() {
       await deleteDoc(doc(db, `projects/${projectId}/receipts/${receiptId}`));
 
       navigate(`/projects/${projectId}/receipts`, {
-        state: { message: 'Receipt deleted successfully' }
+        state: { message: t('receipts.detail.deleteSuccess') }
       });
     } catch (error) {
       console.error('Error deleting receipt:', error);
-      alert('Failed to delete receipt: ' + error.message);
+      alert(t('receipts.detail.deleteFailed') + error.message);
       setDeleting(false);
     }
   };
@@ -67,7 +69,7 @@ export default function ReceiptDetail() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading receipt...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -83,11 +85,11 @@ export default function ReceiptDetail() {
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
-          onClick={() => navigate(`/projects/${projectId}/receipts`)}
-          className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
+            onClick={() => navigate(`/projects/${projectId}/receipts`)}
+            className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
-          <CircleArrowLeft size={25} /> 
-          Back to Projects
+            <CircleArrowLeft size={25} /> 
+            {t('receipts.detail.back')}
           </button>
           
           <button
@@ -96,7 +98,7 @@ export default function ReceiptDetail() {
             className="flex items-center mb-4 gap-2 text-red-600 hover:text-red-700 disabled:opacity-50"
           >
             <Trash2 className="w-5 h-5" />
-            {deleting ? 'Deleting...' : 'Delete'}
+            {deleting ? t('receipts.detail.deleting') : t('receipts.detail.delete')}
           </button>
         </div>
       </div>
@@ -107,16 +109,16 @@ export default function ReceiptDetail() {
           <div className="bg-white rounded-lg shadow-md p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
               <ImageIcon className="w-4 h-4" />
-              Receipt Image
+              {t('receipts.detail.receiptImage')}
             </h3>
             <img
               src={receipt.receiptImageUrl}
-              alt="Receipt"
+              alt={t('receipts.detail.receiptImage')}
               onClick={() => setShowFullImage(true)}
               className="w-full max-h-96 object-contain rounded border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
             />
             <p className="text-xs text-gray-500 text-center mt-2">
-              Click to view full size
+              {t('receipts.detail.clickToEnlarge')}
             </p>
           </div>
         )}
@@ -126,7 +128,7 @@ export default function ReceiptDetail() {
           {/* Merchant & Total */}
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {receipt.merchant || 'Unknown Merchant'}
+              {receipt.merchant || t('receipts.unknownMerchant')}
             </h1>
             <p className="text-4xl font-bold text-green-600">
               ${receipt.total?.toFixed(2) || '0.00'}
@@ -136,8 +138,8 @@ export default function ReceiptDetail() {
           {/* Date */}
           <div className="flex items-center gap-2 text-gray-600">
             <Calendar className="w-5 h-5" />
-            <span className="font-semibold">Date:</span>
-            <span>{receipt.date || 'No date'}</span>
+            <span className="font-semibold">{t('receipts.review.date')}:</span>
+            <span>{receipt.date || t('receipts.noDate')}</span>
           </div>
 
           {/* Tags */}
@@ -145,7 +147,7 @@ export default function ReceiptDetail() {
             <div>
               <div className="flex items-center gap-2 text-gray-700 mb-2">
                 <Tag className="w-5 h-5" />
-                <span className="font-semibold">Tags:</span>
+                <span className="font-semibold">{t('receipts.review.tags')}:</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {receipt.tags.map((tag, idx) => (
@@ -153,7 +155,7 @@ export default function ReceiptDetail() {
                     key={idx}
                     className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
                   >
-                    {tag}
+                    {t(`receipts.tags.${tag}`, tag)}
                   </span>
                 ))}
               </div>
@@ -163,7 +165,9 @@ export default function ReceiptDetail() {
           {/* Notes */}
           {receipt.notes && (
             <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Notes:</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">
+                {t('receipts.detail.notes')}:
+              </h3>
               <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">
                 {receipt.notes}
               </p>
@@ -174,7 +178,7 @@ export default function ReceiptDetail() {
           {receipt.items && receipt.items.length > 0 && (
             <div>
               <h3 className="font-semibold text-gray-700 mb-3">
-                Line Items ({receipt.items.length})
+                {t('receipts.review.lineItems', { count: receipt.items.length })}
               </h3>
               <div className="space-y-2">
                 {receipt.items.map((item, idx) => (
@@ -196,7 +200,7 @@ export default function ReceiptDetail() {
           {receipt.ocrConfidence && (
             <div className="border-t pt-4">
               <h3 className="font-semibold text-gray-700 mb-2">
-                OCR Confidence Score
+                {t('receipts.review.ocrConfidence')}
               </h3>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-gray-200 rounded-full h-2">
@@ -214,10 +218,12 @@ export default function ReceiptDetail() {
 
           {/* Metadata */}
           <div className="border-t pt-4 text-sm text-gray-500">
-            <p>Submitted by: {receipt.submittedByName || 'Unknown'}</p>
+            <p>{t('receipts.detail.submittedBy', { name: receipt.submittedByName || t('receipts.detail.unknown') })}</p>
             {receipt.createdAt && (
               <p>
-                Created: {new Date(receipt.createdAt.seconds * 1000).toLocaleString()}
+                {t('receipts.detail.created', { 
+                  date: new Date(receipt.createdAt.seconds * 1000).toLocaleString() 
+                })}
               </p>
             )}
           </div>
@@ -232,7 +238,7 @@ export default function ReceiptDetail() {
         >
           <img
             src={receipt.receiptImageUrl}
-            alt="Receipt Full Size"
+            alt={t('receipts.detail.fullSize')}
             className="max-w-full max-h-full object-contain"
           />
           <button
