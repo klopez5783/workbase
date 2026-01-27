@@ -330,6 +330,13 @@ const workerStats = workers.map(worker => {  // worker is a string ID
           📷 Scan Receipt
         </button>
 
+        <button
+          onClick={() => navigate(`/projects/${projectId}/receipts`)}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold"
+        >
+          📷Receipt List
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Workers and Activity */}
           <div className="lg:col-span-2 space-y-6">
