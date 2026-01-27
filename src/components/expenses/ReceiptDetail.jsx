@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { storageService } from '../../services/storageServices';
-import { ArrowLeft, Calendar, DollarSign, Tag, Trash2, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, CircleArrowLeft , Tag, Trash2, Image as ImageIcon } from 'lucide-react';
 
 export default function ReceiptDetail() {
   const { projectId, receiptId } = useParams();
@@ -83,17 +83,17 @@ export default function ReceiptDetail() {
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
-            onClick={() => navigate(`/projects/${projectId}/receipts`)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          onClick={() => navigate(`/projects/${projectId}/receipts`)}
+          className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
-            <ArrowLeft className="w-5 h-5" />
-            Back
+          <CircleArrowLeft size={25} /> 
+          Back to Projects
           </button>
           
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="flex items-center gap-2 text-red-600 hover:text-red-700 disabled:opacity-50"
+            className="flex items-center mb-4 gap-2 text-red-600 hover:text-red-700 disabled:opacity-50"
           >
             <Trash2 className="w-5 h-5" />
             {deleting ? 'Deleting...' : 'Delete'}
