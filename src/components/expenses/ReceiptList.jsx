@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Camera, Calendar, DollarSign, Tag, CircleArrowLeft } from 'lucide-react';
+import { Camera, Calendar, DollarSign, Tag } from 'lucide-react';
+import { LoadingPage, LoadingCard } from '../LoadingSpinner';
+import { Toast } from '../components/common/Toast';
 
 export default function ReceiptList() {
   const { projectId } = useParams();
@@ -12,51 +14,73 @@ export default function ReceiptList() {
   
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
+  const [toast, setToast] = useState(null);
 
-  // Fetch receipts from Firestore
   useEffect(() => {
     const receiptsRef = collection(db, `projects/${projectId}/receipts`);
     const q = query(receiptsRef, orderBy('createdAt', 'desc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const receiptData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      setReceipts(receiptData);
-      
-      // Calculate total
-      const sum = receiptData.reduce((acc, receipt) => acc + (receipt.total || 0), 0);
-      setTotal(sum);
-      
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching receipts:', error);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        try {
+          const receiptData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          setReceipts(receiptData);
+          
+          const sum = receiptData.reduce((acc, receipt) => acc + (receipt.total || 0), 0);
+          setTotal(sum);
+          
+          setLoading(false);
+          setError(null);
+        } catch (err) {
+          console.error('Error processing receipts:', err);
+          setError('Failed to process receipt data');
+          setLoading(false);
+        }
+      },
+      (err) => {
+        console.error('Error fetching receipts:', err);
+        setError('Failed to load receipts. Please check your connection and try again.');
+        setLoading(false);
+      }
+    );
 
-    // Cleanup listener on unmount
     return () => unsubscribe();
   }, [projectId]);
 
-  // Show success message if navigated here after saving
+  // Show success message
   useEffect(() => {
     if (location.state?.message) {
-      const timer = setTimeout(() => {
-        window.history.replaceState({}, document.title);
-      }, 3000);
-      return () => clearTimeout(timer);
+      setToast({ message: location.state.message, type: 'success' });
+      window.history.replaceState({}, document.title);
     }
   }, [location]);
 
   if (loading) {
+    return <LoadingPage message="Loading receipts..." />;
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading receipts...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Error Loading Receipts
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -64,16 +88,15 @@ export default function ReceiptList() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="max-w-4xl mx-auto p-4">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
-        <button
-        onClick={() => navigate(`/project/${projectId}`)}
-        className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
-        >
-        <CircleArrowLeft size={25} /> 
-        Back to Projects
-        </button>
-        
+      <div className="max-w-4xl mx-auto p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -84,21 +107,12 @@ export default function ReceiptList() {
           </div>
           <button
             onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 shadow-lg"
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 shadow-lg transition-colors"
           >
             <Camera className="w-5 h-5" />
             Scan Receipt
           </button>
         </div>
-
-        {/* Success Message */}
-        {location.state?.message && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800 font-semibold">
-              ✅ {location.state.message}
-            </p>
-          </div>
-        )}
 
         {/* Total Summary */}
         {receipts.length > 0 && (
@@ -120,7 +134,7 @@ export default function ReceiptList() {
             </p>
             <button
               onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
               Scan Receipt
             </button>
@@ -131,19 +145,18 @@ export default function ReceiptList() {
               <div
                 key={receipt.id}
                 onClick={() => navigate(`/projects/${projectId}/receipts/${receipt.id}`)}
-                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-all cursor-pointer active:scale-98"
               >
                 <div className="flex gap-4">
-                  {/* Receipt Image Thumbnail */}
                   {receipt.receiptImageUrl && (
                     <img
                       src={receipt.receiptImageUrl}
                       alt="Receipt"
                       className="w-20 h-20 object-cover rounded border border-gray-200"
+                      loading="lazy"
                     />
                   )}
 
-                  {/* Receipt Details */}
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
@@ -162,7 +175,6 @@ export default function ReceiptList() {
                         </div>
                       </div>
                       
-                      {/* Total (Large on Right) */}
                       <div className="text-right">
                         <p className="text-2xl font-bold text-green-600">
                           ${receipt.total?.toFixed(2) || '0.00'}
@@ -170,10 +182,9 @@ export default function ReceiptList() {
                       </div>
                     </div>
 
-                    {/* Tags */}
                     {receipt.tags && receipt.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {receipt.tags.map((tag, idx) => (
+                        {receipt.tags.slice(0, 3).map((tag, idx) => (
                           <span
                             key={idx}
                             className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium"
@@ -182,10 +193,14 @@ export default function ReceiptList() {
                             {tag}
                           </span>
                         ))}
+                        {receipt.tags.length > 3 && (
+                          <span className="text-xs text-gray-500 py-1">
+                            +{receipt.tags.length - 3} more
+                          </span>
+                        )}
                       </div>
                     )}
 
-                    {/* Notes Preview */}
                     {receipt.notes && (
                       <p className="text-sm text-gray-600 mt-2 line-clamp-1">
                         {receipt.notes}
@@ -198,6 +213,15 @@ export default function ReceiptList() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
+        className="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 transition-all hover:scale-110 active:scale-95"
+        aria-label="Scan receipt"
+      >
+        <Camera className="w-8 h-8" />
+      </button>
     </div>
   );
 }

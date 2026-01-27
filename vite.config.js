@@ -4,14 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
-
-
-
-// https://vite.dev/config/
-// export default defineConfig({
-//   plugins: [react(), tailwindcss()],
-// })
-
 export default defineConfig({
   plugins: [
     react(),
@@ -74,5 +66,18 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',  // Expose to network
     https: true, // Enable HTTPS
+  },
+  theme: {
+    extend: {
+      keyframes: {
+        'slide-in': {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' }
+        }
+      },
+      animation: {
+        'slide-in': 'slide-in 0.3s ease-out'
+      }
+    }
   }
 });
