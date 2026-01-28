@@ -363,7 +363,12 @@ const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
 // Only initialize Vision client in production
 let visionClient;
 if (!isEmulator) {
-  visionClient = new vision.ImageAnnotatorClient();
+  try {
+    visionClient = new vision.ImageAnnotatorClient();
+    console.log('✅ Vision API client initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize Vision API:', error);
+  }
 }
 
 // ============================================================================
@@ -378,6 +383,7 @@ exports.processReceipt = onCall(
       "http://localhost:3000",
       "http://127.0.0.1:5173",
       "https://workbase-8dfe2.firebaseapp.com",
+      "https://workbase-8dfe2.web.app"
     ],
   },
   async (request) => {
@@ -422,11 +428,47 @@ exports.processReceipt = onCall(
 
       const projectData = projectDoc.data();
       const userId = request.auth.uid;
-      const isMember = 
-        projectData.adminId === userId ||
-        (projectData.workers || []).some(w => w.uid === userId);
 
-      if (!isMember) {
+      // Get user document
+      const userDoc = await admin.firestore()
+        .collection('users')
+        .doc(userId)
+        .get();
+
+      if (!userDoc.exists) {
+        throw new HttpsError('not-found', 'User not found');
+      }
+
+      const userData = userDoc.data();
+
+      // Check authorization based on user role
+      let isAuthorized = false;
+
+      if (userData.role === 'admin') {
+        // ADMIN: Check if user's company owns this project
+        const companyId = projectData.createdBy; // Company ID
+        isAuthorized = userData.companyId === companyId;
+        
+        if (isAuthorized) {
+          console.log('✅ User authorized (admin - company member)');
+        }
+        
+      } else {
+        // WORKER/USER: Check if user is in the project's assignedWorkers array
+        isAuthorized = (projectData.assignedWorkers || []).includes(userId);
+        
+        if (isAuthorized) {
+          console.log('✅ User authorized (worker - assigned to project)');
+        }
+      }
+
+      if (!isAuthorized) {
+        console.log('❌ Authorization failed');
+        console.log('User ID:', userId);
+        console.log('User role:', userData.role);
+        console.log('User company:', userData.companyId);
+        console.log('Project company:', projectData.createdBy);
+        console.log('Assigned workers:', projectData.assignedWorkers);
         throw new HttpsError(
           'permission-denied',
           'User does not have access to this project'
