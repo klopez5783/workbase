@@ -15,6 +15,244 @@ const twilioToken = defineSecret("TWILIO_AUTH_TOKEN");
 const twilioPhone = defineSecret("TWILIO_PHONE_NUMBER");
 const twilioMessagingServiceSid = defineSecret("TWILIO_MESSAGING_SERVICE_SID");
 
+
+/**
+ * Parses OCR receipt text into structured data.
+ * Supports Home Depot, Lowe's, Menards, ABC Supply, 84 Lumber, and generic receipts.
+ */
+
+/* ============================================================================
+   STORE DEFINITIONS (DATA-DRIVEN)
+============================================================================ */
+
+const STORE_PARSERS = {
+  HOME_DEPOT: {
+    name: 'HOME DEPOT',
+    patterns: [
+      {
+        regex: /^(\d+)\s+(.+?)\s+(\d+\.\d{2})$/,
+        map: m => ({ description: m[2], amount: +m[3] })
+      },
+      { nextLinePrice: true }
+    ]
+  },
+
+  LOWES: {
+    name: "LOWE'S",
+    patterns: [
+      {
+        regex: /^(\d+)\s+(.+?)\s+\$(\d+\.\d{2})$/,
+        map: m => ({
+          description: `${+m[1] > 1 ? m[1] + 'x ' : ''}${m[2]}`,
+          amount: +m[3]
+        })
+      }
+    ]
+  },
+
+  MENARDS: {
+    name: 'MENARDS',
+    patterns: [
+      {
+        regex: /^(\d+)\s+(.+?)\s+(\d+\.\d{2})\s*(?:NT)?$/,
+        map: m => ({ description: m[2], amount: +m[3] })
+      }
+    ]
+  },
+
+  ABC_SUPPLY: {
+    name: 'ABC SUPPLY',
+    patterns: [
+      {
+        regex: /^(.+?)\s+(\d+)\s+\$?(\d+\.\d{2})$/,
+        map: m => ({
+          description: `${+m[2] > 1 ? m[2] + 'x ' : ''}${m[1]}`,
+          amount: +m[3]
+        })
+      }
+    ]
+  },
+
+  LUMBER_84: {
+    name: '84 LUMBER',
+    patterns: [{ nextLinePrice: true }]
+  },
+
+  GENERIC: {
+    name: 'Unknown Merchant',
+    patterns: [
+      {
+        regex: /^(.+?)\s+\$?(\d+\.\d{2})$/,
+        map: m => ({ description: m[1], amount: +m[2] })
+      },
+      { nextLinePrice: true }
+    ]
+  }
+};
+
+/* ============================================================================
+   MAIN ENTRY
+============================================================================ */
+
+function parseReceiptText(text) {
+  const lines = text
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  const storeKey = detectStore(text);
+  const storeConfig = STORE_PARSERS[storeKey] || STORE_PARSERS.GENERIC;
+
+  const items = parseLines(lines, storeConfig);
+
+  const merchant = storeConfig.name;
+  const date = extractDate(text);
+  const total = extractTotal(text);
+
+  return {
+    merchant,
+    date,
+    total,
+    items,
+    confidence: calculateConfidence({ merchant, date, total, items })
+  };
+}
+
+/* ============================================================================
+   PARSING ENGINE
+============================================================================ */
+
+function parseLines(lines, storeConfig) {
+  const items = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    for (const pattern of storeConfig.patterns) {
+      // Description → price on next line
+      if (pattern.nextLinePrice && i < lines.length - 1) {
+        const priceMatch = lines[i + 1].match(/^(\d+\.\d{2})$/);
+        if (priceMatch && !isExcludedText(line) && line.length > 3) {
+          const amount = +priceMatch[1];
+          if (amount > 0 && amount < 100000) {
+            items.push({
+              description: cleanDescription(line),
+              amount: amount
+            });
+            i++;
+            break;
+          }
+        }
+      }
+
+      // Regex-based line
+      if (pattern.regex) {
+        const match = line.match(pattern.regex);
+        if (match && !isExcludedText(line)) {
+          const item = pattern.map(match);
+          if (isValidItem(item)) {
+            items.push({
+              description: cleanDescription(item.description),
+              amount: item.amount
+            });
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return items;
+}
+
+/* ============================================================================
+   STORE DETECTION
+============================================================================ */
+
+function detectStore(text) {
+  const t = text.toUpperCase();
+
+  if (t.includes('HOME DEPOT')) return 'HOME_DEPOT';
+  if (t.includes("LOWE'S") || t.includes('LOWES')) return 'LOWES';
+  if (t.includes('MENARDS')) return 'MENARDS';
+  if (t.includes('ABC SUPPLY')) return 'ABC_SUPPLY';
+  if (t.includes('84 LUMBER')) return 'LUMBER_84';
+
+  return 'GENERIC';
+}
+
+/* ============================================================================
+   HELPERS
+============================================================================ */
+
+function isValidItem(item) {
+  return (
+    item &&
+    typeof item.amount === 'number' &&
+    item.amount > 0 &&
+    item.amount < 100000 &&
+    item.description &&
+    item.description.length > 2
+  );
+}
+
+function isExcludedText(text) {
+  const t = text.toLowerCase();
+  return [
+    'total', 'subtotal', 'tax', 'balance', 'payment', 'change',
+    'cashier', 'receipt', 'thank', 'return', 'policy',
+    'credit', 'debit', 'visa', 'mastercard', 'survey', 'auth',
+    'sale', 'store', 'manager', 'barcode', 'customer'
+  ].some(k => t.includes(k));
+}
+
+function cleanDescription(text) {
+  return text
+    .replace(/^\d+\s+/, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[<>]/g, '')
+    .trim()
+    .substring(0, 100);
+}
+
+function extractDate(text) {
+  const patterns = [
+    /\b(\d{2}\/\d{2}\/\d{2,4})\b/,
+    /\b(\d{2}-\d{2}-\d{2,4})\b/,
+    /\b(\d{4}-\d{2}-\d{2})\b/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  
+  return null;
+}
+
+function extractTotal(text) {
+  const patterns = [
+    /total[\s:$]*(\d+\.\d{2})/i,
+    /balance[\s:$]*(\d+\.\d{2})/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return +match[1];
+  }
+  
+  return null;
+}
+
+function calculateConfidence({ merchant, date, total, items }) {
+  let score = 0;
+  if (merchant && merchant !== 'Unknown Merchant') score += 0.25;
+  if (date) score += 0.25;
+  if (total) score += 0.25;
+  if (items && items.length) score += 0.25;
+  return score;
+}
+
 /**
  * Formats a phone number to E.164 format for Twilio
  * @param {string} phone - Phone number (10 digits or already formatted)
@@ -379,11 +617,15 @@ exports.processReceipt = onCall(
     region: "us-east1",
     memory: "256MiB",
     cors: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "http://127.0.0.1:5173",
-      "https://workbase-8dfe2.firebaseapp.com",
-      "https://workbase-8dfe2.web.app"
+      // "http://localhost:5173",
+      // "http://localhost:3000",
+      // "https://localhost:3000",      // ← ADD THIS
+      // "http://127.0.0.1:5173",
+      // "http://127.0.0.1:3000",        // ← ADD THIS TOO
+      // "https://127.0.0.1:3000",       // ← AND THIS
+      // "https://workbase-8dfe2.firebaseapp.com",
+      // "https://workbase-8dfe2.web.app"
+      true
     ],
   },
   async (request) => {
@@ -559,22 +801,22 @@ THANK YOU!`,
   };
 }
 
-function parseReceiptText(text) {
-  const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+// function parseReceiptText(text) {
+//   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
   
-  const merchant = extractMerchant(lines);
-  const date = extractDate(text);
-  const total = extractTotal(text);
-  const items = extractLineItems(lines);
+//   const merchant = extractMerchant(lines);
+//   const date = extractDate(text);
+//   const total = extractTotal(text);
+//   const items = extractLineItems(lines);
   
-  return {
-    merchant,
-    date,
-    total,
-    items,
-    confidence: calculateConfidence({ merchant, date, total, items })
-  };
-}
+//   return {
+//     merchant,
+//     date,
+//     total,
+//     items,
+//     confidence: calculateConfidence({ merchant, date, total, items })
+//   };
+// }
 
 function extractMerchant(lines) {
   const commonMerchants = [

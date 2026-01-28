@@ -21,12 +21,11 @@ export function useReceiptOCR() {
 
       const idToken = await user.getIdToken();
       
-      const hostname = window.location.hostname;
-      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      // ALWAYS use production Cloud Function
+      // If you want to use emulator, change this manually
+      const functionUrl = 'https://us-east1-workbase-8dfe2.cloudfunctions.net/processReceipt';
       
-      const functionUrl = isLocalhost
-        ? 'http://127.0.0.1:5001/workbase-8dfe2/us-east1/processReceipt'
-        : 'https://us-east1-workbase-8dfe2.cloudfunctions.net/processReceipt';
+      console.log('📞 Calling Cloud Function:', functionUrl);
       
       const response = await fetch(functionUrl, {
         method: 'POST',
@@ -42,11 +41,17 @@ export function useReceiptOCR() {
         })
       });
 
+      console.log('📥 Response status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('✅ Response data:', data);
+      
       const resultData = data.result;
       
       if (!resultData.success) {
@@ -57,6 +62,7 @@ export function useReceiptOCR() {
       return resultData;
       
     } catch (err) {
+      console.error('❌ processReceipt error:', err);
       setError(err.message);
       throw err;
     } finally {

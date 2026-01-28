@@ -5,7 +5,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -30,6 +31,11 @@ export default function ReceiptReview({
   const [showItems, setShowItems] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [showRawText, setShowRawText] = useState(false);
+  
+  // NEW: State for adding manual items
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [newItem, setNewItem] = useState({ description: '', amount: '' });
 
   const commonTags = [
     'materials',
@@ -81,6 +87,32 @@ export default function ReceiptReview({
       e.preventDefault();
       handleAddTag(tagInput);
     }
+  };
+
+  // NEW: Add manual line item
+  const handleAddItem = () => {
+    if (newItem.description.trim() && newItem.amount) {
+      const item = {
+        description: newItem.description.trim(),
+        amount: parseFloat(newItem.amount)
+      };
+      
+      setFormData({
+        ...formData,
+        items: [...formData.items, item]
+      });
+      
+      setNewItem({ description: '', amount: '' });
+      setIsAddingItem(false);
+    }
+  };
+
+  // NEW: Remove line item
+  const handleRemoveItem = (index) => {
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index)
+    });
   };
 
   return (
@@ -276,7 +308,7 @@ export default function ReceiptReview({
                   <button
                     key={tag}
                     onClick={() => handleAddTag(tag)}
-                    className="px-3 py-1 bg-gray-100 rounded-full text-sm"
+                    className="px-3 py-1 bg-gray-100 rounded-full text-sm hover:bg-gray-200"
                   >
                     + {t(`receipts.tags.${tag}`, tag)}
                   </button>
@@ -300,36 +332,97 @@ export default function ReceiptReview({
             />
           </div>
 
-          {/* Line Items */}
-          {formData.items.length > 0 && (
-            <div className="border-t pt-4">
-              <button
-                onClick={() => setShowItems(!showItems)}
-                className="w-full flex justify-between py-2 font-semibold"
-              >
-                {t('receipts.review.lineItems', {
-                  count: formData.items.length
-                })}
-                {showItems ? <ChevronUp /> : <ChevronDown />}
-              </button>
-
-              {showItems && (
-                <div className="space-y-2">
-                  {formData.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <span>{item.description}</span>
-                      <span className="font-semibold">
-                        ${item.amount.toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+          {/* Line Items Section */}
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-700">
+                {t('receipts.review.lineItems', { count: formData.items.length })}
+              </h3>
+              {!isAddingItem && (
+                <button
+                  onClick={() => setIsAddingItem(true)}
+                  className="flex items-center gap-1 text-blue-600 text-sm font-semibold hover:text-blue-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Item
+                </button>
               )}
             </div>
-          )}
+
+            {/* Add New Item Form */}
+            {isAddingItem && (
+              <div className="bg-blue-50 p-3 rounded-lg mb-3 space-y-2">
+                <input
+                  type="text"
+                  value={newItem.description}
+                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Item description..."
+                />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={newItem.amount}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (/^\d*\.?\d{0,2}$/.test(v)) {
+                          setNewItem({ ...newItem, amount: v });
+                        }
+                      }}
+                      className="w-full pl-7 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <button
+                    onClick={handleAddItem}
+                    disabled={!newItem.description.trim() || !newItem.amount}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold disabled:bg-gray-300"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAddingItem(false);
+                      setNewItem({ description: '', amount: '' });
+                    }}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Display Items */}
+            {formData.items.length > 0 ? (
+              <div className="space-y-2">
+                {formData.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group"
+                  >
+                    <span className="flex-1 text-sm">{item.description}</span>
+                    <span className="font-semibold text-sm mr-2">
+                      ${item.amount.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveItem(idx)}
+                      className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 transition-opacity"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No line items. Click "Add Item" to add manually.
+              </p>
+            )}
+          </div>
 
           {/* OCR Confidence */}
           {ocrData.confidence > 0 && (
@@ -350,10 +443,27 @@ export default function ReceiptReview({
               </div>
             </div>
           )}
+
+          {/* Debug: Show raw OCR text */}
+          {ocrData.rawText && (
+            <div className="border-t pt-4">
+              <button
+                onClick={() => setShowRawText(!showRawText)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                {showRawText ? 'Hide' : 'Show'} Raw OCR Text (Debug)
+              </button>
+              {showRawText && (
+                <pre className="text-xs bg-gray-50 p-2 rounded mt-2 overflow-auto max-h-48">
+                  {ocrData.rawText}
+                </pre>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Save Button */}
+      {/* Fixed Save Button */}
       <div className="bg-white border-t p-4 shadow-lg">
         <button
           onClick={handleSubmit}
@@ -363,13 +473,18 @@ export default function ReceiptReview({
             !formData.total ||
             saving
           }
-          className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg disabled:bg-gray-300"
+          className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg disabled:bg-gray-300 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
         >
-          {saving
-            ? t('receipts.review.saving')
-            : t('receipts.review.saveExpense', {
-                total: Number(formData.total || 0).toFixed(2)
-              })}
+          {saving ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white"></div>
+              {t('receipts.review.saving')}
+            </>
+          ) : (
+            t('receipts.review.saveExpense', {
+              total: Number(formData.total || 0).toFixed(2)
+            })
+          )}
         </button>
       </div>
     </div>
