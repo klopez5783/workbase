@@ -5,10 +5,8 @@ import { firestoreService } from '../services/firestoreService';
 import StatCard from '../components/dashboard/StatCard';
 import QuickActions from '../components/dashboard/QuickActions';
 import ActivityList from '../components/dashboard/ActivityList';
-import WorkerLinkStatus from '../components/WorkerLinkStatus';
 import { useAuth } from '../contexts/AuthContext';
 import AdminOnboardingWizard from '../features/onboarding/components/AdminOnboardingWizard';
-import LanguageSwitcher from '../components/dashboard/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { Briefcase, Clock, Users, AlertCircle } from 'lucide-react';
 
@@ -145,10 +143,9 @@ export default function Dashboard() {
       {/* Project Stats - Admin Only */}
       {isAdmin && (
         <div className="px-5 mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
-            <LanguageSwitcher compact />
-          </div>
+          
+          <h2 className="text-lg font-bold text-gray-900 mb-2">{t('projectStats.Title')}</h2>
+          
           
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {/* Table Rows - 2x2 Grid */}

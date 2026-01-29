@@ -18,7 +18,9 @@ import {
   FileText,
   UserCheck,
   Activity,
-  CircleArrowLeft
+  CircleArrowLeft,
+  Camera,
+  List
 } from 'lucide-react';
 import AssignWorkersModal from '../features/projects/components/AssignWorkersModal';
 import ProjectForm from '../features/projects/components/ProjectForm';
@@ -205,7 +207,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 text-red-600" size={64} />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Not Found</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => navigate('/admin/projects')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
@@ -222,7 +224,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
     <div className="min-h-screen bg-gray-50 p-5 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <button
             onClick={() => navigate('/admin/projects')}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
@@ -232,7 +234,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
           </button>
 
           {/* Project Title Section */}
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-gradient-to-r mb-4 from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -257,85 +259,120 @@ const workerStats = workers.map(worker => {  // worker is a string ID
                 {project.status || t('project.active')}
               </span>
             </div>
-
+            
             {/* Quick Actions */}
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => navigate(`/reports/time-card?projectId=${projectId}`)}
-                className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition flex items-center gap-2"
-              >
-                <Clock size={18} />
-                {t('Hours.ViewHours')}
-              </button>
-                <button
-                  onClick={handleEdit}
-                  className="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2"
-                >
-                  <Edit size={18} />
-                  {t('projects.editProject')}
-                </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-blue-100 rounded-lg mb-2">
-                <Clock className="text-blue-600" size={24} />
-              </div>
-              <p className="text-gray-600 text-xs mb-1">{t('Hours.totalHours')}</p>
-              <p className="text-3xl font-bold text-gray-900">{totalHours.toFixed(1)}</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <button onClick={() => handleAssignWorkers()} className="w-full flex justify-center items-center">
-              <div className="flex flex-col items-center text-center">
-                <div className="p-3 bg-purple-100 rounded-lg mb-2">
-                  <Users className="text-purple-600" size={24} />
-                </div>
-                <p className="text-gray-600 text-xs mb-1">{t('workers.title')}</p>
-                <p className="text-3xl font-bold text-gray-900">{workers.length}</p>
-              </div>
+            <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => navigate(`/reports/time-card?projectId=${projectId}`)}
+              className="flex-1 bg-white text-blue-600 px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <Clock size={18} />
+              {t('Hours.ViewHours')}
+            </button>
+            <button
+              onClick={handleEdit}
+              className="px-4 py-3 rounded-lg font-semibold border-2 border-white text-white hover:bg-white hover:text-blue-600 transition-all flex items-center gap-2"
+            >
+              <Edit size={18} />
+              {t('projects.editProject')}
             </button>
           </div>
 
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-green-100 rounded-lg mb-2">
-                <CheckCircle className="text-green-600" size={24} />
-              </div>
-              <p className="text-gray-600 text-xs mb-1">{t('Hours.approved')}</p>
-              <p className="text-3xl font-bold text-green-600">{approvedCount}</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-3 bg-orange-100 rounded-lg mb-2">
-                <AlertCircle className="text-orange-600" size={24} />
-              </div>
-              <p className="text-gray-600 text-xs mb-1">{t('Hours.pending')}</p>
-              <p className="text-3xl font-bold text-orange-600">{pendingCount}</p>
-            </div>
-          </div>
+            
+            
         </div>
+            
+          {/* Statistics Grid */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {/* Total Hours */}
+            <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200">
+              <div className="flex flex-col items-center text-center">
+                <div className="p-2 bg-blue-100 rounded-lg mb-2">
+                  <Clock className="text-blue-600" size={20} />
+                </div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  {t('Hours.totalHours')}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalHours.toFixed(1)}
+                </p>
+              </div>
+            </div>
 
-        <button
-          onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold"
-        >
-          📷 Scan Receipt
-        </button>
+            {/* Workers */}
+            <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200">
+              <button 
+                onClick={() => handleAssignWorkers()} 
+                className="w-full h-full flex flex-col items-center text-center hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="p-2 bg-purple-100 rounded-lg mb-2">
+                  <Users className="text-purple-600" size={20} />
+                </div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  {t('workers.title')}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {workers.length}
+                </p>
+              </button>
+            </div>
 
-        <button
-          onClick={() => navigate(`/projects/${projectId}/receipts`)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold"
-        >
-          📷Receipt List
-        </button>
+            {/* Approved
+            <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200">
+              <div className="flex flex-col items-center text-center">
+                <div className="p-2 bg-green-100 rounded-lg mb-2">
+                  <CheckCircle className="text-green-600" size={20} />
+                </div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  {t('Hours.approved')}
+                </p>
+                <p className="text-xl font-bold text-green-600">
+                  {approvedCount}
+                </p>
+              </div>
+            </div> */}
+
+            {/* Pending */}
+            <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200">
+              <div className="flex flex-col items-center text-center">
+                <div className="p-2 bg-orange-100 rounded-lg mb-2">
+                  <AlertCircle className="text-orange-600" size={20} />
+                </div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  {t('Hours.pending')}
+                </p>
+                <p className="text-xl font-bold text-orange-600">
+                  {pendingCount}
+                </p>
+              </div>
+            </div>
+          </div>
+
+
+        {/* Receipt Actions - Clear Hierarchy */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <button
+            onClick={() => navigate(`/projects/${projectId}/receipts/scan`)}
+            className="bg-blue-600 text-white px-3 py-4 rounded-xl font-semibold hover:bg-blue-700 hover:shadow-lg transition-all flex items-center justify-center gap-3"
+          >
+            <Camera size={35} />
+            <div className="text-left">
+              <div className="font-bold">Scan Receipt</div>
+              <div className="text-xs text-blue-100">Upload a new receipt</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate(`/projects/${projectId}/receipts`)}
+            className="bg-white text-blue-600 border-2 border-blue-600 px- py-4 rounded-xl font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-3"
+          >
+            <List size={35} />
+            <div className="text-left">
+              <div className="font-bold">Receipt List</div>
+              <div className="text-xs text-blue-500">View all receipts</div>
+            </div>
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Workers and Activity */}
@@ -446,61 +483,6 @@ const workerStats = workers.map(worker => {  // worker is a string ID
 
           {/* Right Column - Project Info & Documents */}
           <div className="space-y-6">
-            {/* Project Information */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="text-purple-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">{t('projects.Project Info')}</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">{t('projects.projectName')}</p>
-                  <p className="font-semibold text-gray-900">{project.name}</p>
-                </div>
-
-                {project.clientName && (
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">{t('projectCard.Client')}</p>
-                    <p className="font-semibold text-gray-900">{project.clientName}</p>
-                  </div>
-                )}
-
-                {project.address && (
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">{t('projects.projectAddress')}</p>
-                    <p className="font-semibold text-gray-900">{project.address}</p>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">{t('projects.Status')}</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                    project.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {project.status || 'Active'}
-                  </span>
-                </div>
-
-                {project.notes && (
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Notes</p>
-                    <p className="text-gray-900 whitespace-pre-wrap">{project.notes}</p>
-                  </div>
-                )}
-
-                {project.createdAt && (
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">{t("Created", "Creado")}</p>
-                    <p className="font-semibold text-gray-900">
-                      {formatDate(project.createdAt)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Project Documents */}
             <ProjectDocuments 
@@ -530,5 +512,7 @@ const workerStats = workers.map(worker => {  // worker is a string ID
         )}
 
     </div>
+
+  </div>
   );
 }

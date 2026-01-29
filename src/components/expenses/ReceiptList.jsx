@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Camera, Calendar, DollarSign, Tag, RefreshCw } from 'lucide-react';
+import { Camera, Calendar, DollarSign, Tag, RefreshCw, CircleArrowLeft } from 'lucide-react';
 import { LoadingPage } from '../LoadingSpinner';
 import { Toast } from '../Toast';
 import { OfflineBanner } from '../OfflineBanner';
@@ -194,6 +194,14 @@ export default function ReceiptList() {
       )}
 
       <div className="max-w-4xl mx-auto p-4">
+
+          <button
+            onClick={() => navigate(`/project/${projectId}`)}
+            className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
+          >
+            <CircleArrowLeft size={25} />
+            Back to Project
+          </button>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>

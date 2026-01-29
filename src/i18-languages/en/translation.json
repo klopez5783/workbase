@@ -586,5 +586,27 @@
       "plumbing": "plumbing",
       "drywall": "drywall"
     }
+  },
+  "addWorker": {
+    "title": "Add Worker",
+    "workerName": "Worker Name",
+    "phoneNumber": "Phone Number",
+    "phonePlaceholder": "(555) 123-4567",
+    "namePlaceholder": "John Smith",
+    "phoneHelper": "📱 We'll send a link to this number so they can clock in",
+    "noAccountNeeded": "No account needed!",
+    "infoMessage": "Workers will receive a link they can use to clock in/out instantly.",
+    "cancel": "Cancel",
+    "addButton": "Add Worker",
+    "adding": "Adding...",
+    "required": "*",
+    "errors": {
+      "nameRequired": "Please enter worker name",
+      "phoneRequired": "Please enter phone number",
+      "invalidPhone": "Please enter a valid 10-digit phone number",
+      "companyRequired": "You must be part of a company to add workers",
+      "failed": "Failed to add worker"
+    },
+    "success": "Worker added successfully! Access link expires in 30 minutes."
   }
 }

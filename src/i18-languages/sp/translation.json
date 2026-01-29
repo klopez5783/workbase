@@ -589,5 +589,27 @@
       "plumbing": "plomería",
       "drywall": "panel de yeso"
     }
+  },
+  "addWorker": {
+    "title": "Agregar Trabajador",
+    "workerName": "Nombre del Trabajador",
+    "phoneNumber": "Número de Teléfono",
+    "phonePlaceholder": "(555) 123-4567",
+    "namePlaceholder": "Juan Pérez",
+    "phoneHelper": "📱 Enviaremos un enlace a este número para que puedan registrar entrada/salida",
+    "noAccountNeeded": "¡No se necesita cuenta!",
+    "infoMessage": "Los trabajadores recibirán un enlace que pueden usar para registrar entrada/salida instantáneamente.",
+    "cancel": "Cancelar",
+    "addButton": "Agregar Trabajador",
+    "adding": "Agregando...",
+    "required": "*",
+    "errors": {
+      "nameRequired": "Por favor ingrese el nombre del trabajador",
+      "phoneRequired": "Por favor ingrese el número de teléfono",
+      "invalidPhone": "Por favor ingrese un número de teléfono válido de 10 dígitos",
+      "companyRequired": "Debe ser parte de una empresa para agregar trabajadores",
+      "failed": "Error al agregar trabajador"
+    },
+    "success": "¡Trabajador agregado exitosamente! El enlace de acceso expira en 30 minutos."
   }
 }
