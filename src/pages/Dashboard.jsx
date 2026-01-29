@@ -255,12 +255,6 @@ export default function Dashboard() {
       )}
       <QuickActions />
 
-      <button
-        onClick={() => window.location.href = '/test-camera'}
-        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold"
-      >
-        Test Camera
-      </button>
 
       {/* Stats Grid - Show for All Users */}
       <div className="grid grid-cols-2 gap-3 px-5 mt-4">
