@@ -72,6 +72,7 @@ export default function ProjectDetailsPage() {
    const handleCloseForm = async () => {
     setShowForm(false);
     setEditingProject(null);
+    await loadProjectDetails();
   };
 
   const loadProjectDetails = async () => {
