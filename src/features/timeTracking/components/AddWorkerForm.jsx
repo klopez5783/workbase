@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Loader } from 'lucide-react';
 import { firestoreService } from '../../../services/firestoreService';
+import { useTranslation } from 'react-i18next';
 
 export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,23 +35,23 @@ export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
     e.preventDefault();
 
     if (!name.trim()) {
-      setError('Please enter worker name');
+      setError(t('addWorker.errors.nameRequired'));
       return;
     }
 
     if (!phone.trim()) {
-      setError('Please enter phone number');
+      setError(t('addWorker.errors.phoneRequired'));
       return;
     }
 
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
+      setError(t('addWorker.errors.invalidPhone'));
       return;
     }
 
     if (!companyId) {
-      setError('You must be part of a company to add workers');
+      setError(t('addWorker.errors.companyRequired'));
       return;
     }
 
@@ -79,15 +81,15 @@ export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
       const result = await firestoreService.create('workers', workerData);
       
       if (result.success) {
-        alert('Worker added successfully! Access link expires in 30 minutes.');
+        alert(t('addWorker.success'));
         onSuccess(workerData);
       } else {
         console.error('Failed to create worker:', result.error);
-        setError(result.error || 'Failed to add worker');
+        setError(result.error || t('addWorker.errors.failed'));
       }
     } catch (err) {
       console.error('Error adding worker:', err);
-      setError(err.message || 'An error occurred');
+      setError(err.message || t('addWorker.errors.failed'));
     } finally {
       setLoading(false);
     }
@@ -98,7 +100,7 @@ export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Add Worker</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('addWorker.title')}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -118,20 +120,20 @@ export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
           {/* Info Box */}
           <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3">
             <p className="text-blue-900 text-sm">
-              <strong>No account needed!</strong> Workers will receive a link they can use to clock in/out instantly.
+              <strong>{t('addWorker.noAccountNeeded')}</strong> {t('addWorker.infoMessage')}
             </p>
           </div>
 
           {/* Name Input */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Worker Name *
+              {t('addWorker.workerName')} {t('addWorker.required')}
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Smith"
+              placeholder={t('addWorker.namePlaceholder')}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
               autoFocus
@@ -141,18 +143,18 @@ export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
           {/* Phone Input */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Phone Number *
+              {t('addWorker.phoneNumber')} {t('addWorker.required')}
             </label>
             <input
               type="tel"
               value={phone}
               onChange={handlePhoneChange}
-              placeholder="(555) 123-4567"
+              placeholder={t('addWorker.phonePlaceholder')}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
             <p className="text-xs text-gray-500 mt-2">
-              📱 We'll send a link to this number so they can clock in
+              {t('addWorker.phoneHelper')}
             </p>
           </div>
 
@@ -163,7 +165,7 @@ export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
               onClick={onClose}
               className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition"
             >
-              Cancel
+              {t('addWorker.cancel')}
             </button>
             <button
               type="submit"
@@ -173,10 +175,10 @@ export default function AddWorkerForm({ onClose, onSuccess, companyId }) {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader className="animate-spin" size={20} />
-                  Adding...
+                  {t('addWorker.adding')}
                 </span>
               ) : (
-                'Add Worker'
+                t('addWorker.addButton')
               )}
             </button>
           </div>

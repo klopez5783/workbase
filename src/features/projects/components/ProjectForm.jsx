@@ -11,23 +11,27 @@ export default function ProjectForm({ onClose, existingProject = null }) {
   const { currentEmployee } = useEmployeeStore();
   
   // Parse existing address if editing
-  const parseAddress = (fullAddress) => {
-    if (!fullAddress) return { street: '', apt: '', city: '', state: 'Ohio', zip: '' };
+ const parseAddress = (fullAddress) => {
+  if (!fullAddress) return { street: '', apt: '', city: '', state: 'Ohio', zip: '' };
+  
+  // Split by comma to get main parts
+  const parts = fullAddress.split(',').map(p => p.trim());
+  
+  if (parts.length >= 3) {
+    const street = parts[0] || '';
+    const city = parts[1] || '';
     
-    // Try to parse the address (this is a simple parser, may need refinement)
-    const parts = fullAddress.split(',').map(p => p.trim());
-    if (parts.length >= 3) {
-      const street = parts[0] || '';
-      const city = parts[1] || '';
-      const stateZip = parts[2]?.split(' ') || [];
-      const state = stateZip[0] || 'Ohio';
-      const zip = stateZip[1] || '';
-      
-      return { street, apt: '', city, state, zip };
-    }
+    // The last part should be "State ZIP"
+    // Split by space and take the last element as ZIP, everything else as State
+    const stateZipParts = parts[2]?.trim().split(/\s+/) || [];
+    const zip = stateZipParts[stateZipParts.length - 1] || '';
+    const state = stateZipParts.slice(0, -1).join(' ') || 'Ohio';
     
-    return { street: fullAddress, apt: '', city: '', state: 'Ohio', zip: '' };
-  };
+    return { street, apt: '', city, state, zip };
+  }
+  
+  return { street: fullAddress, apt: '', city: '', state: 'Ohio', zip: '' };
+};
 
   const initialAddress = existingProject?.address ? parseAddress(existingProject.address) : { street: '', apt: '', city: '', state: 'Ohio', zip: '' };
 
@@ -82,65 +86,74 @@ export default function ProjectForm({ onClose, existingProject = null }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!name || !streetAddress || !city || !state || !zipCode) {
-      setError('Please fill in all required fields');
-      return;
-    }
+  e.preventDefault();
+  
+  if (!name || !streetAddress || !city || !state || !zipCode) {
+    setError('Please fill in all required fields');
+    return;
+  }
 
-    if (!location) {
-      setError('Please set the job site location');
-      return;
-    }
+  if (!location) {
+    setError('Please set the job site location');
+    return;
+  }
 
-    setLoading(true);
-    setError('');
+  setLoading(true);
+  setError('');
 
-    const fullAddress = getFullAddress();
+  const fullAddress = getFullAddress();
 
-    const projectData = {
-      name,
-      address: fullAddress,
-      location,
-      geofenceRadius: Number(geofenceRadius),
-      clientName,
-      clientPhone,
-      status: 'active',
-      assignedEmployees: existingProject?.assignedEmployees || [],
-      assignedWorkers: existingProject?.assignedWorkers || [],
-      createdAt: existingProject?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      // Add createdBy field for new projects to track the company (using companyId)
-      ...(existingProject ? {} : { createdBy: currentEmployee?.companyId }),
-    };
-
-    try {
-      if (existingProject) {
-        // Update existing project
-        const projectId = existingProject.firestoreId || existingProject.id;
-        await firestoreService.update('projects', projectId, projectData);
-        updateProject(existingProject.id, projectData);
-      } else {
-        // Create new project
-        const result = await firestoreService.create('projects', projectData);
-        
-        if (result.success) {
-          addProject({
-            id: result.id,
-            firestoreId: result.id,
-            ...projectData,
-          });
-        }
-      }
-
-      onClose();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  // Ensure location object has the current form address
+  const updatedLocation = {
+    latitude: location.latitude,
+    longitude: location.longitude,
+    address: fullAddress
   };
+
+  const projectData = {
+    name,
+    address: fullAddress,
+    location: updatedLocation, // Use the updated location with correct address
+    geofenceRadius: Number(geofenceRadius),
+    clientName,
+    clientPhone,
+    status: 'active',
+    assignedEmployees: existingProject?.assignedEmployees || [],
+    assignedWorkers: existingProject?.assignedWorkers || [],
+    createdAt: existingProject?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...(existingProject ? {} : { createdBy: currentEmployee?.companyId }),
+  };
+
+  console.log('=== PROJECT UPDATE DEBUG ===');
+  console.log('Project data being saved:', projectData);
+
+  try {
+    if (existingProject) {
+      // Update existing project
+      const projectId = existingProject.firestoreId || existingProject.id;
+      await firestoreService.update('projects', projectId, projectData);
+      updateProject(existingProject.id, projectData);
+    } else {
+      // Create new project
+      const result = await firestoreService.create('projects', projectData);
+      
+      if (result.success) {
+        addProject({
+          id: result.id,
+          firestoreId: result.id,
+          ...projectData,
+        });
+      }
+    }
+
+    onClose();
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-5 z-50 overflow-y-auto">

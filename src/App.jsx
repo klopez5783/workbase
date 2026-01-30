@@ -29,6 +29,11 @@ import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectHoursPage from './pages/ProjectHoursPage';
 import SMSTerms from './pages/SMSTerms';
 import JoinCompany from './pages/JoinCompany';
+import TestOCR from './pages/TestOCR';
+import ReceiptList from './components/expenses/ReceiptList';
+import ReceiptScanner from './components/expenses/ReceiptScanner';
+import TestCamera from './pages/TestCamera';
+import ReceiptDetail from './components/expenses/ReceiptDetail';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -115,6 +120,7 @@ return (
         <Route path="/signup" element={currentUser ? <Navigate to="/" /> : <Signup />} />
         <Route path="/sms-terms" element={<SMSTerms />} />
         <Route path="/join-company" element={<JoinCompany />} />
+        <Route path="/test-camera" element={<TestCamera />} />
 
         {/* Worker Clock-In (Public) */}
         <Route path="/worker/:accessKey" element={<WorkerClockIn />} />
@@ -139,8 +145,12 @@ return (
           <Route path="daily-reports" element={<DailyReportsViewer />} />
           <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
           <Route path="/project-hours" element={<ProjectHoursPage />} />
+          <Route path="/test-ocr" element={<TestOCR />} />
+          <Route path="/projects/:projectId/receipts" element={<ReceiptList />} />
+          <Route path="/projects/:projectId/receipts/scan" element={<ReceiptScanner />} />
+          <Route path="/projects/:projectId/receipts/:receiptId" element={<ReceiptDetail />} />
           
-          {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */}
+          {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */} 
           <Route 
             path="admin/tools" 
             element={

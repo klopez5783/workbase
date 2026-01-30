@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTimeTrackingStore } from '../../features/timeTracking/store/timeTrackingStore';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../../components/dashboard/LanguageSwitcher';
 
 export default function QuickActions() {
   const { t } = useTranslation();
@@ -58,7 +59,7 @@ const adminActions = [
     {
       icon: Camera,
       label: t('receipts.addReceipt'),  // "Add Receipt" / "Agregar Recibo"
-      onClick: () => navigate('/receipts/upload'),
+      onClick: () => navigate('/receipts'),
       gradient: 'from-emerald-500 to-emerald-600',
     },
     {
@@ -80,7 +81,10 @@ const adminActions = [
 
    return (
     <div className="px-5 mt-3">
-      <h2 className="text-lg font-bold text-gray-900 mb-4">{t('quickActions.title')}</h2>
+      <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{t('quickActions.title')}</h2>
+            <LanguageSwitcher />
+          </div>
       <div className="grid grid-cols-2 gap-3">
         {actions.map(({ icon: Icon, label, onClick, gradient }) => (
           <button

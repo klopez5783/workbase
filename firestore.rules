@@ -67,5 +67,25 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
+    // Receipt rules (changed from expenses)
+    match /projects/{projectId}/receipts/{receiptId} {
+      // Allow project members to read receipts
+      allow read: if request.auth != null 
+        && (get(/databases/$(database)/documents/projects/$(projectId)).data.adminId == request.auth.uid
+            || get(/databases/$(database)/documents/projects/$(projectId)).data.workers[request.auth.uid] != null);
+      
+      // Allow authenticated users to create receipts
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.submittedBy;
+      
+      // Allow receipt creator or project admin to update
+      allow update: if request.auth != null
+        && (request.auth.uid == resource.data.submittedBy
+            || get(/databases/$(database)/documents/projects/$(projectId)).data.adminId == request.auth.uid);
+      
+      // Allow project admin to delete
+      allow delete: if request.auth != null
+        && get(/databases/$(database)/documents/projects/$(projectId)).data.adminId == request.auth.uid;
+    }
   }
 }

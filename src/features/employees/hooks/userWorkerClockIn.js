@@ -12,7 +12,6 @@ export function useWorkerClockIn(accessKey = null) {
 
    let currentUser = null;
   let currentEmployee = null;
-  let setCurrentEmployee = () => {};
   
   try {
     const auth = useAuth();

@@ -1,5 +1,6 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from './firebase';
+import { v4 as uuidv4 } from 'uuid';
 
 export const storageService = {
   // Upload file (renamed from 'upload' to match usage in WorkLogForm)
@@ -13,6 +14,47 @@ export const storageService = {
       return { success: false, error: error.message };
     }
   },
+
+ // src/services/storageService.js (just the uploadReceipt and deleteReceipt methods)
+
+async uploadReceipt(projectId, imageBlob) {
+  try {
+    const receiptId = uuidv4();
+    const fileName = `${receiptId}.jpg`;
+    const path = `receipts/${projectId}/${fileName}`;
+    
+    const storageRef = ref(storage, path);
+    const snapshot = await uploadBytes(storageRef, imageBlob, {
+      contentType: 'image/jpeg',
+      customMetadata: {
+        uploadedAt: new Date().toISOString(),
+        projectId: projectId
+      }
+    });
+
+    const url = await getDownloadURL(snapshot.ref);
+    
+    return { success: true, url };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+},
+
+async deleteReceipt(imageUrl) {
+  try {
+    const url = new URL(imageUrl);
+    const pathStart = url.pathname.indexOf('/o/') + 3;
+    const pathEnd = url.pathname.indexOf('?');
+    const path = decodeURIComponent(url.pathname.substring(pathStart, pathEnd));
+    
+    const storageRef = ref(storage, path);
+    await deleteObject(storageRef);
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+},
 
   // Upload file (alternate method name)
   async upload(path, file) {

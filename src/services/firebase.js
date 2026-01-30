@@ -18,52 +18,54 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 const functions = getFunctions(app, 'us-east1');
 
 // Connect to emulators in development
 // IMPORTANT: This must run BEFORE any auth operations
-const USE_EMULATORS = false; // ← SET TO true TO USE EMULATORS
+// const USE_EMULATORS = true; // ← SET TO true TO USE EMULATORS
 
-if (USE_EMULATORS && typeof window !== 'undefined') {
-  // Only connect once
-  let emulatorsConnected = false;
+// if (USE_EMULATORS && typeof window !== 'undefined') {
+//   // Only connect once
+//   let emulatorsConnected = false;
   
-  if (!emulatorsConnected) {
-    try {
-      console.log('🔧 Connecting to Firebase Emulators...');
-      
-      // Connect to Auth Emulator
-      connectAuthEmulator(auth, "http://127.0.0.1:9099", { 
-        disableWarnings: true 
-      });
-      
-      // Connect to Firestore Emulator
-      connectFirestoreEmulator(db, "127.0.0.1", 8080);
-      
-      // Connect to Storage Emulator
-      connectStorageEmulator(storage, "127.0.0.1", 9199);
+//   if (!emulatorsConnected) {
+//     try {
+//     console.log('🔧 Connecting to Firebase Emulators...');
+    
+//     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+//     connectFirestoreEmulator(db, "127.0.0.1", 8080);
+//     connectStorageEmulator(storage, "127.0.0.1", 9199);
+    
+//     // 🎯 THIS LINE CONNECTS TO FUNCTIONS EMULATOR
+//     connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    
+//     console.log('✅ Functions emulator connected');
+//     } catch (error) {
+//       console.error('❌ Failed to connect to emulators:', error);
+//       console.error('Make sure emulators are running: firebase emulators:start');
+//     }
+//   }
+// } else {
+//   console.log('🌐 Using Production Firebase');
+// }
 
-      // Connect to Functions Emulator
-      connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-      
-      emulatorsConnected = true;
-      
-      console.log('✅ Connected to Firebase Emulators:');
-      console.log('   - Auth: http://127.0.0.1:9099');
-      console.log('   - Firestore: http://127.0.0.1:8080');
-      console.log('   - Storage: http://127.0.0.1:9199');
-      console.log('   - Functions: http://127.0.0.1:5001'); 
-      console.log('   - UI: http://127.0.0.1:4000');
-    } catch (error) {
-      console.error('❌ Failed to connect to emulators:', error);
-      console.error('Make sure emulators are running: firebase emulators:start');
-    }
-  }
-} else {
-  console.log('🌐 Using Production Firebase');
-}
+// ONLY use emulators when accessing from localhost (your PC)
+// if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+//   console.log('🔧 Connecting to Firebase Emulators...');
+  
+//   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+//   connectFirestoreEmulator(db, "127.0.0.1", 8080);
+//   connectStorageEmulator(storage, "127.0.0.1", 9199);
+//   connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  
+//   console.log('✅ Emulators connected');
+// } else {
+//   console.log('✅ Using production Firebase');
+// }
 
+// Export AFTER connecting
+export { auth, db, storage, functions };
 export default app;
