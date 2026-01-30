@@ -89,63 +89,42 @@ export default function ReceiptScanner() {
   };
 
   const handleSave = async (expenseData) => {
-    setSaving(true);
-
-    try {
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        throw new Error(t('receipts.scan.loginRequired'));
-      }
-
-      // If offline, save to queue
-      if (!isOnline) {
-        await addToUploadQueue({
-          ...expenseData,
-          imageBlob: imageBlob,
-          projectId: projectId,
-          submittedBy: currentUser.uid,
-          submittedByName: currentUser.displayName || currentUser.email || t('receipts.detail.unknown')
-        });
-
-        navigate(`/projects/${projectId}/receipts`, {
-          state: { 
-            message: t('receipts.offline.savedOffline'),
-            type: 'warning'
-          }
-        });
-        return;
-      }
-
-      // Online - save directly to Firestore
-      await addDoc(collection(db, `projects/${projectId}/receipts`), {
-        merchant: expenseData.merchant,
-        date: expenseData.date,
-        total: expenseData.total,
-        tags: expenseData.tags || [],
-        notes: expenseData.notes || '',
-        items: expenseData.items || [],
-        receiptImageUrl: expenseData.receiptImageUrl,
-        ocrRawText: expenseData.ocrRawText || '',
-        ocrConfidence: expenseData.ocrConfidence || 0,
-        projectId: projectId,
-        submittedBy: currentUser.uid,
-        submittedByName: currentUser.displayName || currentUser.email || t('receipts.detail.unknown'),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-
-      navigate(`/projects/${projectId}/receipts`, {
-        state: { message: t('receipts.scan.saveSuccess') }
-      });
-
-    } catch (err) {
-      console.error('Error saving receipt:', err);
-      alert(t('receipts.scan.saveFailed') + err.message);
-    } finally {
-      setSaving(false);
+  setSaving(true);
+  
+  try {
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      throw new Error('You must be logged in to save expenses');
     }
-  };
+
+    // Save to Firestore
+    await addDoc(collection(db, `projects/${projectId}/receipts`), {
+      merchant: expenseData.merchant,
+      date: expenseData.date,
+      total: expenseData.total,
+      tags: expenseData.tags || [],
+      notes: expenseData.notes || '',
+      items: expenseData.items || [],
+      receiptImageUrl: expenseData.receiptImageUrl,
+      ocrRawText: expenseData.ocrRawText || '',
+      ocrConfidence: expenseData.ocrConfidence || 0,
+      projectId: projectId,
+      submittedBy: currentUser.uid,
+      submittedByName: currentUser.displayName || currentUser.email || 'Unknown',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    // Success!
+    navigate(`/projects/${projectId}/receipts`, {
+      state: { message: 'Receipt saved successfully!' }
+    });
+
+  } catch (err) {
+    alert('Failed to save expense: ' + err.message);
+  }
+}
 
   return (
     <>

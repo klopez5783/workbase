@@ -149,6 +149,7 @@ return (
           <Route path="/projects/:projectId/receipts" element={<ReceiptList />} />
           <Route path="/projects/:projectId/receipts/scan" element={<ReceiptScanner />} />
           <Route path="/projects/:projectId/receipts/:receiptId" element={<ReceiptDetail />} />
+          <Route path="/projects/:projectId/receipts/:receiptId" element={<ReceiptDetail />} />
           
           {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */} 
           <Route 

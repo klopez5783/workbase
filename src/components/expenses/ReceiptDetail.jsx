@@ -1,17 +1,19 @@
 // src/pages/ReceiptDetail.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { doc, getDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../../services/firebase';
 import { storageService } from '../../services/storageServices';
 import {
   CircleArrowLeft,
   Calendar,
   Tag,
   Trash2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Edit as EditIcon
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ReceiptReview from '../../components/expenses/ReceiptReview';
 
 export default function ReceiptDetail() {
   const { t } = useTranslation();
@@ -22,6 +24,8 @@ export default function ReceiptDetail() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showFullImage, setShowFullImage] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // Add edit mode state
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchReceipt();
@@ -34,7 +38,25 @@ export default function ReceiptDetail() {
       );
 
       if (receiptDoc.exists()) {
-        setReceipt({ id: receiptDoc.id, ...receiptDoc.data() });
+        const receiptData = receiptDoc.data();
+        
+        setReceipt({ 
+          id: receiptDoc.id,
+          merchant: receiptData.merchant || '',
+          date: receiptData.date || '',
+          total: receiptData.total || 0,
+          tags: Array.isArray(receiptData.tags) ? receiptData.tags : [],
+          notes: receiptData.notes || '',
+          items: Array.isArray(receiptData.items) ? receiptData.items : [],
+          receiptImageUrl: receiptData.receiptImageUrl || '',
+          ocrRawText: receiptData.ocrRawText || '',
+          ocrConfidence: receiptData.ocrConfidence || 0,
+          projectId: receiptData.projectId || projectId,
+          submittedBy: receiptData.submittedBy || '',
+          submittedByName: receiptData.submittedByName || '',
+          createdAt: receiptData.createdAt,
+          updatedAt: receiptData.updatedAt
+        });
       } else {
         alert(t('receipts.detail.notFound'));
         navigate(`/projects/${projectId}/receipts`);
@@ -44,6 +66,48 @@ export default function ReceiptDetail() {
       alert(t('receipts.detail.loadFailed'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async (expenseData) => {
+    setSaving(true);
+
+    try {
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error(t('receipts.scan.loginRequired'));
+      }
+
+      const receiptRef = doc(db, `projects/${projectId}/receipts`, receiptId);
+      
+      await updateDoc(receiptRef, {
+        merchant: expenseData.merchant,
+        date: expenseData.date,
+        total: expenseData.total,
+        tags: expenseData.tags || [],
+        notes: expenseData.notes || '',
+        items: expenseData.items || [],
+        ocrRawText: expenseData.ocrRawText || '',
+        ocrConfidence: expenseData.ocrConfidence || 0,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid,
+        updatedByName: currentUser.displayName || currentUser.email || t('receipts.detail.unknown')
+      });
+
+      // Refresh the receipt data
+      await fetchReceipt();
+      
+      // Exit edit mode
+      setIsEditMode(false);
+
+      alert(t('receipts.edit.updateSuccess') || 'Receipt updated successfully');
+
+    } catch (err) {
+      console.error('Error updating receipt:', err);
+      alert(t('receipts.edit.updateFailed') || 'Failed to update receipt: ' + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -83,6 +147,58 @@ export default function ReceiptDetail() {
 
   if (!receipt) return null;
 
+  // If in edit mode, show ReceiptReview component
+  if (isEditMode) {
+    const ocrData = {
+      merchant: receipt.merchant,
+      date: receipt.date,
+      total: receipt.total,
+      items: receipt.items,
+      tags: receipt.tags,
+      notes: receipt.notes,
+      receiptImageUrl: receipt.receiptImageUrl,
+      ocrRawText: receipt.ocrRawText,
+      ocrConfidence: receipt.ocrConfidence,
+      confidence: receipt.ocrConfidence
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b sticky top-0 z-10">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <button
+              onClick={() => setIsEditMode(false)}
+              className="text-blue-600 font-semibold flex items-center gap-2 hover:text-blue-700 transition"
+            >
+              <CircleArrowLeft size={25} />
+              {t('common.cancel')}
+            </button>
+
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 disabled:opacity-50"
+            >
+              <Trash2 className="w-5 h-5" />
+              {deleting ? t('receipts.detail.deleting') : t('receipts.detail.delete')}
+            </button>
+          </div>
+        </div>
+
+        <ReceiptReview
+          imageUrl={receipt.receiptImageUrl}
+          ocrData={ocrData}
+          onSave={handleSave}
+          onRetake={() => setIsEditMode(false)}
+          saving={saving}
+          isEditMode={true}
+        />
+      </div>
+    );
+  }
+
+  // Normal view mode
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -96,16 +212,25 @@ export default function ReceiptDetail() {
             {t('receipts.detail.back')}
           </button>
 
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex items-center gap-2 text-red-600 hover:text-red-700 disabled:opacity-50"
-          >
-            <Trash2 className="w-5 h-5" />
-            {deleting
-              ? t('receipts.detail.deleting')
-              : t('receipts.detail.delete')}
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Edit Button */}
+            <button
+              onClick={() => setIsEditMode(true)}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              <EditIcon className="w-5 h-5" />
+              {t('common.edit') || 'Edit'}
+            </button>
+
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 disabled:opacity-50"
+            >
+              <Trash2 className="w-5 h-5" />
+              {deleting ? t('receipts.detail.deleting') : t('receipts.detail.delete')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -243,9 +368,7 @@ export default function ReceiptDetail() {
           <div className="border-t pt-4 text-sm text-gray-500">
             <p>
               {t('receipts.detail.submittedBy', {
-                name:
-                  receipt.submittedByName ||
-                  t('receipts.detail.unknown')
+                name: receipt.submittedByName || t('receipts.detail.unknown')
               })}
             </p>
 

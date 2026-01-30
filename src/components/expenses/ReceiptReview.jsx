@@ -15,7 +15,8 @@ export default function ReceiptReview({
   ocrData,
   onSave,
   onRetake,
-  saving
+  saving,
+  isEditMode = false
 }) {
   const { t } = useTranslation();
 
@@ -125,9 +126,10 @@ export default function ReceiptReview({
           </h1>
           <button
             onClick={onRetake}
-            className="text-blue-600 font-semibold"
+            disabled={saving}
+            className="..."
           >
-            {t('receipts.review.retake')}
+            {isEditMode ? "" : t('common.cancel')}
           </button>
         </div>
       </div>
@@ -466,25 +468,14 @@ export default function ReceiptReview({
       {/* Fixed Save Button */}
       <div className="bg-white border-t p-4 shadow-lg">
         <button
-          onClick={handleSubmit}
-          disabled={
-            !formData.merchant ||
-            !formData.date ||
-            !formData.total ||
-            saving
-          }
-          className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg disabled:bg-gray-300 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+        onClick={handleSubmit}
+        disabled={saving}
+        className="..."
         >
-          {saving ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white"></div>
-              {t('receipts.review.saving')}
-            </>
-          ) : (
-            t('receipts.review.saveExpense', {
-              total: Number(formData.total || 0).toFixed(2)
-            })
-          )}
+          {saving 
+            ? (isEditMode ? t('common.updating') : t('receipts.scan.saving'))
+            : (isEditMode ? t('common.update') : t('receipts.scan.save'))
+          }
         </button>
       </div>
     </div>
