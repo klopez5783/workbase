@@ -470,11 +470,11 @@ export default function ReceiptReview({
         <button
         onClick={handleSubmit}
         disabled={saving}
-        className="..."
+        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold disabled:bg-gray-300 flex items-center justify-center"
         >
           {saving 
-            ? (isEditMode ? t('common.updating') : t('receipts.scan.saving'))
-            : (isEditMode ? t('common.update') : t('receipts.scan.save'))
+            ? (isEditMode ? t('common.updating') : t('common.saving'))
+            : (isEditMode ? t('common.update') : t('common.save'))
           }
         </button>
       </div>

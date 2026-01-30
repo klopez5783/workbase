@@ -29,7 +29,9 @@
     "weeksAgo": "semanas atrás",
     "retry": "Intentar de Nuevo",
     "add": "Agregar",
-    "done": "Listo"
+    "done": "Listo",
+    "update": "Actualizar",
+    "saving": "Guardando..."
   },
   "nav": {
     "Home": "Inicio",

@@ -216,7 +216,7 @@ export default function ReceiptDetail() {
             {/* Edit Button */}
             <button
               onClick={() => setIsEditMode(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              className="flex items-center gap-2 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition"
             >
               <EditIcon className="w-5 h-5" />
               {t('common.edit') || 'Edit'}

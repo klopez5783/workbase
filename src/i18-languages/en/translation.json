@@ -29,7 +29,9 @@
     "weeksAgo": "weeks ago",
     "retry": "Try Again",
     "add": "Add",
-    "done": "Done"
+    "done": "Done",
+    "update": "Update",
+    "saving": "Saving..."
   },
   "nav": {
     "Home": "Home",
