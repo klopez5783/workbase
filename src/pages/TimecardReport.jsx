@@ -572,7 +572,7 @@ export default function TimecardReport() {
             onClick={() => navigate(-1)}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2 hover:text-blue-700 transition"
           >
-            <CircleArrowLeft size={24} />
+            <CircleArrowLeft size={25} />
             {t('common.back')}
           </button>
 

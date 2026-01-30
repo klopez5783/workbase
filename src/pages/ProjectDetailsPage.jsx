@@ -358,19 +358,19 @@ const workerStats = workers.map(worker => {  // worker is a string ID
           >
             <Camera size={35} />
             <div className="text-left">
-              <div className="font-bold">Scan Receipt</div>
-              <div className="text-xs text-blue-100">Upload a new receipt</div>
+              <div className="font-bold">{t('receipts.scanReceipt')}</div>
+              <div className="text-xs text-blue-100">{t('receipts.uploadNewReceipt')}</div>
             </div>
           </button>
 
           <button
             onClick={() => navigate(`/projects/${projectId}/receipts`)}
-            className="bg-white text-blue-600 border-2 border-blue-600 px- py-4 rounded-xl font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-3"
+            className="bg-white text-blue-600 border-2 border-blue-600 px-3 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-3"
           >
             <List size={35} />
             <div className="text-left">
-              <div className="font-bold">Receipt List</div>
-              <div className="text-xs text-blue-500">View all receipts</div>
+              <div className="font-bold">{t('receipts.receiptList')}</div>
+              <div className="text-xs text-blue-500">{t('receipts.viewAllReceipts')}</div>
             </div>
           </button>
         </div>

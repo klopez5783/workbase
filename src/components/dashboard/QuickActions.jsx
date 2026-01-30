@@ -59,7 +59,7 @@ const adminActions = [
     {
       icon: Camera,
       label: t('receipts.addReceipt'),  // "Add Receipt" / "Agregar Recibo"
-      onClick: () => navigate('/receipts/upload'),
+      onClick: () => navigate('/receipts'),
       gradient: 'from-emerald-500 to-emerald-600',
     },
     {

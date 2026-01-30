@@ -487,6 +487,10 @@
     "synced_plural": "Synced {{count}} receipts!",
     "syncFailed": "Sync failed",
     "addReceipt": "Add Receipt",
+    "selectProjectPrompt": "Which project is this for?",
+    "tapToOpenCamera": "Tap a project to open camera",
+    "noProjectsTitle": "Create a project first",
+    "noProjectsDescription": "You'll need at least one project before you can add receipts",
     "receiptDate": "Receipt Date",
     "vendor": "Vendor",
     "amount": "Amount",
@@ -497,6 +501,9 @@
     "labor": "Labor",
     "equipment": "Equipment",
     "other": "Other",
+    "receiptList": "Receipt List",
+    "viewAllReceipts": "View all receipts",
+    "uploadNewReceipt": "Upload a new receipt",
     
     "scan": {
       "captureReceipt": "Capture Receipt",

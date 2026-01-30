@@ -92,7 +92,7 @@ export default function ReceiptDetail() {
             onClick={() => navigate(`/projects/${projectId}/receipts`)}
             className="text-blue-600 font-semibold flex items-center gap-2 hover:text-blue-700 transition"
           >
-            <CircleArrowLeft size={22} />
+            <CircleArrowLeft size={25} />
             {t('receipts.detail.back')}
           </button>
 
