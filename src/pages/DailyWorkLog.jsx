@@ -119,7 +119,7 @@ export default function DailyWorkLog() {
 
   // Show project selection
   return (
-    <div className="p-5 pb-24">
+    <div className="p-2 pb-24">
       {isAdmin && (
         <button
           onClick={() => navigate(-1)}
@@ -129,34 +129,45 @@ export default function DailyWorkLog() {
         </button>
       )}
 
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('reports.dailyReport')}</h1>
-        <p className="text-gray-600 text-sm mt-1">
-          {t('reports.workCompleted')}
-        </p>
-      </div>
+      <div className="space-y-4 grid grid-cols-3 justify-between mb-2 gap-1">
+        {/* Header */}
+        <div className="col-span-1 self-center">
+          <h1 className="text-xl font-bold text-gray-900">
+            {t('reports.dailyReport')}
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">
+            {t('reports.workCompleted')}
+          </p>
+        </div>
 
-      {/* Today's Summary */}
-      <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 rounded-xl p-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white">
-            <Calendar size={24} />
-          </div>
-          <div>
-            <p className="font-semibold text-blue-900">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </p>
-            <p className="text-sm text-blue-700">
-              {todayLogs.length} {t('reports.dailyReport')} {todayLogs.length !== 1 ? 's' : ''} {t('reports.reportSubmitted')}
-            </p>
+        {/* Today's Summary */}
+        <div className="bg-gradient-to-r from-blue-50 col-span-2 to-blue-100 border-l-4 border-blue-500 rounded-xl p-3">
+          <div className="grid grid-flow-col justify-items-center gap-3">
+            <div className="self-center w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white">
+              <Calendar size={24} />
+            </div>
+
+            <div>
+              <p className="font-semibold text-blue-900">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+
+              <p className="text-sm text-blue-700">
+                {todayLogs.length} {t('reports.dailyReport')}
+                {todayLogs.length !== 1 ? 's' : ''}{' '}
+                {t('reports.reportSubmitted')}
+              </p>
+            </div>
           </div>
         </div>
       </div>
+
+
+
 
       {/* Instructions Card */}
       <div className="bg-white rounded-xl p-4 mb-6 border border-gray-200">

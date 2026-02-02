@@ -31,7 +31,7 @@ export default function QuickActions() {
     {
       icon: Send,
       label: t('reports.submitReport'),
-      onClick: () => navigate('/reports/submit'),
+      onClick: () => navigate('/daily-work-log'),
       gradient: 'from-green-500 to-green-600',
     }
   ];

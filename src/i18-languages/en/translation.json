@@ -617,5 +617,35 @@
       "failed": "Failed to add worker"
     },
     "success": "Worker added successfully! Access link expires in 30 minutes."
+  },
+  "workLog": {
+    "backToProjects": "Back to Projects",
+    "title": "Daily Work Log",
+    "description": {
+      "label": "Work Description",
+      "hint": "Summarize the work completed today in any language",
+      "placeholder": "Example: Installed drywall in master bedroom"
+    },
+    "photos": {
+      "label": "Work Photos",
+      "hint": "Take photos of your completed work (at least 1 required)",
+      "takePhoto": "Take Photo",
+      "uploadPhoto": "Upload Photo",
+      "previewAlt": "Preview {{number}}",
+      "count": "{{count}} photo added",
+      "count_plural": "{{count}} photos added"
+    },
+    "submit": "Submit Work Log",
+    "submitting": "Submitting...",
+    "languageSupport": {
+      "title": "Multi-Language Support",
+      "description": "You can write your description in any language! It will be automatically translated to English for reports."
+    },
+    "errors": {
+      "descriptionRequired": "Please provide a work description",
+      "photoRequired": "Please add at least one photo",
+      "submitFailed": "Failed to submit work log",
+      "submitError": "An error occurred while submitting"
+    }
   }
 }

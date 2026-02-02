@@ -620,5 +620,34 @@
       "failed": "Error al agregar trabajador"
     },
     "success": "¡Trabajador agregado exitosamente! El enlace de acceso expira en 30 minutos."
+  },"workLog": {
+    "backToProjects": "Volver a Proyectos",
+    "title": "Registro de Trabajo Diario",
+    "description": {
+      "label": "Descripción del Trabajo",
+      "hint": "Describe el trabajo que realizaste hoy",
+      "placeholder": "Ejemplo: Instalé paneles de yeso en el dormitorio principal"
+    },
+    "photos": {
+      "label": "Fotos del Trabajo",
+      "hint": "Toma fotos de tu trabajo completado (se requiere al menos 1)",
+      "takePhoto": "Tomar Foto",
+      "uploadPhoto": "Subir Foto",
+      "previewAlt": "Vista previa {{number}}",
+      "count": "{{count}} foto agregada",
+      "count_plural": "{{count}} fotos agregadas"
+    },
+    "submit": "Enviar Registro de Trabajo",
+    "submitting": "Enviando...",
+    "languageSupport": {
+      "title": "Soporte Multi-Idioma",
+      "description": "¡Puedes escribir tu descripción en cualquier idioma! Se traducirá automáticamente al inglés para los informes."
+    },
+    "errors": {
+      "descriptionRequired": "Por favor proporciona una descripción del trabajo",
+      "photoRequired": "Por favor agrega al menos una foto",
+      "submitFailed": "Error al enviar el registro de trabajo",
+      "submitError": "Ocurrió un error al enviar"
+    }
   }
 }
