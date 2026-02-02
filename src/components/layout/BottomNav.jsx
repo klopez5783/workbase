@@ -18,7 +18,7 @@ export default function BottomNav() {
 
   // Worker navigation items
   const workerNavItems = [
-    { path: '/', icon: Home, label: t('nav.home') },
+    { path: '/', icon: Home, label: t('nav.Home') },
     { path: '/time', icon: Clock, label: t('timeTracking.timesheet') },
     { path: '/daily-work-log', icon: FileText, label: t('reports.dailyReport') },
   ];

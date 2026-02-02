@@ -102,6 +102,7 @@ function App() {
             status: userData.status,
             companyId: userData.companyId || null,
             createdAt: userData.createdAt,
+            phone: userData.phone || null,
           });
         }
       };

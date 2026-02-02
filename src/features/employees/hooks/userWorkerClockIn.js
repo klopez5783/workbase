@@ -10,7 +10,7 @@ export function useWorkerClockIn(accessKey = null) {
   // const { currentUser } = useAuth();
   // const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
 
-   let currentUser = null;
+  let currentUser = null;
   let currentEmployee = null;
   
   try {
@@ -340,7 +340,11 @@ const loadWorkerData = async () => {
         timeEntry.anonymousUserId = currentUser?.uid; // Optional: for debugging
       }
 
+      console.log("Clock-in entry:", timeEntry);
+
       const result = await firestoreService.create('timeEntries', timeEntry);
+
+      console.log("Clock-in result:", result);
 
       if (result.success) {
         setActiveShift({ ...timeEntry, id: result.id });
