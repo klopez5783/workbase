@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { useLocationVerification } from './useLocationVerification';
 import { useEmployeeStore } from '../../employees/store/employeeStore';
@@ -14,7 +14,19 @@ export const useClockIn = () => {
   const { verifyLocation } = useLocationVerification();
   const currentEmployee = useEmployeeStore((state) => state.currentEmployee);
   const projects = useProjectStore((state) => state.projects);
-  const { clockIn, clockOut, activeShift } = useTimeTrackingStore();
+  const { clockIn, clockOut, activeShift, loadActiveShift } = useTimeTrackingStore();
+
+  // ✅ CHECK FOR ACTIVE SHIFT ON MOUNT
+  useEffect(() => {
+    const checkActiveShift = async () => {
+      if (currentEmployee?.id) {
+        console.log('Checking for active shift for user:', currentEmployee.id);
+        await loadActiveShift(currentEmployee.id);
+      }
+    };
+    
+    checkActiveShift();
+  }, [currentEmployee?.id, loadActiveShift]);
 
   const handleClockIn = async (selectedProjectId) => {
     setLoading(true);
@@ -28,7 +40,7 @@ export const useClockIn = () => {
         throw new Error('Project not found');
       }
 
-      // Check if authenticated user is assigned (checks both new and legacy arrays)
+      // Check if authenticated user is assigned
       const assigned = isAssignedToProject(
         project,
         currentEmployee?.id,
@@ -58,29 +70,28 @@ export const useClockIn = () => {
       }
 
       const entry = {
-        id: Date.now().toString(),
-        employeeId: currentEmployee.id,
+        workerId: currentEmployee.id, // ✅ Using workerId for consistency
         employeeName: currentEmployee.name,
         projectId: project.id,
         projectName: project.name,
         clockIn: new Date().toISOString(),
         clockInLocation: {
-            ...userLocation,
-            address: project.location.address,
+          ...userLocation,
+          address: project.location.address,
         },
         distanceFromSite: verification.distance,
         verified: true,
-        status: 'active',
+        status: 'active', // ✅ Set as active
       };
 
       await clockIn(entry);
 
       setLoading(false);
-            return {
-            success: true,
-            message: verification.message,
-            distance: verification.distance,
-        };
+      return {
+        success: true,
+        message: verification.message,
+        distance: verification.distance,
+      };
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -130,8 +141,7 @@ export const useClockIn = () => {
       const project = projects.find((p) => p.id === projectId);
       
       const entry = {
-        id: Date.now().toString(),
-        employeeId: currentEmployee.id,
+        workerId: currentEmployee.id, // ✅ Changed from employeeId to workerId
         employeeName: currentEmployee.name,
         projectId: project.id,
         projectName: project.name,
@@ -143,7 +153,7 @@ export const useClockIn = () => {
         notes: 'Location override by user',
       };
 
-      clockIn(entry);
+      await clockIn(entry);
       setLoading(false);
       
       return { success: true, message: 'Clocked in (location override)' };

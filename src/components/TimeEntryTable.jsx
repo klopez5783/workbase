@@ -59,7 +59,7 @@ export default function TimeEntryTable({
   useVirtualization: forceVirtualization,
   showActions = true,
   showSelection = true,
-  entriesPerProject = null  // NEW: Set limit per project
+  entriesPerProject = null
 }) {
   // Track expanded projects (for "Show More" functionality)
   const [expandedProjects, setExpandedProjects] = useState({});
@@ -80,7 +80,7 @@ export default function TimeEntryTable({
   // Group entries by employee and project
   const groupedEntries = useMemo(() => {
     return entries.reduce((acc, entry) => {
-      const empName = getEmployeeName(entry.employeeId);
+      const empName = getEmployeeName(entry.workerId);
       const projName = getProjectName(entry.projectId);
       
       if (!acc[empName]) acc[empName] = {};
@@ -270,7 +270,6 @@ export default function TimeEntryTable({
             <div className="bg-gray-800 text-white p-4 print:bg-gray-900">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  
                   <User size={24} />
                   <div>
                     <h2 className="text-2xl font-bold">{employeeName}</h2>
@@ -350,6 +349,9 @@ export default function TimeEntryTable({
                             </th>
                           )}
                           <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">
+                            Employee
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">
                             Date
                           </th>
                           <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">
@@ -395,6 +397,9 @@ export default function TimeEntryTable({
                                   />
                                 </td>
                               )}
+                              <td className="px-4 py-3 text-lg text-gray-900 font-semibold">
+                                {entry.workerName || entry.userName}
+                              </td>
                               <td className="px-4 py-3 text-lg text-gray-900">
                                 {formatDate(entry.clockIn)}
                               </td>

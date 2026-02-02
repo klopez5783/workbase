@@ -426,95 +426,99 @@ export default function ProjectHoursPage() {
                   </div>
 
                   {/* Time Entries Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b-2 border-gray-300">
-                        <tr>
-                          <th className="px-4 py-3 text-center">
-                            <input
-                              type="checkbox"
-                              checked={entries.every(e => selectedEntries.includes(e.id))}
-                              onChange={() => {
-                                const allSelected = entries.every(e => selectedEntries.includes(e.id));
-                                if (allSelected) {
-                                  setSelectedEntries(prev => prev.filter(id => !entries.find(e => e.id === id)));
-                                } else {
-                                  setSelectedEntries(prev => [...new Set([...prev, ...entries.map(e => e.id)])]);
-                                }
-                              }}
-                              className="w-5 h-5 cursor-pointer"
-                            />
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">Date</th>
-                          <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">Clock In</th>
-                          <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">Clock Out</th>
-                          <th className="px-4 py-3 text-right text-sm font-bold text-gray-900 uppercase">Hours</th>
-                          <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 uppercase">Status</th>
-                          <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 uppercase">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {entries.map((entry, idx) => {
-                          const hours = calculateHours(entry.clockIn, entry.clockOut);
-                          const isSelected = selectedEntries.includes(entry.id);
+<div className="overflow-x-auto">
+  <table className="w-full">
+    <thead className="bg-gray-50 border-b-2 border-gray-300">
+      <tr>
+        <th className="px-4 py-3 text-center">
+          <input
+            type="checkbox"
+            checked={entries.every(e => selectedEntries.includes(e.id))}
+            onChange={() => {
+              const allSelected = entries.every(e => selectedEntries.includes(e.id));
+              if (allSelected) {
+                setSelectedEntries(prev => prev.filter(id => !entries.find(e => e.id === id)));
+              } else {
+                setSelectedEntries(prev => [...new Set([...prev, ...entries.map(e => e.id)])]);
+              }
+            }}
+            className="w-5 h-5 cursor-pointer"
+          />
+        </th>
+        <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">Employee</th>
+        <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">Date</th>
+        <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">Clock In</th>
+        <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 uppercase">Clock Out</th>
+        <th className="px-4 py-3 text-right text-sm font-bold text-gray-900 uppercase">Hours</th>
+        <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 uppercase">Status</th>
+        <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 uppercase">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {entries.map((entry, idx) => {
+        const hours = calculateHours(entry.clockIn, entry.clockOut);
+        const isSelected = selectedEntries.includes(entry.id);
 
-                          return (
-                            <tr
-                              key={entry.id}
-                              className={`border-b border-gray-200 ${
-                                isSelected ? 'bg-blue-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                              }`}
-                            >
-                              <td className="px-4 py-3 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => toggleSelectEntry(entry.id)}
-                                  className="w-5 h-5 cursor-pointer"
-                                />
-                              </td>
-                              <td className="px-4 py-3 text-gray-900">
-                                {formatDate(entry.clockIn)}
-                              </td>
-                              <td className="px-4 py-3 text-gray-900 font-mono">
-                                {formatTime(entry.clockIn)}
-                              </td>
-                              <td className="px-4 py-3 text-gray-900 font-mono">
-                                {formatTime(entry.clockOut)}
-                              </td>
-                              <td className="px-4 py-3 text-right font-bold text-gray-900">
-                                {hours.toFixed(2)}
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                  entry.status === 'approved'
-                                    ? 'bg-green-100 text-green-800'
-                                    : entry.status === 'rejected'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {entry.status || 'Pending'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                  {entry.status !== 'approved' && (
-                                    <button
-                                      onClick={() => handleApprove(entry.id)}
-                                      className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
-                                      title="Approve"
-                                    >
-                                      <Check size={18} />
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+        return (
+          <tr
+            key={entry.id}
+            className={`border-b border-gray-200 ${
+              isSelected ? 'bg-blue-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+            }`}
+          >
+            <td className="px-4 py-3 text-center">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleSelectEntry(entry.id)}
+                className="w-5 h-5 cursor-pointer"
+              />
+            </td>
+            <td className="px-4 py-3 text-gray-900 font-semibold">
+              {getEmployeeName(entry.employeeId)}
+            </td>
+            <td className="px-4 py-3 text-gray-900">
+              {formatDate(entry.clockIn)}
+            </td>
+            <td className="px-4 py-3 text-gray-900 font-mono">
+              {formatTime(entry.clockIn)}
+            </td>
+            <td className="px-4 py-3 text-gray-900 font-mono">
+              {formatTime(entry.clockOut)}
+            </td>
+            <td className="px-4 py-3 text-right font-bold text-gray-900">
+              {hours.toFixed(2)}
+            </td>
+            <td className="px-4 py-3 text-center">
+              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                entry.status === 'approved'
+                  ? 'bg-green-100 text-green-800'
+                  : entry.status === 'rejected'
+                  ? 'bg-red-100 text-red-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {entry.status || 'Pending'}
+              </span>
+            </td>
+            <td className="px-4 py-3 text-center">
+              <div className="flex items-center justify-center gap-2">
+                {entry.status !== 'approved' && (
+                  <button
+                    onClick={() => handleApprove(entry.id)}
+                    className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
+                    title="Approve"
+                  >
+                    <Check size={18} />
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
                 </div>
               );
             })}
