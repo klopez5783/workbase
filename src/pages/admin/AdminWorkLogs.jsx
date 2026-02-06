@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { firestoreService } from '../../services/firestoreService';
-import { FileText, Loader, Search, CircleArrowLeft, Filter, Calendar, User, MapPin, Image as ImageIcon, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, TrendingUp, FileText, Loader, Search, CircleArrowLeft, Filter, Calendar, User, MapPin, Image as ImageIcon, X, ChevronDown, ChevronUp } from 'lucide-react';
 import WorkSummaryGenerator from '../../components/WorkSummaryGenerator';
-import { Sparkles } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useEmployeeStore } from '../../features/employees/store/employeeStore';
 import { useTranslation } from 'react-i18next';
@@ -190,64 +189,143 @@ export default function AdminWorkLogs() {
     <div className="p-5 pb-24 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
-        >
-          <CircleArrowLeft size={25} /> {t('common.back')}
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">{t('reports.dailyReport')}</h1>
-        <p className="text-gray-600 text-sm mt-1">
-          {t('reports.viewReports')}
-        </p>
-        <button
+        {/* <div className="grid grid-cols-3 items-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
+          >
+            <CircleArrowLeft size={25} /> {t('common.back')}
+          </button>
+          <div className="justify-self-center col-span-2 ">
+              <h1 className="text-2xl font-bold text-gray-900">{t('reports.dailyReport')}</h1>
+              <p className="text-gray-600 text-center text-sm mt-1">
+                {t('reports.viewReports')}
+              </p>
+          </div>
+        </div> */}
+
+        <div className="grid grid-cols-5 items-center mb-4">
+          {/* Left: Back Button */}
+          <div>
+            <button
+              onClick={() => navigate(-1)}
+              className="text-blue-600 font-semibold flex items-center gap-2"
+            >
+              <CircleArrowLeft size={25} /> {t('common.back')}
+            </button>
+          </div>
+          
+          {/* Center: Title & Subtitle */}
+          <div className="text-center col-span-3">
+            <h1 className="text-2xl font-bold text-gray-900">{t('reports.dailyReport')}</h1>
+            <p className="text-gray-600 text-sm mt-1">
+              {t('reports.viewReports')}
+            </p>
+          </div>
+          
+          {/* Right: Empty (for balance) */}
+          <div></div>
+        </div>
+        
+        {/* <button
           onClick={() => setShowSummaryGenerator(true)}
           disabled={filteredLogs.length === 0}
           className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition flex items-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
         >
           <Sparkles size={20} />
           Generate AI Summary
-        </button>
+        </button> */}
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{workLogs.length}</p>
+      {/* Stats Card - Compact Horizontal Layout */}
+<div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+  <div className="divide-y divide-gray-100">
+    {/* Row 1: Total & Today */}
+    <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
+      <div className="grid grid-cols-4 gap-2 items-center">
+        {/* Total */}
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
+            <FileText className="text-blue-600" size={16} />
+          </div>
+          <span className="text-xs font-medium text-gray-900">
+            Total
+          </span>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">{t('timeTracking.today')}</p>
-          <p className="text-2xl font-bold text-blue-600">
+        <div className="text-right">
+          <span className="text-xl font-bold text-gray-900">
+            {workLogs.length}
+          </span>
+        </div>
+
+        {/* Today */}
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-green-100 rounded-lg flex-shrink-0">
+            <Calendar className="text-green-600" size={16} />
+          </div>
+          <span className="text-xs font-medium text-gray-900">
+            {t('timeTracking.today')}
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="text-xl font-bold text-green-600">
             {workLogs.filter(log => {
               const logDate = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
               const today = new Date();
               return logDate.toDateString() === today.toDateString();
             }).length}
-          </p>
+          </span>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">{t('timeTracking.thisWeek')}</p>
-          <p className="text-2xl font-bold text-green-600">
+      </div>
+    </div>
+
+    {/* Row 2: This Week & Filtered */}
+    <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
+      <div className="grid grid-cols-4 gap-2 items-center">
+        {/* This Week */}
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-purple-100 rounded-lg flex-shrink-0">
+            <TrendingUp className="text-purple-600" size={16} />
+          </div>
+          <span className="text-xs font-medium text-gray-900">
+            {t('timeTracking.thisWeek')}
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="text-xl font-bold text-purple-600">
             {workLogs.filter(log => {
               const logDate = log.createdAt?.toDate ? log.createdAt.toDate() : new Date(log.createdAt);
               const weekAgo = new Date();
               weekAgo.setDate(weekAgo.getDate() - 7);
               return logDate >= weekAgo;
             }).length}
-          </p>
+          </span>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Filtered</p>
-          <p className="text-2xl font-bold text-purple-600">{filteredLogs.length}</p>
+
+          {/* Filtered */}
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-orange-100 rounded-lg flex-shrink-0">
+              <Filter className="text-orange-600" size={16} />
+            </div>
+            <span className="text-xs font-medium text-gray-900">
+              Filtered
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-xl font-bold text-orange-600">
+              {filteredLogs.length}
+            </span>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
 
       {/* Search and Filter Bar */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
         {/* Search Bar */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 relative">
+          {/* <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
@@ -256,10 +334,18 @@ export default function AdminWorkLogs() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-          </div>
+          </div> */}
+          <button
+            onClick={() => setShowSummaryGenerator(true)}
+            disabled={filteredLogs.length === 0}
+            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-1 rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          >
+            <Sparkles size={25} />
+            Generate AI Summary
+          </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+            className={`px-4 py-4 rounded-lg font-semibold transition flex items-center gap-2 ${
               showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
