@@ -67,7 +67,9 @@ export default function TimecardReport() {
     clockOutTime: '',
     status: 'pending',
     workerId: '',
-    projectId: ''
+    projectId: '',
+    entryName: '',
+    isWorkerEntry: false // Add this flag
   });
   const [bulkEditForm, setBulkEditForm] = useState({
     status: '',
@@ -93,39 +95,48 @@ export default function TimecardReport() {
   }, [timeEntries, startDate, endDate, selectedProject, selectedEmployee, approvalStatus]);
 
   const loadData = async () => {
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
 
-      const projectsResult = await firestoreService.getAll('projects');
-      if (projectsResult.success) {
-        // Filter projects by company
-        const companyProjects = projectsResult.data.filter(
-          project => project.createdBy === currentEmployee?.companyId
-        );
-        setProjects(companyProjects);
+        // Load projects first - filter by company
+        const projectsResult = await firestoreService.getAll('projects');
+        let companyProjects = [];
+        if (projectsResult.success) {
+          // Filter projects by company
+          companyProjects = projectsResult.data.filter(
+            project => project.createdBy === currentEmployee?.companyId
+          );
+          setProjects(companyProjects);
+        }
+
+        // Get array of company project IDs for filtering time entries
+        const companyProjectIds = companyProjects.map(p => p.id);
+
+        const employeesResult = await firestoreService.getAll('users');
+        if (employeesResult.success) {
+          // Filter workers by company
+          const companyWorkers = employeesResult.data.filter(
+            u => u.role === 'worker' && u.companyId === currentEmployee?.companyId
+          );
+          setEmployees(companyWorkers);
+        }
+
+        // Load time entries - FILTER by company projects
+        const entriesResult = await firestoreService.getAll('timeEntries');
+        if (entriesResult.success) {
+          // Only include time entries from this company's projects
+          const companyEntries = entriesResult.data.filter(entry => 
+            companyProjectIds.includes(entry.projectId)
+          );
+          setTimeEntries(companyEntries);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setLoading(false);
       }
-
-      const employeesResult = await firestoreService.getAll('users');
-      if (employeesResult.success) {
-        // Filter workers by company
-        const companyWorkers = employeesResult.data.filter(
-          u => u.role === 'worker' && u.companyId === currentEmployee?.companyId
-        );
-        setEmployees(companyWorkers);
-      }
-
-      const entriesResult = await firestoreService.getAll('timeEntries');
-      if (entriesResult.success) {
-        setTimeEntries(entriesResult.data);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading data:', error);
-      setLoading(false);
-    }
-  };
-
+    };
   const applyFilters = () => {
     let filtered = [...timeEntries];
 
@@ -405,63 +416,77 @@ export default function TimecardReport() {
   };
 
   // Single entry CRUD operations
-  const handleEdit = (entry) => {
-    const clockInDate = entry.clockIn?.toDate ? entry.clockIn.toDate() : new Date(entry.clockIn);
-    const clockOutDate = entry.clockOut?.toDate ? entry.clockOut.toDate() : new Date(entry.clockOut);
+ const handleEdit = (entry) => {
+  console.log('Editing entry:', entry);
+  const clockInDate = entry.clockIn?.toDate ? entry.clockIn.toDate() : new Date(entry.clockIn);
+  const clockOutDate = entry.clockOut?.toDate ? entry.clockOut.toDate() : new Date(entry.clockOut);
 
-    setEditingEntry(entry);
-    setEditForm({
-      clockInDate: clockInDate.toISOString().split('T')[0],
-      clockInTime: clockInDate.toTimeString().split(' ')[0].substring(0, 5),
-      clockOutDate: clockOutDate.toISOString().split('T')[0],
-      clockOutTime: clockOutDate.toTimeString().split(' ')[0].substring(0, 5),
-      status: entry.status || 'pending',
-      workerId: entry.workerId,
-      projectId: entry.projectId
-    });
-    setShowEditModal(true);
-    setError('');
-  };
+  // Determine if this is a worker or user entry
+  const isWorkerEntry = !!entry.workerId;
+  const entryName = entry.workerName || entry.userName;
+  const entryId = entry.workerId || entry.userId;
+
+  setEditingEntry(entry);
+  setEditForm({
+    clockInDate: clockInDate.toISOString().split('T')[0],
+    clockInTime: clockInDate.toTimeString().split(' ')[0].substring(0, 5),
+    clockOutDate: clockOutDate.toISOString().split('T')[0],
+    clockOutTime: clockOutDate.toTimeString().split(' ')[0].substring(0, 5),
+    status: entry.status || 'pending',
+    workerId: entryId, // Store the ID (either workerId or userId)
+    projectId: entry.projectId,
+    entryName: entryName,
+    isWorkerEntry: isWorkerEntry // Track which type it is
+  });
+  setShowEditModal(true);
+  setError('');
+};
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      setError('');
+  try {
+    setSaving(true);
+    setError('');
 
-      const clockIn = new Date(`${editForm.clockInDate}T${editForm.clockInTime}`);
-      const clockOut = new Date(`${editForm.clockOutDate}T${editForm.clockOutTime}`);
+    const clockIn = new Date(`${editForm.clockInDate}T${editForm.clockInTime}`);
+    const clockOut = new Date(`${editForm.clockOutDate}T${editForm.clockOutTime}`);
 
-      if (clockOut <= clockIn) {
-        setError('Clock Out must be after Clock In');
-        setSaving(false);
-        return;
-      }
-
-      const updateData = {
-        clockIn: clockIn.toISOString(),
-        clockOut: clockOut.toISOString(),
-        status: editForm.status,
-        workerId: editForm.workerId,
-        projectId: editForm.projectId
-      };
-
-      const result = await firestoreService.update('timeEntries', editingEntry.id, updateData);
-
-      if (result.success) {
-        await loadData();
-        setShowEditModal(false);
-        setEditingEntry(null);
-      } else {
-        setError(result.error || 'Failed to update entry');
-      }
-
+    if (clockOut <= clockIn) {
+      setError('Clock Out must be after Clock In');
       setSaving(false);
-    } catch (err) {
-      console.error('Error saving entry:', err);
-      setError('Failed to save changes');
-      setSaving(false);
+      return;
     }
-  };
+
+    const updateData = {
+      clockIn: clockIn.toISOString(),
+      clockOut: clockOut.toISOString(),
+      status: editForm.status,
+      projectId: editForm.projectId
+    };
+
+    // Only update the appropriate ID field based on entry type
+    if (editForm.isWorkerEntry) {
+      updateData.workerId = editForm.workerId;
+    } else {
+      updateData.userId = editForm.workerId; // We stored userId in workerId field
+    }
+
+    const result = await firestoreService.update('timeEntries', editingEntry.id, updateData);
+
+    if (result.success) {
+      await loadData();
+      setShowEditModal(false);
+      setEditingEntry(null);
+    } else {
+      setError(result.error || 'Failed to update entry');
+    }
+
+    setSaving(false);
+  } catch (err) {
+    console.error('Error saving entry:', err);
+    setError('Failed to save changes');
+    setSaving(false);
+  }
+};
 
   const handleDelete = (entry) => {
     setEntryToDelete(entry);
@@ -862,7 +887,6 @@ export default function TimecardReport() {
         )}
       </div>
 
-      {/* Single Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -888,21 +912,14 @@ export default function TimecardReport() {
               )}
 
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                {/* Worker Info - Read Only */}
+                <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
                     {t('Hours.worker')}
                   </label>
-                  <select
-                    value={editForm.workerId}
-                    onChange={(e) => setEditForm({ ...editForm, workerId: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg"
-                  >
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name}
-                      </option>
-                    ))}
-                  </select>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {editForm.entryName}
+                  </p>
                 </div>
 
                 <div>

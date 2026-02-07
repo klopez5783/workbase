@@ -66,7 +66,7 @@ export default function AdminWorkLogs() {
 
       // Load work logs - FILTER by company projects
       const logsResult = await firestoreService.getAll('workLogs');
-      if (logsResult.success) {
+    if (logsResult.success) {
         // Only include work logs from this company's projects
         const companyLogs = logsResult.data.filter(log => 
           companyProjectIds.includes(log.projectId)
