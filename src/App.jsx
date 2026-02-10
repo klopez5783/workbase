@@ -1,40 +1,40 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
-import { useEmployeeStore } from './features/employees/store/employeeStore';
-import { firestoreService } from './services/firestoreService';
-import { useEffect, useState } from 'react';
-import { Loader } from 'lucide-react';
-import Layout from './components/layout/Layout';
-import Dashboard from './pages/Dashboard';
-import Receipts from './pages/Receipts';
-import Time from './pages/Time';
-import Reports from './pages/Reports';
-import Documents from './pages/Documents';
-import Login from './pages/auth/Login';
-import Signup from './pages/auth/Signup';
-import Projects from './pages/projects';
-import ProjectManagement from './pages/admin/ProjectManagement';
-import CompanyManagement from './pages/admin/CompanyManagement';
-import CompanyView from './pages/CompanyView';
-import WorkerManagement from './pages/admin/WorkerManagement';
-import WorkerClockIn from './pages/WorkerClockIn';
-import ProfileSettings from './pages/ProfileSettings';
-import DailyWorkLog from './pages/DailyWorkLog';
-import DailyReportsViewer from './pages/DailyReportsViewer';
-import { authService } from './services/authService';
-import AdminWorkLogs from './pages/admin/AdminWorkLogs';
-import AdminTools from './pages/admin/AdminTools';
-import TimecardReport from './pages/TimecardReport';
-import ProjectDetailsPage from './pages/ProjectDetailsPage';
-import ProjectHoursPage from './pages/ProjectHoursPage';
-import SMSTerms from './pages/SMSTerms';
-import JoinCompany from './pages/JoinCompany';
-import TestOCR from './pages/TestOCR';
-import ReceiptList from './components/expenses/ReceiptList';
-import ReceiptScanner from './components/expenses/ReceiptScanner';
-import TestCamera from './pages/TestCamera';
-import ReceiptDetail from './components/expenses/ReceiptDetail';
-import EstimateGenerator from './pages/admin/EstimateGenerator';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./contexts/AuthContext";
+import { useEmployeeStore } from "./features/employees/store/employeeStore";
+import { firestoreService } from "./services/firestoreService";
+import { useEffect, useState } from "react";
+import { Loader } from "lucide-react";
+import Layout from "./components/layout/Layout";
+import Dashboard from "./pages/Dashboard";
+import Receipts from "./pages/Receipts";
+import Time from "./pages/Time";
+import Reports from "./pages/Reports";
+import Documents from "./pages/Documents";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import Projects from "./pages/projects";
+import ProjectManagement from "./pages/admin/ProjectManagement";
+import CompanyManagement from "./pages/admin/CompanyManagement";
+import CompanyView from "./pages/CompanyView";
+import WorkerManagement from "./pages/admin/WorkerManagement";
+import WorkerClockIn from "./pages/WorkerClockIn";
+import ProfileSettings from "./pages/ProfileSettings";
+import DailyWorkLog from "./pages/DailyWorkLog";
+import DailyReportsViewer from "./pages/DailyReportsViewer";
+import { authService } from "./services/authService";
+import AdminWorkLogs from "./pages/admin/AdminWorkLogs";
+import AdminTools from "./pages/admin/AdminTools";
+import TimecardReport from "./pages/TimecardReport";
+import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import ProjectHoursPage from "./pages/ProjectHoursPage";
+import SMSTerms from "./pages/SMSTerms";
+import JoinCompany from "./pages/JoinCompany";
+import TestOCR from "./pages/TestOCR";
+import ReceiptList from "./components/expenses/ReceiptList";
+import ReceiptScanner from "./components/expenses/ReceiptScanner";
+import TestCamera from "./pages/TestCamera";
+import ReceiptDetail from "./components/expenses/ReceiptDetail";
+import EstimateGenerator from "./pages/admin/EstimateGenerator";
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -44,7 +44,10 @@ function ProtectedRoute({ children, requiredRole = null }) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <Loader className="animate-spin mx-auto mb-4 text-blue-600" size={40} />
+          <Loader
+            className="animate-spin mx-auto mb-4 text-blue-600"
+            size={40}
+          />
           <p className="text-gray-600">Verifying access...</p>
         </div>
       </div>
@@ -56,19 +59,23 @@ function ProtectedRoute({ children, requiredRole = null }) {
   }
 
   if (requiredRole && currentEmployee) {
-    const hasRequiredRole = currentEmployee.role === requiredRole || currentEmployee.role === 'admin';
-    
+    const hasRequiredRole =
+      currentEmployee.role === requiredRole || currentEmployee.role === "admin";
+
     if (!hasRequiredRole) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50 p-5">
           <div className="bg-white rounded-xl p-8 text-center max-w-md shadow-lg">
             <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Access Denied
+            </h2>
             <p className="text-gray-600 mb-6">
-              You don't have permission to access this page. Admin access required.
+              You don't have permission to access this page. Admin access
+              required.
             </p>
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => (window.location.href = "/")}
               className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
             >
               Go to Dashboard
@@ -89,8 +96,8 @@ function App() {
   useEffect(() => {
     if (currentUser) {
       const loadEmployee = async () => {
-        const result = await firestoreService.query('users', [
-          { field: 'uid', operator: '==', value: currentUser.uid }
+        const result = await firestoreService.query("users", [
+          { field: "uid", operator: "==", value: currentUser.uid },
         ]);
 
         if (result.success && result.data.length > 0) {
@@ -114,19 +121,23 @@ function App() {
     }
   }, [currentUser, setCurrentEmployee]);
 
-return (
+  return (
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/login" element={currentUser ? <Navigate to="/" /> : <Login />} />
-        <Route path="/signup" element={currentUser ? <Navigate to="/" /> : <Signup />} />
+        <Route
+          path="/login"
+          element={currentUser ? <Navigate to="/" /> : <Login />}
+        />
+        <Route
+          path="/signup"
+          element={currentUser ? <Navigate to="/" /> : <Signup />}
+        />
         <Route path="/sms-terms" element={<SMSTerms />} />
         <Route path="/join-company" element={<JoinCompany />} />
         <Route path="/test-camera" element={<TestCamera />} />
-
         {/* Worker Clock-In (Public) */}
         <Route path="/worker/:accessKey" element={<WorkerClockIn />} />
-
         {/* Main App Routes (WITH Layout - has sidebar/navbar) */}
         <Route
           path="/"
@@ -148,44 +159,57 @@ return (
           <Route path="/project/:projectId" element={<ProjectDetailsPage />} />
           <Route path="/project-hours" element={<ProjectHoursPage />} />
           <Route path="/test-ocr" element={<TestOCR />} />
-          <Route path="/projects/:projectId/receipts" element={<ReceiptList />} />
-          <Route path="/projects/:projectId/receipts/scan" element={<ReceiptScanner />} />
-          <Route path="/projects/:projectId/receipts/:receiptId" element={<ReceiptDetail />} />
-          <Route path="/projects/:projectId/receipts/:receiptId" element={<ReceiptDetail />} />
-          
-          {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */} 
-          <Route 
-            path="admin/tools" 
+          <Route
+            path="/projects/:projectId/receipts"
+            element={<ReceiptList />}
+          />
+          <Route
+            path="/projects/:projectId/receipts/scan"
+            element={<ReceiptScanner />}
+          />
+          <Route
+            path="/projects/:projectId/receipts/:receiptId"
+            element={<ReceiptDetail />}
+          />
+          <Route
+            path="/projects/:projectId/receipts/:receiptId"
+            element={<ReceiptDetail />}
+          />
+
+          {/* ✅ MOVE ADMIN TOOLS HERE - Inside Layout */}
+          <Route
+            path="admin/tools"
             element={
               <ProtectedRoute requiredRole="admin">
                 <AdminTools />
               </ProtectedRoute>
-            } 
+            }
           />
 
           <Route path="admin/estimates/new" element={<EstimateGenerator />} />
-          <Route path="admin/estimates/:id/edit" element={<EstimateGenerator />} />
-          
+          <Route
+            path="admin/estimates/:id/edit"
+            element={<EstimateGenerator />}
+          />
+
           {/* ✅ MOVE ADMIN WORK LOGS HERE - Inside Layout */}
-          <Route 
-            path="admin/work-logs" 
+          <Route
+            path="admin/work-logs"
             element={
               <ProtectedRoute requiredRole="admin">
                 <AdminWorkLogs />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="reports/time-card" 
+          <Route
+            path="reports/time-card"
             element={
               <ProtectedRoute requiredRole="admin">
                 <TimecardReport />
               </ProtectedRoute>
-            } 
-            
+            }
           />
-
 
           <Route
             path="admin/projects"
@@ -204,11 +228,9 @@ return (
               </ProtectedRoute>
             }
           />
-
-        </Route>//end Route tag
-
+        </Route>
+        //end Route tag
         {/* Admin Management Pages (WITHOUT Layout - full page for complex management) */}
-        
         <Route
           path="/admin/workers"
           element={
