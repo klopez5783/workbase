@@ -15,6 +15,7 @@ import {
   Edit,
   Check,
   Briefcase,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -27,69 +28,69 @@ const DEFAULT_TERMS = {
 };
 
 export default function EstimateGenerator() {
-const { t } = useTranslation();
-const navigate = useNavigate();
-const { id } = useParams();
-const { currentEmployee } = useEmployeeStore();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { currentEmployee } = useEmployeeStore();
 
-// Modal states
-const [showClientModal, setShowClientModal] = useState(false);
-const [showProjectModal, setShowProjectModal] = useState(false);
-const [showLineItemModal, setShowLineItemModal] = useState(false);  // FIX: lowercase 's'
-const [showOptionalDetails, setShowOptionalDetails] = useState(false);  // ADD THIS
+  // Modal states
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showLineItemModal, setShowLineItemModal] = useState(false); // FIX: lowercase 's'
+  const [showOptionalDetails, setShowOptionalDetails] = useState(false); // ADD THIS
 
-// Form states
-const [clientForm, setClientForm] = useState({
-  clientName: "",
-  clientEmail: "",
-  clientPhone: "",
-  clientAddress: "",
-});
+  // Form states
+  const [clientForm, setClientForm] = useState({
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    clientAddress: "",
+  });
 
-const [projectForm, setProjectForm] = useState({
-  projectName: "",
-  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0],
-});
+  const [projectForm, setProjectForm] = useState({
+    projectName: "",
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+  });
 
-const [editingLineItem, setEditingLineItem] = useState(null);  // FIX: rename from editingItem
-const [lineItemForm, setLineItemForm] = useState({
-  description: "",
-  notes: "",
-  // Simple fields
-  quantity: 1,
-  unit: "each",
-  unitPrice: 0,
-  total: 0,
-  // Detailed fields
-  materialCost: 0,
-  laborCost: 0,
-  itemTotal: 0,
-});
+  const [editingLineItem, setEditingLineItem] = useState(null); // FIX: rename from editingItem
+  const [lineItemForm, setLineItemForm] = useState({
+    description: "",
+    notes: "",
+    // Simple fields
+    quantity: 1,
+    unit: "each",
+    unitPrice: 0,
+    total: 0,
+    // Detailed fields
+    materialCost: 0,
+    laborCost: 0,
+    itemTotal: 0,
+  });
 
-const [estimateType, setEstimateType] = useState("simple");
-const [estimate, setEstimate] = useState({
-  clientName: "",
-  clientEmail: "",
-  clientPhone: "",
-  clientAddress: "",
-  projectName: "",
-  projectDescription: "",
-  lineItems: [],
-  taxRate: 7.5,
-  discountAmount: 0,
-  notes: "",
-  terms: DEFAULT_TERMS,
-  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0],
-  status: "draft",
-});
+  const [estimateType, setEstimateType] = useState("simple");
+  const [estimate, setEstimate] = useState({
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    clientAddress: "",
+    projectName: "",
+    projectDescription: "",
+    lineItems: [],
+    taxRate: 7.5,
+    discountAmount: 0,
+    notes: "",
+    terms: DEFAULT_TERMS,
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    status: "draft",
+  });
 
-const [saving, setSaving] = useState(false);
-const [loading, setLoading] = useState(false);
-const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Load existing estimate if editing
   useEffect(() => {
@@ -179,23 +180,23 @@ const [error, setError] = useState("");
     setEstimate({ ...estimate, lineItems: updatedItems });
   };
 
-// ============================================
-// ESTIMATE TYPE HANDLER
-// ============================================
-const handleEstimateTypeChange = (newType) => {
-  if (estimate.lineItems.length > 0) {
-    if (
-      window.confirm(
-        "Changing estimate type will clear all line items. Continue?"
-      )
-    ) {
+  // ============================================
+  // ESTIMATE TYPE HANDLER
+  // ============================================
+  const handleEstimateTypeChange = (newType) => {
+    if (estimate.lineItems.length > 0) {
+      if (
+        window.confirm(
+          "Changing estimate type will clear all line items. Continue?",
+        )
+      ) {
+        setEstimateType(newType);
+        setEstimate({ ...estimate, lineItems: [] });
+      }
+    } else {
       setEstimateType(newType);
-      setEstimate({ ...estimate, lineItems: [] });
     }
-  } else {
-    setEstimateType(newType);
-  }
-};
+  };
 
   const removeLineItem = (id) => {
     setEstimate({
@@ -312,89 +313,91 @@ const handleEstimateTypeChange = (newType) => {
   };
 
   // ============================================
-// LINE ITEM HANDLERS
-// ============================================
-const openLineItemModal = (item = null) => {
-  if (item) {
-    // Editing existing item
-    setEditingLineItem(item);
-    setLineItemForm({ ...item });
-    setShowOptionalDetails(!!item.notes); // Auto-expand if notes exist
-  } else {
-    // Adding new item
-    setEditingLineItem(null);
+  // LINE ITEM HANDLERS
+  // ============================================
+  const openLineItemModal = (item = null) => {
+    if (item) {
+      // Editing existing item
+      setEditingLineItem(item);
+      setLineItemForm({ ...item });
+      setShowOptionalDetails(!!item.notes); // Auto-expand if notes exist
+    } else {
+      // Adding new item
+      setEditingLineItem(null);
+      setShowOptionalDetails(false);
+      setLineItemForm(
+        estimateType === "simple"
+          ? {
+              description: "",
+              notes: "",
+              quantity: 1,
+              unit: "sqft",
+              unitPrice: 0,
+              total: 0,
+            }
+          : {
+              description: "",
+              notes: "",
+              materialCost: 0,
+              laborCost: 0,
+              itemTotal: 0,
+            },
+      );
+    }
+    setShowLineItemModal(true);
+  };
+
+  const saveLineItem = () => {
+    // Validation
+    if (!lineItemForm.description.trim()) {
+      setError("Item description is required");
+      return;
+    }
+
+    // Calculate totals based on estimate type
+    if (estimateType === "simple") {
+      lineItemForm.total =
+        (lineItemForm.quantity || 0) * (lineItemForm.unitPrice || 0);
+    } else {
+      lineItemForm.itemTotal =
+        (lineItemForm.materialCost || 0) + (lineItemForm.laborCost || 0);
+    }
+
+    if (editingLineItem) {
+      // UPDATE existing item
+      setEstimate({
+        ...estimate,
+        lineItems: estimate.lineItems.map((item) =>
+          item.id === editingLineItem.id
+            ? { ...lineItemForm, id: item.id } // Keep the same ID
+            : item,
+        ),
+      });
+    } else {
+      // ADD new item
+      setEstimate({
+        ...estimate,
+        lineItems: [
+          ...estimate.lineItems,
+          { ...lineItemForm, id: crypto.randomUUID() }, // Generate new ID
+        ],
+      });
+    }
+
+    // Close modal and reset
+    setShowLineItemModal(false);
     setShowOptionalDetails(false);
-    setLineItemForm(
-      estimateType === 'simple'
-        ? {
-            description: '',
-            notes: '',
-            quantity: 1,
-            unit: 'sqft',
-            unitPrice: 0,
-            total: 0
-          }
-        : {
-            description: '',
-            notes: '',
-            materialCost: 0,
-            laborCost: 0,
-            itemTotal: 0
-          }
-    );
-  }
-  setShowLineItemModal(true);
-};
+    setError("");
+  };
 
-const saveLineItem = () => {
-  // Validation
-  if (!lineItemForm.description.trim()) {
-    setError('Item description is required');
-    return;
-  }
-
-  // Calculate totals based on estimate type
-  if (estimateType === 'simple') {
-    lineItemForm.total = (lineItemForm.quantity || 0) * (lineItemForm.unitPrice || 0);
-  } else {
-    lineItemForm.itemTotal = (lineItemForm.materialCost || 0) + (lineItemForm.laborCost || 0);
-  }
-
-  if (editingLineItem) {
-    // UPDATE existing item
-    setEstimate({
-      ...estimate,
-      lineItems: estimate.lineItems.map(item =>
-        item.id === editingLineItem.id 
-          ? { ...lineItemForm, id: item.id } // Keep the same ID
-          : item
-      )
-    });
-  } else {
-    // ADD new item
-    setEstimate({
-      ...estimate,
-      lineItems: [
-        ...estimate.lineItems, 
-        { ...lineItemForm, id: crypto.randomUUID() } // Generate new ID
-      ]
-    });
-  }
-
-  // Close modal and reset
-  setShowLineItemModal(false);
-  setShowOptionalDetails(false);
-  setError('');
-};
-
-const deleteLineItem = (itemId) => {
-  if (window.confirm('Delete this line item?')) {
-    setEstimate({
-      ...estimate,
-      lineItems: estimate.lineItems.filter(item => item.id !== itemId)
-    });
-  }
-};
+  const deleteLineItem = (itemId) => {
+    if (window.confirm("Delete this line item?")) {
+      setEstimate({
+        ...estimate,
+        lineItems: estimate.lineItems.filter((item) => item.id !== itemId),
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -606,10 +609,13 @@ const deleteLineItem = (itemId) => {
               )}
             </div>
           ) : (
-            <div className="text-center flex flex-row py-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-              <User size={40} className="mx-auto mb-3 text-gray-400" />
-              <div className="px-2">
-                <p className="text-gray-600 font-medium mb-1">
+            <div className="text-center flex flex-row bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <User
+                size={40}
+                className="self-center ml-3 mt-3 mb-3 text-gray-400"
+              />
+              <div className="p-2">
+                <p className="text-gray-600 font-medium">
                   No client information added
                 </p>
                 <p className="text-gray-500 text-sm">
@@ -735,88 +741,80 @@ const deleteLineItem = (itemId) => {
           </div>
 
           {estimate.lineItems.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-16 w-16 mx-auto text-gray-300 mb-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <p className="text-gray-600 font-medium mb-2">
-                No line items added yet
-              </p>
-              <p className="text-gray-500 text-sm">
-                Click "Add Item" to start building your estimate
-              </p>
+            <div className="flex flex-row text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <FileSpreadsheet
+                size={40}
+                className="self-center ml-3 mt-3 mb-3 text-gray-400"
+              />
+              <div className="p-2">
+                <p className="text-gray-600 font-medium">
+                  No line items added yet
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Click "Add Item" to start building your estimate
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
               {estimate.lineItems.map((item) => (
-  <div
-    key={item.id}
-    className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition group relative"
-  >
-    {/* X Delete Button - Top Right Corner */}
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        deleteLineItem(item.id);
-      }}
-      className="absolute top-3 right-3 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition z-10"
-      title="Delete item"
-    >
-      <X size={18} />
-    </button>
+                <div
+                  key={item.id}
+                  className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition group relative"
+                >
+                  {/* X Delete Button - Top Right Corner */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteLineItem(item.id);
+                    }}
+                    className="absolute top-3 right-3 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition z-10"
+                    title="Delete item"
+                  >
+                    <X size={18} />
+                  </button>
 
-    {/* Clickable area to edit */}
-    <div 
-      onClick={() => openLineItemModal(item)}
-      className="cursor-pointer pr-8"
-    >
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="font-bold text-gray-900">
-          {item.description}
-        </h3>
-        <span className="text-lg font-bold text-gray-900">
-          $
-          {estimateType === "simple"
-            ? item.total.toFixed(2)
-            : item.itemTotal.toFixed(2)}
-        </span>
-      </div>
+                  {/* Clickable area to edit */}
+                  <div
+                    onClick={() => openLineItemModal(item)}
+                    className="cursor-pointer pr-8"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-bold text-gray-900">
+                        {item.description}
+                      </h3>
+                      <span className="text-lg font-bold text-gray-900">
+                        $
+                        {estimateType === "simple"
+                          ? item.total.toFixed(2)
+                          : item.itemTotal.toFixed(2)}
+                      </span>
+                    </div>
 
-      {/* Subtitle with calculation */}
-      <p className="text-sm text-gray-600">
-        {estimateType === "simple" ? (
-          <>
-            {item.quantity} {item.unit} × $
-            {item.unitPrice.toFixed(2)}
-          </>
-        ) : (
-          <>
-            Material: ${item.materialCost.toFixed(2)} + Labor: $
-            {item.laborCost.toFixed(2)}
-          </>
-        )}
-      </p>
+                    {/* Subtitle with calculation */}
+                    <p className="text-sm text-gray-600">
+                      {estimateType === "simple" ? (
+                        <>
+                          {item.quantity} {item.unit} × $
+                          {item.unitPrice.toFixed(2)}
+                        </>
+                      ) : (
+                        <>
+                          Material: ${item.materialCost.toFixed(2)} + Labor: $
+                          {item.laborCost.toFixed(2)}
+                        </>
+                      )}
+                    </p>
 
-      {/* Show notes if they exist */}
-      {item.notes && (
-        <p className="text-xs text-gray-500 mt-2 italic">
-          📝 {item.notes}
-        </p>
-      )}
-    </div>
-  </div>
-))}
+                    {/* Show notes if they exist */}
+                    {item.notes && (
+                      <p className="text-xs text-gray-500 mt-2 italic">
+                        📝 {item.notes}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -955,6 +953,180 @@ const deleteLineItem = (itemId) => {
             </div>
           </div>
         )}
+
+        {/* Terms & Conditions Section */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-purple-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Terms & Conditions
+            </h2>
+          </div>
+
+          {/* Standard Terms Checkboxes */}
+          <div className="space-y-3 mb-6">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={estimate.terms.isNonBinding}
+                onChange={(e) =>
+                  setEstimate({
+                    ...estimate,
+                    terms: {
+                      ...estimate.terms,
+                      isNonBinding: e.target.checked,
+                    },
+                  })
+                }
+                className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                This estimate is non-binding and subject to final inspection
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={estimate.terms.changesMayAffectPricing}
+                onChange={(e) =>
+                  setEstimate({
+                    ...estimate,
+                    terms: {
+                      ...estimate.terms,
+                      changesMayAffectPricing: e.target.checked,
+                    },
+                  })
+                }
+                className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                Changes to scope or materials may affect final pricing
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={estimate.terms.approvalConstitutesAgreement}
+                onChange={(e) =>
+                  setEstimate({
+                    ...estimate,
+                    terms: {
+                      ...estimate.terms,
+                      approvalConstitutesAgreement: e.target.checked,
+                    },
+                  })
+                }
+                className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                Approval of this estimate constitutes agreement to proceed with
+                work as described
+              </span>
+            </label>
+          </div>
+
+          {/* Payment Terms */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Payment Terms
+            </label>
+            <input
+              type="text"
+              value={estimate.terms.paymentTerms}
+              onChange={(e) =>
+                setEstimate({
+                  ...estimate,
+                  terms: { ...estimate.terms, paymentTerms: e.target.value },
+                })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+              placeholder="Payment due within 30 days of project completion"
+            />
+          </div>
+
+          {/* Custom Terms */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Custom Terms (Optional)
+            </label>
+            <textarea
+              value={estimate.terms.customTerms}
+              onChange={(e) =>
+                setEstimate({
+                  ...estimate,
+                  terms: { ...estimate.terms, customTerms: e.target.value },
+                })
+              }
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base resize-none"
+              placeholder="Add any additional terms or conditions..."
+            />
+          </div>
+        </div>
+
+        {/* General Notes Section */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-yellow-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Additional Notes
+            </h2>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Internal Notes (Optional)
+            </label>
+            <textarea
+              value={estimate.notes}
+              onChange={(e) =>
+                setEstimate({
+                  ...estimate,
+                  notes: e.target.value,
+                })
+              }
+              rows={4}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base resize-none"
+              placeholder="Add any internal notes about this estimate (not shown to client)..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              These notes are for your reference only and won't appear on the
+              final estimate
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* CLIENT INFO MODAL */}
@@ -1199,13 +1371,44 @@ const deleteLineItem = (itemId) => {
                           }
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base appearance-none"
                         >
-                          <option value="each">Each</option>
-                          <option value="hours">Hours</option>
-                          <option value="days">Days</option>
-                          <option value="sqft">Sq Ft</option>
-                          <option value="lbs">Lbs</option>
-                          <option value="job">Job</option>
-                          <option value="lot">Lot</option>
+                          <optgroup label="Labor">
+                            <option value="each">Each</option>
+<option value="hour">Hour</option>
+<option value="day">Day</option>
+<option value="week">Week</option>
+<option value="job">Job</option>
+<option value="crew">Crew</option>
+                        </optgroup>
+
+                        <optgroup label="Area">
+                            <option value="sqft">Sq Ft</option>
+<option value="sqyd">Sq Yd</option>
+<option value="sqm">Sq M</option>
+<option value="acre">Acre</option>
+
+                        </optgroup>
+
+                        <optgroup label="Length">
+                           <option value="lf">Linear Ft</option>
+<option value="lm">Linear M</option>
+<option value="in">Inch</option>
+<option value="ft">Foot</option>
+<option value="yd">Yard</option>
+<option value="m">Meter</option>
+
+                        </optgroup>
+
+
+                        <optgroup label="Contactor Specific">
+                            <option value="allowance">Allowance</option>
+<option value="lump_sum">Lump Sum</option>
+<option value="visit">Service Visit</option>
+<option value="trip">Trip Charge</option>
+<option value="inspection">Inspection</option>
+<option value="permit">Permit</option>
+<option value="load">Load</option>
+<option value="dump">Dump Fee</option>
+                          </optgroup>
                         </select>
                       </div>
                     </div>
@@ -1377,15 +1580,15 @@ const deleteLineItem = (itemId) => {
             {/* Modal Footer */}
             <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
               <button
-  onClick={() => {
-    setShowLineItemModal(false);  // CORRECT
-    setShowOptionalDetails(false);
-    setError("");
-  }}
-  className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition"
->
-  Cancel
-</button>
+                onClick={() => {
+                  setShowLineItemModal(false); // CORRECT
+                  setShowOptionalDetails(false);
+                  setError("");
+                }}
+                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition"
+              >
+                Cancel
+              </button>
               <button
                 onClick={saveLineItem}
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition flex items-center gap-2"
