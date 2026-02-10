@@ -8,9 +8,11 @@ import ActivityList from '../components/dashboard/ActivityList';
 import { useAuth } from '../contexts/AuthContext';
 import AdminOnboardingWizard from '../features/onboarding/components/AdminOnboardingWizard';
 import { useTranslation } from 'react-i18next';
-import { Briefcase, Clock, Users, AlertCircle } from 'lucide-react';
+import { Briefcase, Clock, Users, AlertCircle, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { activeShift } = useTimeTrackingStore();
   const { currentEmployee } = useEmployeeStore();
@@ -250,6 +252,18 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <button
+        onClick={() => navigate('/admin/estimates/new')}
+        className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition"
+      >
+        <div className="flex items-center gap-3">
+          <FileText className="text-blue-600" size={24} />
+          <div>
+            <h3 className="font-bold text-gray-900">Estimates</h3>
+            <p className="text-sm text-gray-600">Create project estimates</p>
+          </div>
+        </div>
+      </button>
       <QuickActions />
 
 

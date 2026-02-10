@@ -34,6 +34,7 @@ import ReceiptList from './components/expenses/ReceiptList';
 import ReceiptScanner from './components/expenses/ReceiptScanner';
 import TestCamera from './pages/TestCamera';
 import ReceiptDetail from './components/expenses/ReceiptDetail';
+import EstimateGenerator from './pages/admin/EstimateGenerator';
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -161,6 +162,9 @@ return (
               </ProtectedRoute>
             } 
           />
+
+          <Route path="admin/estimates/new" element={<EstimateGenerator />} />
+          <Route path="admin/estimates/:id/edit" element={<EstimateGenerator />} />
           
           {/* ✅ MOVE ADMIN WORK LOGS HERE - Inside Layout */}
           <Route 
