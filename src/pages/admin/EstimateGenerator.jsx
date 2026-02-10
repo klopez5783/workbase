@@ -27,48 +27,69 @@ const DEFAULT_TERMS = {
 };
 
 export default function EstimateGenerator() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { id } = useParams(); // For editing existing estimates
-  const { currentEmployee } = useEmployeeStore();
-  const [showClientModal, setShowClientModal] = useState(false);
-  const [clientForm, setClientForm] = useState({
-    clientName: "",
-    clientEmail: "",
-    clientPhone: "",
-    clientAddress: "",
-  });
+const { t } = useTranslation();
+const navigate = useNavigate();
+const { id } = useParams();
+const { currentEmployee } = useEmployeeStore();
 
-  const [showProjectModal, setShowProjectModal] = useState(false);
-  const [projectForm, setProjectForm] = useState({
-    projectName: "",
-    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-  });
+// Modal states
+const [showClientModal, setShowClientModal] = useState(false);
+const [showProjectModal, setShowProjectModal] = useState(false);
+const [showLineItemModal, setShowLineItemModal] = useState(false);  // FIX: lowercase 's'
+const [showOptionalDetails, setShowOptionalDetails] = useState(false);  // ADD THIS
 
-  const [estimateType, setEstimateType] = useState("simple"); // 'simple' or 'detailed'
-  const [estimate, setEstimate] = useState({
-    clientName: "",
-    clientEmail: "",
-    clientPhone: "",
-    clientAddress: "",
-    projectName: "",
-    projectDescription: "",
-    lineItems: [],
-    taxRate: 7.5,
-    discountAmount: 0,
-    notes: "",
-    terms: DEFAULT_TERMS,
-    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-    status: "draft",
-  });
+// Form states
+const [clientForm, setClientForm] = useState({
+  clientName: "",
+  clientEmail: "",
+  clientPhone: "",
+  clientAddress: "",
+});
 
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+const [projectForm, setProjectForm] = useState({
+  projectName: "",
+  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0],
+});
+
+const [editingLineItem, setEditingLineItem] = useState(null);  // FIX: rename from editingItem
+const [lineItemForm, setLineItemForm] = useState({
+  description: "",
+  notes: "",
+  // Simple fields
+  quantity: 1,
+  unit: "each",
+  unitPrice: 0,
+  total: 0,
+  // Detailed fields
+  materialCost: 0,
+  laborCost: 0,
+  itemTotal: 0,
+});
+
+const [estimateType, setEstimateType] = useState("simple");
+const [estimate, setEstimate] = useState({
+  clientName: "",
+  clientEmail: "",
+  clientPhone: "",
+  clientAddress: "",
+  projectName: "",
+  projectDescription: "",
+  lineItems: [],
+  taxRate: 7.5,
+  discountAmount: 0,
+  notes: "",
+  terms: DEFAULT_TERMS,
+  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0],
+  status: "draft",
+});
+
+const [saving, setSaving] = useState(false);
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
 
   // Load existing estimate if editing
   useEffect(() => {
@@ -157,6 +178,24 @@ export default function EstimateGenerator() {
 
     setEstimate({ ...estimate, lineItems: updatedItems });
   };
+
+// ============================================
+// ESTIMATE TYPE HANDLER
+// ============================================
+const handleEstimateTypeChange = (newType) => {
+  if (estimate.lineItems.length > 0) {
+    if (
+      window.confirm(
+        "Changing estimate type will clear all line items. Continue?"
+      )
+    ) {
+      setEstimateType(newType);
+      setEstimate({ ...estimate, lineItems: [] });
+    }
+  } else {
+    setEstimateType(newType);
+  }
+};
 
   const removeLineItem = (id) => {
     setEstimate({
@@ -271,6 +310,91 @@ export default function EstimateGenerator() {
       setSaving(false);
     }
   };
+
+  // ============================================
+// LINE ITEM HANDLERS
+// ============================================
+const openLineItemModal = (item = null) => {
+  if (item) {
+    // Editing existing item
+    setEditingLineItem(item);
+    setLineItemForm({ ...item });
+    setShowOptionalDetails(!!item.notes); // Auto-expand if notes exist
+  } else {
+    // Adding new item
+    setEditingLineItem(null);
+    setShowOptionalDetails(false);
+    setLineItemForm(
+      estimateType === 'simple'
+        ? {
+            description: '',
+            notes: '',
+            quantity: 1,
+            unit: 'sqft',
+            unitPrice: 0,
+            total: 0
+          }
+        : {
+            description: '',
+            notes: '',
+            materialCost: 0,
+            laborCost: 0,
+            itemTotal: 0
+          }
+    );
+  }
+  setShowLineItemModal(true);
+};
+
+const saveLineItem = () => {
+  // Validation
+  if (!lineItemForm.description.trim()) {
+    setError('Item description is required');
+    return;
+  }
+
+  // Calculate totals based on estimate type
+  if (estimateType === 'simple') {
+    lineItemForm.total = (lineItemForm.quantity || 0) * (lineItemForm.unitPrice || 0);
+  } else {
+    lineItemForm.itemTotal = (lineItemForm.materialCost || 0) + (lineItemForm.laborCost || 0);
+  }
+
+  if (editingLineItem) {
+    // UPDATE existing item
+    setEstimate({
+      ...estimate,
+      lineItems: estimate.lineItems.map(item =>
+        item.id === editingLineItem.id 
+          ? { ...lineItemForm, id: item.id } // Keep the same ID
+          : item
+      )
+    });
+  } else {
+    // ADD new item
+    setEstimate({
+      ...estimate,
+      lineItems: [
+        ...estimate.lineItems, 
+        { ...lineItemForm, id: crypto.randomUUID() } // Generate new ID
+      ]
+    });
+  }
+
+  // Close modal and reset
+  setShowLineItemModal(false);
+  setShowOptionalDetails(false);
+  setError('');
+};
+
+const deleteLineItem = (itemId) => {
+  if (window.confirm('Delete this line item?')) {
+    setEstimate({
+      ...estimate,
+      lineItems: estimate.lineItems.filter(item => item.id !== itemId)
+    });
+  }
+};
 
   if (loading) {
     return (
@@ -598,27 +722,11 @@ export default function EstimateGenerator() {
         {/* Line Items Section */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-purple-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-gray-900">Line Items</h2>
-            </div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Line Items ({estimate.lineItems.length})
+            </h2>
             <button
-              onClick={addLineItem}
+              onClick={() => openLineItemModal()}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
             >
               <Plus size={20} />
@@ -651,266 +759,64 @@ export default function EstimateGenerator() {
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Simple Estimate Layout */}
-              {estimateType === "simple" && (
-                <>
-                  {/* Header Row */}
-                  <div className="grid grid-cols-12 gap-3 px-3 py-2 bg-gray-100 rounded-lg font-semibold text-xs text-gray-700 uppercase">
-                    <div className="col-span-4">Description</div>
-                    <div className="col-span-2">Quantity</div>
-                    <div className="col-span-2">Unit</div>
-                    <div className="col-span-2">Unit Price</div>
-                    <div className="col-span-1">Total</div>
-                    <div className="col-span-1"></div>
-                  </div>
+              {estimate.lineItems.map((item) => (
+  <div
+    key={item.id}
+    className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition group relative"
+  >
+    {/* X Delete Button - Top Right Corner */}
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        deleteLineItem(item.id);
+      }}
+      className="absolute top-3 right-3 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition z-10"
+      title="Delete item"
+    >
+      <X size={18} />
+    </button>
 
-                  {/* Line Items */}
-                  {estimate.lineItems.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="grid grid-cols-12 gap-3 items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                    >
-                      {/* Description */}
-                      <div className="col-span-4">
-                        <input
-                          type="text"
-                          value={item.description}
-                          onChange={(e) =>
-                            updateLineItem(
-                              item.id,
-                              "description",
-                              e.target.value,
-                            )
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Item description"
-                        />
-                      </div>
+    {/* Clickable area to edit */}
+    <div 
+      onClick={() => openLineItemModal(item)}
+      className="cursor-pointer pr-8"
+    >
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-bold text-gray-900">
+          {item.description}
+        </h3>
+        <span className="text-lg font-bold text-gray-900">
+          $
+          {estimateType === "simple"
+            ? item.total.toFixed(2)
+            : item.itemTotal.toFixed(2)}
+        </span>
+      </div>
 
-                      {/* Quantity */}
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateLineItem(
-                              item.id,
-                              "quantity",
-                              parseFloat(e.target.value) || 0,
-                            )
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          min="0"
-                          step="0.01"
-                          placeholder="1"
-                        />
-                      </div>
+      {/* Subtitle with calculation */}
+      <p className="text-sm text-gray-600">
+        {estimateType === "simple" ? (
+          <>
+            {item.quantity} {item.unit} × $
+            {item.unitPrice.toFixed(2)}
+          </>
+        ) : (
+          <>
+            Material: ${item.materialCost.toFixed(2)} + Labor: $
+            {item.laborCost.toFixed(2)}
+          </>
+        )}
+      </p>
 
-                      {/* Unit */}
-                      <div className="col-span-2">
-                        <select
-                          value={item.unit}
-                          onChange={(e) =>
-                            updateLineItem(item.id, "unit", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="each">Each</option>
-                          <option value="hours">Hours</option>
-                          <option value="days">Days</option>
-                          <option value="sqft">Sq Ft</option>
-                          <option value="lbs">Lbs</option>
-                          <option value="job">Job</option>
-                          <option value="lot">Lot</option>
-                        </select>
-                      </div>
-
-                      {/* Unit Price */}
-                      <div className="col-span-2">
-                        <div className="relative">
-                          <span className="absolute left-3 top-2 text-gray-500 text-sm">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            value={item.unitPrice}
-                            onChange={(e) =>
-                              updateLineItem(
-                                item.id,
-                                "unitPrice",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full pl-6 pr-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Total */}
-                      <div className="col-span-1">
-                        <div className="px-2 py-2 bg-gray-100 rounded text-sm font-semibold text-gray-900 text-center">
-                          ${item.total.toFixed(2)}
-                        </div>
-                      </div>
-
-                      {/* Delete Button */}
-                      <div className="col-span-1 flex justify-center">
-                        <button
-                          onClick={() => removeLineItem(item.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition"
-                          title="Remove item"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {/* We'll add Detailed Layout in Step 10 */}
-              {/* Detailed Estimate Layout (Material + Labor) */}
-              {estimateType === "detailed" && (
-                <>
-                  {/* Header Row */}
-                  <div className="grid grid-cols-12 gap-3 px-3 py-2 bg-gray-100 rounded-lg font-semibold text-xs text-gray-700 uppercase">
-                    <div className="col-span-6">Item Description</div>
-                    <div className="col-span-2 text-right">Material Cost</div>
-                    <div className="col-span-2 text-right">Labor Cost</div>
-                    <div className="col-span-1 text-right">Total</div>
-                    <div className="col-span-1"></div>
-                  </div>
-
-                  {/* Line Items */}
-                  {estimate.lineItems.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="grid grid-cols-12 gap-3 items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                    >
-                      {/* Description */}
-                      <div className="col-span-6">
-                        <input
-                          type="text"
-                          value={item.description}
-                          onChange={(e) =>
-                            updateLineItem(
-                              item.id,
-                              "description",
-                              e.target.value,
-                            )
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Floor, Dry Wall, Tile, etc."
-                        />
-                      </div>
-
-                      {/* Material Cost */}
-                      <div className="col-span-2">
-                        <div className="relative">
-                          <span className="absolute left-3 top-2 text-gray-500 text-sm">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            value={item.materialCost}
-                            onChange={(e) =>
-                              updateLineItem(
-                                item.id,
-                                "materialCost",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full pl-6 pr-3 py-2 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Labor Cost */}
-                      <div className="col-span-2">
-                        <div className="relative">
-                          <span className="absolute left-3 top-2 text-gray-500 text-sm">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            value={item.laborCost}
-                            onChange={(e) =>
-                              updateLineItem(
-                                item.id,
-                                "laborCost",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full pl-6 pr-3 py-2 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Item Total */}
-                      <div className="col-span-1">
-                        <div className="px-2 py-2 bg-blue-50 rounded text-sm font-semibold text-blue-900 text-right">
-                          ${item.itemTotal.toFixed(2)}
-                        </div>
-                      </div>
-
-                      {/* Delete Button */}
-                      <div className="col-span-1 flex justify-center">
-                        <button
-                          onClick={() => removeLineItem(item.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition"
-                          title="Remove item"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Material & Labor Subtotals for Detailed */}
-                  {estimate.lineItems.length > 0 && (
-                    <div className="border-t-2 border-gray-300 pt-4 mt-4">
-                      <div className="grid grid-cols-12 gap-3 px-3">
-                        <div className="col-span-6"></div>
-
-                        {/* Material Total */}
-                        <div className="col-span-2">
-                          <div className="text-right">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
-                              Material Total:
-                            </div>
-                            <div className="text-lg font-bold text-gray-900">
-                              ${totals.materialGrandTotal?.toFixed(2) || "0.00"}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Labor Total */}
-                        <div className="col-span-2">
-                          <div className="text-right">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
-                              Labor Total:
-                            </div>
-                            <div className="text-lg font-bold text-gray-900">
-                              ${totals.laborGrandTotal?.toFixed(2) || "0.00"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="col-span-2"></div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+      {/* Show notes if they exist */}
+      {item.notes && (
+        <p className="text-xs text-gray-500 mt-2 italic">
+          📝 {item.notes}
+        </p>
+      )}
+    </div>
+  </div>
+))}
             </div>
           )}
         </div>
@@ -1168,7 +1074,8 @@ export default function EstimateGenerator() {
             <div className="sticky bottom-0 bg-white p-6 border-t border-gray-200 flex justify-end gap-3 rounded-b-2xl">
               <button
                 onClick={() => {
-                  setShowClientModal(false);
+                  setShowLineItemModal(false);
+                  setShowOptionalDetails(false); // ADD THIS
                   setError("");
                 }}
                 className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition"
@@ -1181,6 +1088,310 @@ export default function EstimateGenerator() {
               >
                 <Check size={18} />
                 Save Client Info
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LINE ITEM MODAL */}
+      {showLineItemModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-purple-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {editingLineItem ? "Edit" : "Add"} Line Item
+                </h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowLineItemModal(false);
+                  setShowOptionalDetails(false); // ADD THIS
+                  setError("");
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6">
+                  <p className="text-red-900 font-medium">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={lineItemForm.description}
+                    onChange={(e) =>
+                      setLineItemForm({
+                        ...lineItemForm,
+                        description: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base appearance-none"
+                    placeholder="Blue Pearl Granite"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Simple Estimate Fields */}
+                {estimateType === "simple" ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Quantity
+                        </label>
+                        <input
+                          type="number"
+                          value={lineItemForm.quantity}
+                          onChange={(e) =>
+                            setLineItemForm({
+                              ...lineItemForm,
+                              quantity: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          onFocus={(e) => e.target.select()}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base appearance-none"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Unit
+                        </label>
+                        <select
+                          value={lineItemForm.unit}
+                          onChange={(e) =>
+                            setLineItemForm({
+                              ...lineItemForm,
+                              unit: e.target.value,
+                            })
+                          }
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base appearance-none"
+                        >
+                          <option value="each">Each</option>
+                          <option value="hours">Hours</option>
+                          <option value="days">Days</option>
+                          <option value="sqft">Sq Ft</option>
+                          <option value="lbs">Lbs</option>
+                          <option value="job">Job</option>
+                          <option value="lot">Lot</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Unit Price
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-3 text-gray-500">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          value={lineItemForm.unitPrice}
+                          onChange={(e) =>
+                            setLineItemForm({
+                              ...lineItemForm,
+                              unitPrice: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          onFocus={(e) => e.target.select()}
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base appearance-none"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preview Total */}
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">
+                          Total:
+                        </span>
+                        <span className="text-xl font-bold text-blue-600">
+                          $
+                          {(
+                            lineItemForm.quantity * lineItemForm.unitPrice
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-4 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const notesSection =
+                            document.getElementById("notes-section");
+                          notesSection.classList.toggle("hidden");
+                        }}
+                        className="flex items-center justify-between w-full text-left group"
+                      >
+                        <span className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition">
+                          Optional Details
+                        </span>
+                        <svg
+                          className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition transform group-hover:rotate-180"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+
+                      <div id="notes-section" className="hidden mt-3">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Notes
+                        </label>
+                        <textarea
+                          value={lineItemForm.notes || ""}
+                          onChange={(e) =>
+                            setLineItemForm({
+                              ...lineItemForm,
+                              notes: e.target.value,
+                            })
+                          }
+                          rows={3}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base resize-none"
+                          placeholder="Add any additional notes or details..."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Optional: Specifications, dimensions, or special
+                          instructions
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Detailed Estimate Fields */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Material Cost
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-3 text-gray-500">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          value={lineItemForm.materialCost}
+                          onChange={(e) =>
+                            setLineItemForm({
+                              ...lineItemForm,
+                              materialCost: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base appearance-none"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Labor Cost
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-3 text-gray-500">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          value={lineItemForm.laborCost}
+                          onChange={(e) =>
+                            setLineItemForm({
+                              ...lineItemForm,
+                              laborCost: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base appearance-none"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preview Total */}
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">
+                          Total:
+                        </span>
+                        <span className="text-xl font-bold text-blue-600">
+                          $
+                          {(
+                            lineItemForm.materialCost + lineItemForm.laborCost
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+              <button
+  onClick={() => {
+    setShowLineItemModal(false);  // CORRECT
+    setShowOptionalDetails(false);
+    setError("");
+  }}
+  className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition"
+>
+  Cancel
+</button>
+              <button
+                onClick={saveLineItem}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition flex items-center gap-2"
+              >
+                <Check size={18} />
+                {editingLineItem ? "Update" : "Add"} Item
               </button>
             </div>
           </div>
