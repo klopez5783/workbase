@@ -1373,41 +1373,38 @@ export default function EstimateGenerator() {
                         >
                           <optgroup label="Labor">
                             <option value="each">Each</option>
-<option value="hour">Hour</option>
-<option value="day">Day</option>
-<option value="week">Week</option>
-<option value="job">Job</option>
-<option value="crew">Crew</option>
-                        </optgroup>
+                            <option value="hour">Hour</option>
+                            <option value="day">Day</option>
+                            <option value="week">Week</option>
+                            <option value="job">Job</option>
+                            <option value="crew">Crew</option>
+                          </optgroup>
 
-                        <optgroup label="Area">
+                          <optgroup label="Area">
                             <option value="sqft">Sq Ft</option>
-<option value="sqyd">Sq Yd</option>
-<option value="sqm">Sq M</option>
-<option value="acre">Acre</option>
+                            <option value="sqyd">Sq Yd</option>
+                            <option value="sqm">Sq M</option>
+                            <option value="acre">Acre</option>
+                          </optgroup>
 
-                        </optgroup>
+                          <optgroup label="Length">
+                            <option value="lf">Linear Ft</option>
+                            <option value="lm">Linear M</option>
+                            <option value="in">Inch</option>
+                            <option value="ft">Foot</option>
+                            <option value="yd">Yard</option>
+                            <option value="m">Meter</option>
+                          </optgroup>
 
-                        <optgroup label="Length">
-                           <option value="lf">Linear Ft</option>
-<option value="lm">Linear M</option>
-<option value="in">Inch</option>
-<option value="ft">Foot</option>
-<option value="yd">Yard</option>
-<option value="m">Meter</option>
-
-                        </optgroup>
-
-
-                        <optgroup label="Contactor Specific">
+                          <optgroup label="Contactor Specific">
                             <option value="allowance">Allowance</option>
-<option value="lump_sum">Lump Sum</option>
-<option value="visit">Service Visit</option>
-<option value="trip">Trip Charge</option>
-<option value="inspection">Inspection</option>
-<option value="permit">Permit</option>
-<option value="load">Load</option>
-<option value="dump">Dump Fee</option>
+                            <option value="lump_sum">Lump Sum</option>
+                            <option value="visit">Service Visit</option>
+                            <option value="trip">Trip Charge</option>
+                            <option value="inspection">Inspection</option>
+                            <option value="permit">Permit</option>
+                            <option value="load">Load</option>
+                            <option value="dump">Dump Fee</option>
                           </optgroup>
                         </select>
                       </div>
