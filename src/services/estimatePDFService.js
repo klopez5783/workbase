@@ -205,8 +205,8 @@ export const estimatePDFService = {
 
     // ─── TOTALS ───────────────────────────────────────
     yPos = doc.lastAutoTable.finalY + 8;
-    const totalsLabelX = pageWidth - 55;
-    const totalsValueX = pageWidth - 15;
+    const totalsLabelX = pageWidth - 48;
+    const totalsValueX = pageWidth - 20;
 
     doc.setFontSize(9);
     doc.setTextColor(...grayColor);
@@ -264,7 +264,7 @@ export const estimatePDFService = {
     // Divider line above total
     yPos += 4;
     doc.setDrawColor(...lightGray);
-    doc.line(totalsLabelX - 20, yPos, totalsValueX, yPos);
+    doc.line(totalsLabelX - 14, yPos, totalsValueX, yPos);
 
     // Grand Total
     yPos += 7;
@@ -294,7 +294,7 @@ export const estimatePDFService = {
       doc.text("Payment method:", 15, yPos);
       doc.setFont(undefined, "normal");
       doc.setTextColor(...grayColor);
-      doc.text(estimate.terms.paymentTerms, 55, yPos);
+      doc.text(estimate.terms.paymentTerms, 45, yPos);
       yPos += 7;
     }
 
@@ -327,7 +327,7 @@ export const estimatePDFService = {
         );
       if (estimate.terms.customTerms) noteText.push(estimate.terms.customTerms);
 
-      doc.text(noteText.join(" "), 30, yPos, {
+      doc.text(noteText.join(" "), 25, yPos, {
         maxWidth: pageWidth - 45,
       });
 
@@ -349,7 +349,7 @@ export const estimatePDFService = {
         month: "long",
         day: "numeric",
       }),
-      30,
+      35,
       yPos,
     );
 

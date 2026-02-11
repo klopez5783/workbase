@@ -36,6 +36,7 @@ import TestCamera from "./pages/TestCamera";
 import ReceiptDetail from "./components/expenses/ReceiptDetail";
 import EstimateGenerator from "./pages/admin/EstimateGenerator";
 import EstimatesList from "./pages/admin/EstimatesList";
+import EstimateEditor from "./pages/admin/EstimateEdit";
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { currentUser, loading } = useAuth();
@@ -188,18 +189,15 @@ function App() {
           />
 
           <Route path="admin/estimates/new" element={<EstimateGenerator />} />
-          <Route
-            path="admin/estimates/:id/edit"
-            element={<EstimateGenerator />}
-          />
+          <Route path="admin/estimates/:id/edit" element={<EstimateEditor />} />
 
           <Route
-          path="admin/estimates"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <EstimatesList />
-            </ProtectedRoute>
-          }
+            path="admin/estimates"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <EstimatesList />
+              </ProtectedRoute>
+            }
           />
 
           <Route
@@ -238,7 +236,7 @@ function App() {
             }
           />
         </Route>
-        
+
         {/* Admin Management Pages (WITHOUT Layout - full page for complex management) */}
         <Route
           path="/admin/workers"

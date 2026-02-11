@@ -264,6 +264,17 @@ export default function Dashboard() {
           </div>
         </div>
       </button>
+      <button
+        onClick={() => navigate('/admin/estimates/')}
+        className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition"
+      >
+        <div className="flex items-center gap-3">
+          <FileText className="text-blue-600" size={24} />
+          <div>
+            <h3 className="font-bold text-gray-900">Estimates</h3>
+          </div>
+        </div>
+      </button>
       <QuickActions />
 
 
