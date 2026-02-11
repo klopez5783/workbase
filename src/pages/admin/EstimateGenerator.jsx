@@ -16,8 +16,10 @@ import {
   Check,
   Briefcase,
   FileSpreadsheet,
+  Eye,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { estimatePDFService } from "../../services/estimatePDFService";
 
 const DEFAULT_TERMS = {
   isNonBinding: true,
@@ -431,6 +433,23 @@ export default function EstimateGenerator() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Preview PDF Button */}
+              {estimate.lineItems.length > 0 && (
+                <button
+                  onClick={() =>
+                    estimatePDFService.previewPDF(estimate, {
+                      name: "Your Company Name",
+                      address: "123 Business St, Columbus, OH",
+                      email: "info@yourcompany.com",
+                      phone: "(555) 123-4567",
+                    })
+                  }
+                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center gap-2"
+                >
+                  <Eye size={20} />
+                  Preview PDF
+                </button>
+              )}
               <button
                 onClick={handleSaveDraft}
                 disabled={saving}
