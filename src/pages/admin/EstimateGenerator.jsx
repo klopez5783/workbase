@@ -1015,45 +1015,50 @@ export default function EstimateGenerator() {
             </div>
 
             {/* PDF Actions */}
-            <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-              <h2 className="text-lg font-bold text-gray-900 mb-1">
-                Ready to go?
-              </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Save the estimate and download the PDF to send to your client.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() =>
-                    estimatePDFService.previewPDF(
-                      { ...estimate, ...totals },
-                      companyInfo,
-                    )
-                  }
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
-                >
-                  <Eye size={18} /> Preview PDF
-                </button>
-                <button
-                  onClick={() =>
-                    estimatePDFService.downloadPDF(
-                      { ...estimate, ...totals },
-                      companyInfo,
-                    )
-                  }
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
-                >
-                  <Download size={18} /> Download PDF
-                </button>
-                <button
-                  onClick={handleSaveDraft}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  <Save size={18} />
-                  {saving ? "Saving..." : "Save Estimate"}
-                </button>
-              </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() =>
+                  estimatePDFService.previewPDF(
+                    {
+                      ...estimate,
+                      ...totals,
+                    estimateType,    
+                      createdAt: estimate.createdAt || new Date().toISOString(),
+                      estimateNumber: estimate.estimateNumber || "DRAFT",
+                    },
+                    companyInfo,
+                  )
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                <Eye size={18} /> Preview PDF
+              </button>
+
+              <button
+                onClick={() =>
+                  estimatePDFService.downloadPDF(
+                    {
+                      ...estimate,
+                      ...totals,
+                      createdAt: estimate.createdAt || new Date().toISOString(),
+                      estimateNumber: estimate.estimateNumber || "DRAFT",
+                    },
+                    companyInfo,
+                  )
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                <Download size={18} /> Download PDF
+              </button>
+
+              <button
+                onClick={handleSaveDraft}
+                disabled={saving}
+                className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                <Save size={18} />
+                {saving ? "Saving..." : "Save Estimate"}
+              </button>
             </div>
           </div>
         )}

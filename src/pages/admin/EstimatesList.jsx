@@ -113,7 +113,7 @@ export default function EstimatesList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-5 pb-24">
+    <div className="min-h-screen bg-gray-50 p-4 pb-24">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -254,16 +254,7 @@ export default function EstimatesList() {
 
                   {/* Top Right: Edit + Total stacked */}
                   <div className="flex flex-col items-end gap-3 ml-4 shrink-0">
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/estimates/${estimate.id}/edit`)
-                      }
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
-                    >
-                      <Edit size={15} />
-                      Edit
-                    </button>
-                    <div className="mt-15">
+                    <div className="mt-38">
                       <p className="text-xs text-gray-400 mb-0.5">Total</p>
                       <p className="text-2xl font-bold text-blue-600">
                         ${estimate.grandTotal?.toFixed(2) || "0.00"}
@@ -273,57 +264,70 @@ export default function EstimatesList() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() =>
-                      estimatePDFService.previewPDF(estimate, {
-                        name: "Your Company Name",
-                        address: "123 Business St, Columbus, OH",
-                        email: "info@yourcompany.com",
-                        phone: "(555) 123-4567",
-                      })
-                    }
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
-                  >
-                    <Eye size={18} />
-                    Preview PDF
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      estimatePDFService.downloadPDF(estimate, {
-                        name: "Your Company Name",
-                        address: "123 Business St, Columbus, OH",
-                        email: "info@yourcompany.com",
-                        phone: "(555) 123-4567",
-                      })
-                    }
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200">
+                  <div className="justify-items-center">
+                        <button
+                        onClick={() =>
+                        estimatePDFService.previewPDF(estimate, {
+                            name: "Your Company Name",
+                            address: "123 Business St, Columbus, OH",
+                            email: "info@yourcompany.com",
+                            phone: "(555) 123-4567",
+                        })
+                        }
+                        className="flex w-full items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    Download PDF
-                  </button>
+                        <Eye size={18} />
+                        Preview PDF
+                    </button>
 
-                  <button
-                    onClick={() => deleteEstimate(estimate.id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-semibold hover:bg-red-100 transition ml-auto"
-                  >
-                    <Trash2 size={18} />
-                    Delete
-                  </button>
+                    <button
+                        onClick={() =>
+                        estimatePDFService.downloadPDF(estimate, {
+                            name: "Your Company Name",
+                            address: "123 Business St, Columbus, OH",
+                            email: "info@yourcompany.com",
+                            phone: "(555) 123-4567",
+                        })
+                        }
+                        className="flex mt-2 w-full items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+                    >
+                        <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                        </svg>
+                        Download PDF
+                    </button>
+                  </div>
+
+                  <div className="justify-items-center">
+                        <button
+                        onClick={() => deleteEstimate(estimate.id)}
+                        className="flex w-full items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-semibold hover:bg-red-100 transition ml-auto"
+                        >
+                        <Trash2 size={18} />
+                        Delete
+                    </button>
+                    <button
+                        onClick={() =>
+                        navigate(`/admin/estimates/${estimate.id}/edit`)
+                        }
+                        className="flex mt-2 w-full items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition ml-auto"
+                    >
+                        <Edit size={15} />
+                        Edit
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
