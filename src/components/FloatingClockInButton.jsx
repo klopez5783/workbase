@@ -89,7 +89,7 @@ export default function FloatingClockInButton() {
       {/* Floating Action Button */}
       <button
         onClick={() => setShowModal(true)}
-        className={`fixed bottom-20 right-5 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-40 transition-all active:scale-95 ${
+        className={`fixed bottom-22 right-5 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center z-40 transition-all active:scale-95 ${
           activeShift
             ? 'bg-gradient-to-r from-red-500 to-red-600'
             : 'bg-gradient-to-r from-blue-500 to-blue-600'

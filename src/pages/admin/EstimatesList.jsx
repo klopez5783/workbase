@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { estimatePDFService } from "../../services/estimatePDFService";
+import { parseDate } from "../../utils/dateUtils";
 
 export default function EstimatesList() {
   const { t } = useTranslation();
@@ -202,26 +203,23 @@ export default function EstimatesList() {
                 key={estimate.id}
                 className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition"
               >
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {estimate.estimateNumber}
+                  </h3>
+                  <StatusBadge status={estimate.status} />
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-semibold ${
+                      estimate.estimateType === "simple"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {estimate.estimateType === "simple" ? "Simple" : "Detailed"}
+                  </span>
+                </div>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">
-                        {estimate.estimateNumber}
-                      </h3>
-                      <StatusBadge status={estimate.status} />
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          estimate.estimateType === "simple"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {estimate.estimateType === "simple"
-                          ? "Simple"
-                          : "Detailed"}
-                      </span>
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       {/* Client */}
                       <div className="flex items-center gap-2">
@@ -246,7 +244,7 @@ export default function EstimatesList() {
                         <Calendar size={16} className="text-gray-400" />
                         <span className="text-gray-600">Created:</span>
                         <span className="font-semibold text-gray-900">
-                          {new Date(estimate.createdAt).toLocaleDateString()}
+                          {parseDate(estimate.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
@@ -254,7 +252,7 @@ export default function EstimatesList() {
 
                   {/* Top Right: Edit + Total stacked */}
                   <div className="flex flex-col items-end gap-3 ml-4 shrink-0">
-                    <div className="mt-38">
+                    <div className="">
                       <p className="text-xs text-gray-400 mb-0.5">Total</p>
                       <p className="text-2xl font-bold text-blue-600">
                         ${estimate.grandTotal?.toFixed(2) || "0.00"}
@@ -266,66 +264,66 @@ export default function EstimatesList() {
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200">
                   <div className="justify-items-center">
-                        <button
-                        onClick={() =>
+                    <button
+                      onClick={() =>
                         estimatePDFService.previewPDF(estimate, {
-                            name: "Your Company Name",
-                            address: "123 Business St, Columbus, OH",
-                            email: "info@yourcompany.com",
-                            phone: "(555) 123-4567",
+                          name: "Your Company Name",
+                          address: "123 Business St, Columbus, OH",
+                          email: "info@yourcompany.com",
+                          phone: "(555) 123-4567",
                         })
-                        }
-                        className="flex w-full items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
+                      }
+                      className="flex w-full items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
                     >
-                        <Eye size={18} />
-                        Preview PDF
+                      <Eye size={18} />
+                      Preview PDF
                     </button>
 
                     <button
-                        onClick={() =>
+                      onClick={() =>
                         estimatePDFService.downloadPDF(estimate, {
-                            name: "Your Company Name",
-                            address: "123 Business St, Columbus, OH",
-                            email: "info@yourcompany.com",
-                            phone: "(555) 123-4567",
+                          name: "Your Company Name",
+                          address: "123 Business St, Columbus, OH",
+                          email: "info@yourcompany.com",
+                          phone: "(555) 123-4567",
                         })
-                        }
-                        className="flex mt-2 w-full items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+                      }
+                      className="flex mt-2 w-full items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
                     >
-                        <svg
+                      <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-5 w-5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        >
+                      >
                         <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                         />
-                        </svg>
-                        Download PDF
+                      </svg>
+                      Download PDF
                     </button>
                   </div>
 
                   <div className="justify-items-center">
-                        <button
-                        onClick={() => deleteEstimate(estimate.id)}
-                        className="flex w-full items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-semibold hover:bg-red-100 transition ml-auto"
-                        >
-                        <Trash2 size={18} />
-                        Delete
+                    <button
+                      onClick={() => deleteEstimate(estimate.id)}
+                      className="flex w-full items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-semibold hover:bg-red-100 transition ml-auto"
+                    >
+                      <Trash2 size={18} />
+                      Delete
                     </button>
                     <button
-                        onClick={() =>
+                      onClick={() =>
                         navigate(`/admin/estimates/${estimate.id}/edit`)
-                        }
-                        className="flex mt-2 w-full items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition ml-auto"
+                      }
+                      className="flex mt-2 w-full items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition ml-auto"
                     >
-                        <Edit size={15} />
-                        Edit
+                      <Edit size={15} />
+                      Edit
                     </button>
                   </div>
                 </div>

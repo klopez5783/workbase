@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { estimatePDFService } from "../../services/estimatePDFService";
+import React from "react";
 
 const DEFAULT_TERMS = {
   isNonBinding: true,
@@ -31,24 +32,27 @@ const DEFAULT_TERMS = {
 
 // ─── STEPPER ────────────────────────────────────────────────
 const STEPS = [
-  { number: 1, label: "Estimate Type" },
+  { number: 1, label: "Type" },
   { number: 2, label: "Details" },
-  { number: 3, label: "Terms & Notes" },
+  { number: 3, label: "Terms" },
   { number: 4, label: "Review" },
 ];
 
 function Stepper({ currentStep }) {
   return (
-    <div className="flex items-center justify-between mb-8">
-      {STEPS.map((step, idx) => {
-        const isCompleted = currentStep > step.number;
-        const isActive = currentStep === step.number;
-        return (
-          <div key={step.number} className="flex items-center flex-1">
-            {/* Circle + Label */}
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all
+    <div className="w-full mb-8">
+      <div className="flex items-start w-full">
+        {STEPS.map((step, idx) => {
+          const isCompleted = currentStep > step.number;
+          const isActive = currentStep === step.number;
+
+          return (
+            <React.Fragment key={step.number}>
+              {/* Step (Circle + Label) */}
+              <div className="flex flex-col items-center">
+                {/* Circle */}
+                <div
+                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all
                   ${
                     isCompleted
                       ? "bg-blue-600 text-white"
@@ -56,26 +60,36 @@ function Stepper({ currentStep }) {
                         ? "bg-blue-600 text-white ring-4 ring-blue-100"
                         : "bg-gray-200 text-gray-500"
                   }`}
-              >
-                {isCompleted ? <Check size={16} /> : step.number}
+                >
+                  {isCompleted ? <Check size={16} /> : step.number}
+                </div>
+
+                {/* Label */}
+                <span
+                  className={`mt-2 text-xs font-semibold whitespace-nowrap
+                  ${
+                    isActive
+                      ? "text-blue-600"
+                      : isCompleted
+                        ? "text-blue-500"
+                        : "text-gray-400"
+                  }`}
+                >
+                  {step.label}
+                </span>
               </div>
-              <span
-                className={`mt-1 text-xs font-semibold whitespace-nowrap
-                  ${isActive ? "text-blue-600" : isCompleted ? "text-blue-500" : "text-gray-400"}`}
-              >
-                {step.label}
-              </span>
-            </div>
-            {/* Connector line */}
-            {idx < STEPS.length - 1 && (
-              <div
-                className={`flex-1 h-0.5 mx-2 mb-4 transition-all
+
+              {/* Connector */}
+              {idx < STEPS.length - 1 && (
+                <div
+                  className={`flex-1 h-0.5 mt-4 mx-2 transition-all
                   ${currentStep > step.number ? "bg-blue-600" : "bg-gray-200"}`}
-              />
-            )}
-          </div>
-        );
-      })}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -389,7 +403,7 @@ export default function EstimateGenerator() {
     <div className="min-h-screen bg-gray-50 p-5 pb-24">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-3 grid grid-cols-5">
           <button
             onClick={() => navigate(-1)}
             className="text-blue-600 font-semibold mb-4 flex items-center gap-2"
@@ -397,12 +411,14 @@ export default function EstimateGenerator() {
             <CircleArrowLeft size={25} />
             {t("common.back")}
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {id ? "Edit Estimate" : "Create Estimate"}
-          </h1>
-          <p className="text-gray-600 text-sm mt-1">
-            Generate professional estimates for clients
-          </p>
+          <div className="text-center col-span-3 self-auto">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {id ? "Edit Estimate" : "Create Estimate"}
+            </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              Generate professional estimates
+            </p>
+          </div>
         </div>
 
         {/* Stepper */}
@@ -417,17 +433,18 @@ export default function EstimateGenerator() {
 
         {/* ─── STEP 1: ESTIMATE TYPE ─── */}
         {currentStep === 1 && (
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-2">
               What type of estimate do you need?
             </h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-500 text-sm mb-3">
               Choose based on the size and complexity of the job.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label
-                className={`relative flex items-start p-5 border-2 rounded-xl cursor-pointer transition ${estimateType === "simple" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
+                className={`relative flex items-start p-5 border-2 rounded-xl cursor-pointer transition 
+                    ${estimateType === "simple" ? "border-blue-600 bg-blue-50" : "border-blue-100 hover:border-gray-300"}`}
               >
                 <input
                   type="radio"
@@ -447,17 +464,15 @@ export default function EstimateGenerator() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Best for small jobs (1–1.5 days). Single pricing column with
-                    quantity and unit price.
-                  </p>
-                  <p className="mt-2 text-xs text-gray-400">
-                    Bathroom repaint, minor repairs, small installations
+                    Best for small jobs (1–1.5 days).{" "}
+                    <b>Single pricing column</b> with quantity and unit price.
                   </p>
                 </div>
               </label>
 
               <label
-                className={`relative flex items-start p-5 border-2 rounded-xl cursor-pointer transition ${estimateType === "detailed" ? "border-green-600 bg-green-50" : "border-gray-200 hover:border-gray-300"}`}
+                className={`relative flex items-start p-5 border-2 rounded-xl cursor-pointer transition
+                     ${estimateType === "detailed" ? "border-green-600 bg-green-50" : "border-green-100 hover:border-gray-300"}`}
               >
                 <input
                   type="radio"
@@ -480,9 +495,6 @@ export default function EstimateGenerator() {
                     Separate Material and Labor costs. Perfect for complex
                     projects with detailed breakdowns.
                   </p>
-                  <p className="mt-2 text-xs text-gray-400">
-                    Full renovations, multi-room projects, construction
-                  </p>
                 </div>
               </label>
             </div>
@@ -491,9 +503,9 @@ export default function EstimateGenerator() {
 
         {/* ─── STEP 2: DETAILS ─── */}
         {currentStep === 2 && (
-          <div className="space-y-6">
+          <div className="space-y-3">
             {/* Client Info */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
                   Client Information
@@ -566,7 +578,7 @@ export default function EstimateGenerator() {
             </div>
 
             {/* Project Info */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Project Information
               </h2>
@@ -619,7 +631,7 @@ export default function EstimateGenerator() {
             </div>
 
             {/* Line Items */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
                   Line Items ({estimate.lineItems.length})
@@ -1022,7 +1034,7 @@ export default function EstimateGenerator() {
                     {
                       ...estimate,
                       ...totals,
-                    estimateType,    
+                      estimateType,
                       createdAt: estimate.createdAt || new Date().toISOString(),
                       estimateNumber: estimate.estimateNumber || "DRAFT",
                     },
@@ -1065,7 +1077,7 @@ export default function EstimateGenerator() {
 
         {/* ─── STEP NAVIGATION BUTTONS ─── */}
         <div
-          className={`flex mt-8 ${currentStep === 1 ? "justify-end" : "justify-between"}`}
+          className={`flex mt-3 ${currentStep === 1 ? "justify-end" : "justify-between"}`}
         >
           {currentStep > 1 && (
             <button
