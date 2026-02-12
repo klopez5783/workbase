@@ -235,12 +235,12 @@ const workerStats = workers.map(worker => {  // worker is a string ID
           </button>
 
           {/* Project Title Section */}
-          <div className="bg-gradient-to-r mb-4 from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-gradient-to-r mb-4 from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <Briefcase size={32} />
-                  <h1 className="text-3xl font-bold">{project.name}</h1>
+                  <Briefcase size={28} />
+                  <h1 className="text-xl font-bold">{project.name}</h1>
                 </div>
                 {project.clientName && (
                   <p className="text-blue-100 text-lg mb-2">Client: {project.clientName}</p>
@@ -265,14 +265,14 @@ const workerStats = workers.map(worker => {  // worker is a string ID
             <div className="flex gap-3 mt-4">
             <button
               onClick={() => navigate(`/reports/time-card?projectId=${projectId}`)}
-              className="flex-1 bg-white text-blue-600 px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              className="flex-1 bg-white text-blue-600 px-3 py-2 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
             >
               <Clock size={18} />
               {t('Hours.ViewHours')}
             </button>
             <button
               onClick={handleEdit}
-              className="px-4 py-3 rounded-lg font-semibold border-2 border-white text-white hover:bg-white hover:text-blue-600 transition-all flex items-center gap-2"
+              className="px-3 py-2 rounded-lg font-semibold border-2 border-white text-white hover:bg-white hover:text-blue-600 transition-all flex items-center gap-2"
             >
               <Edit size={18} />
               {t('projects.editProject')}
